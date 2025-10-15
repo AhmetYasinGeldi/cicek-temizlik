@@ -4,13 +4,22 @@ const pool = require('../db');
 const authenticateToken = require('../middleware/authenticateToken');
 const authorizeAdmin = require('../middleware/authorizeAdmin');
 const getOptionalUser = require('../middleware/getOptionalUser');
+const { getSettings } = require('../settingsHelper');
 
-// TÜM ÜRÜNLERİ GETİR (Admin ise hepsini, değilse sadece aktif olanları gösterir)
+// TÜM ÜRÜNLERİ GETİR (Ayarlara ve role göre)
 router.get('/', getOptionalUser, async (req, res) => {
     try {
-        let query = 'SELECT * FROM products ORDER BY id';
-        if (!req.user || req.user.role !== 'admin') {
-            query = 'SELECT * FROM products WHERE is_active = true ORDER BY id';
+        const settings = await getSettings();
+        let query;
+
+        if (req.user && req.user.role === 'admin') {
+            query = 'SELECT * FROM products ORDER BY id';
+        } else {
+            if (settings.out_of_stock_behavior === 'show_as_out_of_stock') {
+                query = 'SELECT * FROM products WHERE is_active = true ORDER BY id';
+            } else {
+                query = 'SELECT * FROM products WHERE is_active = true AND stock_quantity > 0 ORDER BY id';
+            }
         }
         
         const result = await pool.query(query);
@@ -47,14 +56,24 @@ router.get('/:id', getOptionalUser, async (req, res) => {
 router.post('/', [authenticateToken, authorizeAdmin], async (req, res) => {
     try {
         const { name, price, description, image_url, stock_quantity, is_active } = req.body;
+      
         if (!name || price == null) {
             return res.status(400).json({ error: 'İsim ve fiyat alanları zorunludur.' });
         }
+        if (price <= 0) {
+            return res.status(400).json({ error: 'Fiyat 0\'dan büyük olmalıdır.' });
+        }
+        if (stock_quantity < 0) {
+            return res.status(400).json({ error: 'Stok miktarı 0\'dan küçük olamaz.' });
+        }
+
         const newProduct = await pool.query(
             'INSERT INTO products (name, price, description, image_url, stock_quantity, is_active) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
             [name, price, description, image_url, stock_quantity || 0, is_active != null ? is_active : true]
         );
+      
         res.status(201).json(newProduct.rows[0]);
+    
     } catch (err) {
         console.error('Ürün eklenirken hata:', err);
         if (err.code === '23505') {

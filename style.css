@@ -1,0 +1,36 @@
+body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+
+form { display: flex; flex-direction: column; gap: 15px; }
+input, textarea, select { padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+button { padding: 10px 15px; font-size: 1rem; cursor: pointer; border: none; border-radius: 5px; }
+.checkbox-group { display: flex; align-items: center; gap: 10px; }
+
+.product { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+.product h2 { margin-top: 0; }
+.user-panel { text-align: right; margin-bottom: 20px; }
+.admin-controls a { display:inline-block; margin-bottom: 20px; padding: 10px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+th { background-color: #f2f2f2; }
+.quantity-controls button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+.remove-btn { color: #dc3545; cursor: pointer; border: none; background: none; }
+.cart-total { text-align: right; margin-top: 20px; font-size: 1.2rem; font-weight: bold; }
+
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s, bottom 0.5s;
+}
+#toast-container.show { opacity: 1; visibility: visible; bottom: 30px; }
+#toast-container.success { background-color: #28a745; }
+#toast-container.error { background-color: #dc3545; }

@@ -4,25 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sepetim</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .quantity-controls button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
-        .remove-btn { color: #dc3545; cursor: pointer; border: none; background: none; }
-        .cart-total { text-align: right; margin-top: 20px; font-size: 1.2rem; font-weight: bold; }
-    </style>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <a href="/">&larr; Alışverişe Devam Et</a>
     <hr>
     <h1>Sepetim</h1>
 
-    <div id="cart-container">
-        </div>
+    <div id="cart-container"></div>
     <div id="cart-total" class="cart-total"></div>
+    <div id="toast-container"></div>
 
+    <script src="/common.js"></script>
     <script>
         const cartContainer = document.getElementById('cart-container');
         const cartTotalDiv = document.getElementById('cart-total');
@@ -61,7 +54,6 @@
                         </thead>
                         <tbody>
                 `;
-
                 let total = 0;
                 items.forEach(item => {
                     const subtotal = item.price * item.quantity;
@@ -82,16 +74,14 @@
                         </tr>
                     `;
                 });
-
                 tableHTML += '</tbody></table>';
                 cartContainer.innerHTML = tableHTML;
                 cartTotalDiv.innerHTML = `Toplam: ${total.toFixed(2)} TL`;
-
                 addEventListeners();
 
             } catch (error) {
                 console.error('Sepet görüntülenirken hata:', error);
-                cartContainer.innerHTML = '<p>Sepet yüklenirken bir hata oluştu.</p>';
+                showToast('Sepet yüklenirken bir hata oluştu.', 'error');
             }
         }
 
@@ -103,7 +93,6 @@
                     await updateCartItem(productId, newQuantity);
                 });
             });
-
             document.querySelectorAll('.remove-item').forEach(button => {
                 button.addEventListener('click', async () => {
                     const productId = button.dataset.productId;
@@ -122,15 +111,14 @@
                     },
                     body: JSON.stringify({ quantity: quantity })
                 });
-               if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Miktar güncellenemedi.');
-        }
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Miktar güncellenemedi.');
+                }
                 displayCart();
-            }
-         catch (error) {
+            } catch (error) {
                 console.error(error);
-                alert(error.message);
+                showToast(error.message, 'error');
             }
         }
 
@@ -142,10 +130,11 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!response.ok) throw new Error('Ürün kaldırılamadı.');
+                showToast('Ürün sepetten kaldırıldı.');
                 displayCart();
             } catch (error) {
                 console.error(error);
-                alert('Ürün kaldırılırken bir hata oluştu.');
+                showToast('Ürün kaldırılırken bir hata oluştu.', 'error');
             }
         }
 

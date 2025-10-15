@@ -4,18 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yeni Ürün Ekle</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-        form { display: flex; flex-direction: column; gap: 15px; }
-        input, textarea { padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 15px; font-size: 1rem; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
-        .message { padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
-    </style>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <a href="/">&larr; Ana Sayfaya Dön</a>
+    <a href="/">&larr; Ana Panele Dön</a>
     <hr>
     <h1>Yeni Ürün Ekle</h1>
 
@@ -24,64 +16,68 @@
         <input type="text" id="name" name="name" required>
 
         <label for="price">Fiyat:</label>
-        <input type="number" id="price" name="price" step="0.01" required>
+        <input type="number" id="price" name="price" step="0.01" required min="0.01">
 
         <label for="description">Açıklama:</label>
         <textarea id="description" name="description" rows="4"></textarea>
 
+        <label for="stock_quantity">Stok Miktarı:</label>
+        <input type="number" id="stock_quantity" name="stock_quantity" required min="0" value="0">
+
+        <div class="checkbox-group">
+            <label for="is_active">Satışa Açık mı?</label>
+            <input type="checkbox" id="is_active" name="is_active" checked>
+        </div>
+
         <button type="submit">Ürünü Kaydet</button>
     </form>
 
-    <div id="message-container" class="message"></div>
+    <div id="toast-container"></div>
 
+    <script src="/common.js"></script>
     <script>
         const form = document.getElementById('add-product-form');
-        const messageContainer = document.getElementById('message-container');
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('Bu işlem için giriş yapmalısınız.', 'error');
+                return;
+            }
 
-            const formData = new FormData(form);
             const productData = {
-                name: formData.get('name'),
-                price: parseFloat(formData.get('price')),
-                description: formData.get('description')
+                name: form.name.value,
+                price: parseFloat(form.price.value),
+                description: form.description.value,
+                stock_quantity: parseInt(form.stock_quantity.value),
+                is_active: form.is_active.checked
             };
 
             try {
-    const token = localStorage.getItem('token'); // Token'ı al
-    if (!token) {
-        throw new Error("Giriş yapılmamış. Lütfen giriş yapın.");
-    }
-
-    const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Token'ı başlığa ekle
-        },
-        body: JSON.stringify(productData)
-    });
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(productData)
+                });
 
                 if (!response.ok) {
-                    throw new Error('Sunucudan hatalı bir cevap geldi.');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Ürün eklenemedi.');
                 }
                 
-                messageContainer.textContent = 'Ürün başarıyla eklendi! Ana sayfaya yönlendiriliyorsunuz...';
-                messageContainer.className = 'message success';
-                messageContainer.style.display = 'block';
-                
+                showToast('Ürün başarıyla eklendi!');
                 form.reset();
-
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 2000);
 
             } catch (error) {
                 console.error('Ürün eklenirken hata oluştu:', error);
-                messageContainer.textContent = 'Bir hata oluştu. Lütfen tekrar deneyin.';
-                messageContainer.className = 'message error';
-                messageContainer.style.display = 'block';
+                showToast(error.message, 'error');
             }
         });
     </script>

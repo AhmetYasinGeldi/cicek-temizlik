@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genel Ayarlar</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <a href="/">&larr; Ana Panele Dön</a>
+    <hr>
+    <h1>Genel Site Ayarları</h1>
+
+    <form id="settings-form">
+        <div class="setting-item">
+            <label for="sales_active">Genel Satış Durumu:</label>
+            <select id="sales_active" name="sales_active">
+                <option value="true">Satışlar Aktif</option>
+                <option value="false">Satışları Durdur</option>
+            </select>
+            <small>Satışları durdurduğunuzda, müşteriler ürünleri görebilir ancak sepete ekleyemez.</small>
+        </div>
+        <div class="setting-item">
+            <label for="out_of_stock_behavior">Stoğu Biten Ürünler:</label>
+            <select id="out_of_stock_behavior" name="out_of_stock_behavior">
+                <option value="hide">Listeden Gizle</option>
+                <option value="show_as_out_of_stock">"Stokta Yok" olarak göster</option>
+            </select>
+        </div>
+        <div class="setting-item">
+            <label for="critical_stock_percentage">Kritik Stok Yüzdesi (%):</label>
+            <input type="number" id="critical_stock_percentage" name="critical_stock_percentage" min="0" max="100">
+            <small>Stok bu yüzdenin altına düştüğünde uyarı verilir. (Örn: 30)</small>
+        </div>
+        <button type="submit">Ayarları Kaydet</button>
+    </form>
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        const form = document.getElementById('settings-form');
+        const token = localStorage.getItem('token');
+
+        window.onload = async () => {
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            try {
+                const response = await fetch('/api/settings', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Ayarlar yüklenemedi.');
+                const settings = await response.json();
+                
+                form.sales_active.value = settings.sales_active;
+                form.out_of_stock_behavior.value = settings.out_of_stock_behavior;
+                form.critical_stock_percentage.value = settings.critical_stock_percentage;
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast(error.message, 'error');
+            }
+        };
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const updatedSettings = {
+                sales_active: form.sales_active.value,
+                out_of_stock_behavior: form.out_of_stock_behavior.value,
+                critical_stock_percentage: form.critical_stock_percentage.value
+            };
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(updatedSettings)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Güncelleme başarısız.');
+                }
+                showToast('Ayarlar başarıyla güncellendi!');
+            } catch (error) {
+                console.error('Güncelleme hatası:', error);
+                showToast(error.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

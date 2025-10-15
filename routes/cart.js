@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const authenticateToken = require('../middleware/authenticateToken');
-
+const { getSettings } = require('../settingsHelper');
 
 router.post('/items', authenticateToken, async (req, res) => {
     const userId = req.user.userId; 
@@ -14,6 +14,13 @@ router.post('/items', authenticateToken, async (req, res) => {
 
     try {
         
+        const settings = await getSettings();
+        if (!settings.sales_active) {
+            if (!req.user || req.user.role !== 'admin') {
+                return res.status(403).json({ error: 'Sistem şu anda satışa kapalıdır.' });
+            }
+        }
+
         const stockCheck = await pool.query('SELECT stock_quantity FROM products WHERE id = $1 AND is_active = true', [productId]);
         
         if (stockCheck.rows.length === 0) {
@@ -98,6 +105,14 @@ router.put('/items/:productId', authenticateToken, async (req, res) => {
     }
 
     try {
+
+        const settings = await getSettings();
+        if (!settings.sales_active) {
+            if (!req.user || req.user.role !== 'admin') {
+                return res.status(403).json({ error: 'Sistem şu anda satışa kapalıdır.' });
+            }
+        }
+
         if (quantity > 0) {
             const stockCheck = await pool.query('SELECT stock_quantity FROM products WHERE id = $1 AND is_active = true', [productId]);
             

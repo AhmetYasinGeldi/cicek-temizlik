@@ -4,134 +4,122 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ürün Detayı</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .product-detail { border: 1px solid #ccc; padding: 20px; border-radius: 5px; }
-        .product-detail h1 { margin-top: 0; }
-        .actions { margin-top: 20px; display: flex; gap: 10px; }
-        .actions a, .actions button, #add-to-cart-btn-detail { text-decoration: none; padding: 10px; border-radius: 5px; border: none; font-size: 1rem; cursor: pointer;}
-        .edit-btn { background-color: #ffc107; color: black; }
-        .delete-btn { background-color: #dc3545; color: white; }
-        #add-to-cart-btn-detail { background-color: #007bff; color: white; margin-bottom: 20px; display: block; width: fit-content; }
-    </style>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <a href="/">&larr; Geri Dön</a>
     <hr>
+    <div id="product-detail-container"></div>
+    <div id="toast-container"></div>
 
-    <div id="product-detail-container">
-        </div>
-
+    <script src="/common.js"></script>
     <script>
-    function parseJwt(token) {
-        try {
-            return JSON.parse(atob(token.split('.')[1]));
-        } catch (e) {
-            return null;
-        }
-    }
-    
-    window.onload = async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-        const container = document.getElementById('product-detail-container');
-
-        if (!productId) {
-            container.innerHTML = '<h1>Ürün ID\'si bulunamadı.</h1>';
-            return;
-        }
-
-        try {
+        window.onload = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            const container = document.getElementById('product-detail-container');
             const token = localStorage.getItem('token');
-            const headers = {};
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
 
-            const response = await fetch(`/api/products/${productId}`, { headers: headers });
-            
-            if (!response.ok) {
-                container.innerHTML = '<h1>Ürün bulunamadı veya görme yetkiniz yok.</h1>';
+            if (!productId) {
+                container.innerHTML = '<h1>Ürün ID\'si bulunamadı.</h1>';
                 return;
             }
 
-            const product = await response.json();
-            
-            container.innerHTML = `
-                <div class="product-detail">
-                    <h1>${product.name}</h1>
-                    <h3>Fiyat: ${product.price} TL</h3>
-                    <p>${product.description}</p>
-                    <button id="add-to-cart-btn-detail">Sepete Ekle</button>
-                    <div class="actions" id="admin-actions"></div>
-                </div>
-            `;
+            try {
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
 
-            document.getElementById('add-to-cart-btn-detail').addEventListener('click', async () => {
-                if (!token) {
-                    alert('Ürün eklemek için lütfen giriş yapın.');
-                    window.location.href = '/login.html';
+                const response = await fetch(`/api/products/${productId}`, { headers: headers });
+                
+                if (!response.ok) {
+                    container.innerHTML = '<h1>Ürün bulunamadı veya görme yetkiniz yok.</h1>';
                     return;
                 }
-                try {
-                    const cartResponse = await fetch('/api/cart/items', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ productId: parseInt(productId), quantity: 1 })
-                    });
-                    if (cartResponse.ok) {
-                        alert('Ürün sepete eklendi!');
-                    } else {
-                        const errorData = await cartResponse.json();
-                        alert(`Hata: ${errorData.error || 'Ürün eklenemedi.'}`);
-                    }
-                } catch (error) {
-                    console.error('Sepete ekleme hatası:', error);
-                    alert('Bir hata oluştu.');
+
+                const product = await response.json();
+                
+                let cartButtonHTML = '';
+                if (product.stock_quantity > 0) {
+                    cartButtonHTML = '<button id="add-to-cart-btn-detail" style="background-color: #007bff; color: white;">Sepete Ekle</button>';
+                } else {
+                    cartButtonHTML = '<button disabled style="background-color: #6c757d; cursor: not-allowed;">Stokta Yok</button>';
                 }
-            });
 
-            if (token) {
-                const user = parseJwt(token);
-                if (user && user.role === 'admin') {
-                    document.getElementById('admin-actions').innerHTML = `
-                        <a href="edit_product.html?id=${product.id}" class="edit-btn">Düzenle</a>
-                        <button id="delete-button" class="delete-btn">Sil</button>
-                    `;
+                container.innerHTML = `
+                    <div class="product-detail">
+                        <h1>${product.name}</h1>
+                        <h3>Fiyat: ${product.price} TL</h3>
+                        <p>${product.description}</p>
+                        ${cartButtonHTML}
+                        <div class="actions" id="admin-actions" style="margin-top: 20px; display: flex; gap: 10px;"></div>
+                    </div>
+                `;
 
-                    document.getElementById('delete-button').addEventListener('click', async () => {
-                        if (!confirm('Bu ürünü kalıcı olarak silmek istediğinizden emin misiniz?')) {
+                const addToCartButton = document.getElementById('add-to-cart-btn-detail');
+                if (addToCartButton) {
+                    addToCartButton.addEventListener('click', async () => {
+                        if (!token) {
+                            showToast('Lütfen önce giriş yapın.', 'error');
+                            setTimeout(() => window.location.href = '/login.html', 1500);
                             return;
                         }
                         try {
-                            const deleteResponse = await fetch(`/api/products/${productId}`, {
-                                method: 'DELETE',
+                            const cartResponse = await fetch('/api/cart/items', {
+                                method: 'POST',
                                 headers: {
+                                    'Content-Type': 'application/json',
                                     'Authorization': `Bearer ${token}`
-                                }
+                                },
+                                body: JSON.stringify({ productId: parseInt(productId), quantity: 1 })
                             });
-
-                            if (deleteResponse.ok) {
-                                alert('Ürün başarıyla silindi. Ana sayfaya yönlendiriliyorsunuz.');
-                                window.location.href = '/';
+                            if (cartResponse.ok) {
+                                showToast('Ürün sepete eklendi!');
                             } else {
-                                alert('Ürün silinirken bir hata oluştu.');
+                                const errorData = await cartResponse.json();
+                                showToast(errorData.error || 'Ürün eklenemedi.', 'error');
                             }
                         } catch (error) {
-                            console.error('Silme hatası:', error);
-                            alert('Ürün silinirken bir hata oluştu.');
+                            console.error('Sepete ekleme hatası:', error);
+                            showToast('Bir hata oluştu.', 'error');
                         }
                     });
                 }
+                
+                if (token) {
+                    const user = parseJwt(token);
+                    if (user && user.role === 'admin') {
+                        document.getElementById('admin-actions').innerHTML = `
+                            <a href="edit_product.html?id=${product.id}" style="background-color: #ffc107; color: black; text-decoration: none; padding: 10px; border-radius: 5px;">Düzenle</a>
+                            <button id="delete-button" style="background-color: #dc3545; color: white;">Sil</button>
+                        `;
+
+                        document.getElementById('delete-button').addEventListener('click', async () => {
+                            if (!confirm('Bu ürünü kalıcı olarak silmek istediğinizden emin misiniz?')) { return; }
+                            try {
+                                const deleteResponse = await fetch(`/api/products/${productId}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                if (deleteResponse.ok) {
+                                    showToast('Ürün başarıyla silindi!');
+                                    setTimeout(() => window.location.href = '/', 1500);
+                                } else {
+                                    showToast('Ürün silinirken bir hata oluştu.', 'error');
+                                }
+                            } catch (error) {
+                                console.error('Silme hatası:', error);
+                                showToast('Bir hata oluştu.', 'error');
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Detay verisi çekerken bir hata oluştu:', error);
+                container.innerHTML = '<h1>Bir hata oluştu. Lütfen tekrar deneyin.</h1>';
             }
-        } catch (error) {
-            console.error('Detay verisi çekerken bir hata oluştu:', error);
-            container.innerHTML = '<h1>Bir hata oluştu. Lütfen tekrar deneyin.</h1>';
-        }
-    };
-</script>
+        };
+    </script>
 </body>
 </html>

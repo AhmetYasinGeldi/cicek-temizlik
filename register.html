@@ -4,75 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kayıt Ol</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
-        form { display: flex; flex-direction: column; gap: 15px; }
-        input { padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 15px; font-size: 1rem; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 5px; }
-        .message { padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { color: #721c24; background-color: #f8d7da; }
-        .login-link { margin-top: 20px; text-align: center; }
-    </style>
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <h1>Yeni Hesap Oluştur</h1>
-
     <form id="register-form">
         <label for="email">E-posta:</label>
         <input type="email" id="email" name="email" required>
-
         <label for="password">Şifre:</label>
         <input type="password" id="password" name="password" required>
-
         <button type="submit">Kayıt Ol</button>
     </form>
-
-    <div id="message-container" class="message"></div>
-
     <div class="login-link">
         <a href="/login.html">Zaten bir hesabın var mı? Giriş Yap</a>
     </div>
+    <div id="toast-container"></div>
 
+    <script src="/common.js"></script>
     <script>
         const form = document.getElementById('register-form');
-        const messageContainer = document.getElementById('message-container');
-
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
-
             const userData = {
                 email: form.email.value,
                 password: form.password.value
             };
-
             try {
                 const response = await fetch('/api/users/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)
                 });
-
                 const data = await response.json();
-
                 if (!response.ok) {
                     throw new Error(data.error || 'Kayıt başarısız.');
                 }
-                
-                messageContainer.textContent = 'Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz...';
-                messageContainer.className = 'message success';
-                messageContainer.style.display = 'block';
-                
+                showToast('Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz...');
                 form.reset();
-
                 setTimeout(() => {
                     window.location.href = '/login.html';
                 }, 2000);
-
             } catch (error) {
-                messageContainer.textContent = error.message;
-                messageContainer.className = 'message error';
-                messageContainer.style.display = 'block';
+                showToast(error.message, 'error');
             }
         });
     </script>
