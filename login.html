@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        input { padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; font-size: 1rem; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
+        .error { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
+    </style>
+</head>
+<body>
+    <h1>Giriş Yap</h1>
+
+    <form id="login-form">
+        <label for="email">E-posta:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="password">Şifre:</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit">Giriş Yap</button>
+    </form>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="/register.html">Hesabın yok mu? Yeni bir hesap oluştur.</a>
+    </div>
+
+    <div id="error-message" class="error"></div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const errorMessageDiv = document.getElementById('error-message');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const credentials = {
+                email: form.email.value,
+                password: form.password.value
+            };
+
+            try {
+                const response = await fetch('/api/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(credentials)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Giriş başarısız.');
+                }
+
+                localStorage.setItem('token', data.token);
+
+                alert('Giriş başarılı! Ana sayfaya yönlendiriliyorsunuz.');
+                window.location.href = '/';
+
+            } catch (error) {
+                errorMessageDiv.textContent = error.message;
+                errorMessageDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

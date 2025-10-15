@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temizlik Ürünleri</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .product { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .product h2 { margin-top: 0; }
+        .user-panel { text-align: right; margin-bottom: 20px; }
+        .admin-controls a { display:inline-block; margin-bottom: 20px; padding: 10px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="user-panel" id="user-panel"></div>
+
+    <h1>Ürünlerimiz</h1>
+
+    <div class="admin-controls" id="admin-controls"></div>
+
+    <div id="products-container"></div>
+
+<script>
+    function parseJwt(token) {
+        try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
+    }
+
+    const userPanel = document.getElementById('user-panel');
+    const adminControls = document.getElementById('admin-controls');
+    const productsContainer = document.getElementById('products-container');
+    let allProductsData = [];
+
+    function addAdminSaveListeners() {
+        const saveButtons = document.querySelectorAll('.admin-save-btn');
+        saveButtons.forEach(button => {
+            button.addEventListener('click', async () => {
+                const productId = button.dataset.productId;
+                const token = localStorage.getItem('token');
+                if (!token) return;
+
+                const priceInput = document.getElementById(`price-${productId}`);
+                const activeCheckbox = document.getElementById(`active-${productId}`);
+
+                const originalProduct = allProductsData.find(p => p.id == productId);
+                const updatedData = {
+                    ...originalProduct,
+                    price: parseFloat(priceInput.value),
+                    is_active: activeCheckbox.checked
+                };
+
+                try {
+                    const response = await fetch(`/api/products/${productId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(updatedData)
+                    });
+                    if (!response.ok) throw new Error('Güncelleme başarısız.');
+
+                    button.textContent = 'Kaydedildi!';
+                    button.style.backgroundColor = '#28a745';
+                    setTimeout(() => {
+                        button.textContent = 'Kaydet';
+                        button.style.backgroundColor = '#007bff';
+                        fetchAndDisplayProducts(); 
+                    }, 1500);
+
+                } catch (error) {
+                    console.error('Hızlı güncelleme hatası:', error);
+                    alert('Bir hata oluştu.');
+                }
+            });
+        });
+    }
+
+    function addCartButtonListeners() {
+        const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    alert('Ürün eklemek için lütfen giriş yapın.');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                const productId = button.dataset.productId;
+                try {
+                    const response = await fetch('/api/cart/items', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ productId: parseInt(productId), quantity: 1 })
+                    });
+                    if (response.ok) {
+                        alert('Ürün sepete eklendi!');
+                    } else {
+                        const errorData = await response.json();
+                        alert(`Hata: ${errorData.error || 'Ürün eklenemedi.'}`);
+                    }
+                } catch (error) {
+                    console.error('Sepete ekleme hatası:', error);
+                    alert('Bir hata oluştu.');
+                }
+            });
+        });
+    }
+
+    async function fetchAndDisplayProducts() {
+        try {
+            const token = localStorage.getItem('token');
+            const user = token ? parseJwt(token) : null;
+            const isAdmin = user && user.role === 'admin';
+
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch('/api/products', { headers: headers });
+            if (!response.ok) throw new Error('Ürünler getirilemedi.');
+            
+            const products = await response.json();
+            allProductsData = products;
+            productsContainer.innerHTML = '';
+
+            products.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+
+                const link = document.createElement('a');
+                link.href = `product.html?id=${product.id}`;
+                link.style.textDecoration = 'none';
+                link.style.color = 'inherit';
+                link.appendChild(productDiv);
+                productsContainer.appendChild(link);
+
+                if (isAdmin) {
+                    let warningMessage = '';
+                    if (!product.is_active) {
+                        productDiv.style.opacity = '0.5';
+                        warningMessage = product.stock_quantity <= 0 
+                            ? '<p style="color: red; font-weight: bold;">Stok Bitti & Satışta Değil</p>'
+                            : '<p style="color: red; font-weight: bold;">Satışta Değil</p>';
+                    } else if (product.stock_quantity <= 0) {
+                        warningMessage = '<p style="color: orange; font-weight: bold;">Stok Bitti</p>';
+                    }
+
+                    productDiv.innerHTML = `
+                        <h2>${product.name}</h2>
+                        ${warningMessage} 
+                        <div>
+                            <label for="price-${product.id}">Fiyat: </label>
+                            <input type="number" id="price-${product.id}" value="${product.price}" step="0.01" style="width: 80px;"> TL
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <label for="active-${product.id}">Satışta mı? </label>
+                            <input type="checkbox" id="active-${product.id}" ${product.is_active ? 'checked' : ''}>
+                        </div>
+                        <button class="admin-save-btn" data-product-id="${product.id}" style="margin-top: 10px; background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Kaydet</button>
+                    `;
+                } else {
+                    productDiv.innerHTML = `
+                        <h2>${product.name}</h2>
+                        <p>Fiyat: ${product.price} TL</p>
+                        <button class="add-to-cart-btn" data-product-id="${product.id}">Sepete Ekle</button>
+                    `;
+                }
+            });
+
+            if (isAdmin) {
+                document.querySelectorAll('.admin-save-btn, .product input').forEach(el => {
+                    el.addEventListener('click', e => e.stopPropagation());
+                });
+                addAdminSaveListeners();
+            } else {
+                addCartButtonListeners();
+            }
+
+        } catch (error) {
+            console.error('Veri çekerken bir hata oluştu:', error);
+            productsContainer.innerText = 'Ürünler yüklenemedi.';
+        }
+    }
+    
+    window.onload = () => {
+        const token = localStorage.getItem('token');
+        adminControls.innerHTML = '';
+
+        if (token) {
+            const user = parseJwt(token);
+            if (user && user.role === 'admin') {
+                userPanel.innerHTML = `
+                    <span>Hoş geldin, <strong>${user.email}</strong> (Admin) | </span>
+                    <button id="logout-button">Çıkış Yap</button>
+                `;
+                adminControls.innerHTML = '<a href="/add_product.html">+ Yeni Ürün Ekle</a>';
+            } else {
+                userPanel.innerHTML = `
+                    <span>Hoş geldin, <strong>${user.email}</strong> | </span>
+                    <a href="/cart.html">Sepetim</a> | 
+                    <button id="logout-button">Çıkış Yap</button>
+                `;
+            }
+            
+            document.getElementById('logout-button').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                window.location.reload();
+            });
+        } else {
+            userPanel.innerHTML = '<a href="/login.html">Giriş Yap</a>';
+        }
+
+        fetchAndDisplayProducts();
+    };
+</script>
+</body>
+</html>

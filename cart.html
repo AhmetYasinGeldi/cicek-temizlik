@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sepetim</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .quantity-controls button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+        .remove-btn { color: #dc3545; cursor: pointer; border: none; background: none; }
+        .cart-total { text-align: right; margin-top: 20px; font-size: 1.2rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <a href="/">&larr; Alışverişe Devam Et</a>
+    <hr>
+    <h1>Sepetim</h1>
+
+    <div id="cart-container">
+        </div>
+    <div id="cart-total" class="cart-total"></div>
+
+    <script>
+        const cartContainer = document.getElementById('cart-container');
+        const cartTotalDiv = document.getElementById('cart-total');
+        const token = localStorage.getItem('token');
+
+        async function displayCart() {
+            if (!token) {
+                cartContainer.innerHTML = '<p>Sepetinizi görmek için lütfen <a href="/login.html">giriş yapın</a>.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cart', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Sepet yüklenemedi.');
+                
+                const items = await response.json();
+                
+                if (items.length === 0) {
+                    cartContainer.innerHTML = '<p>Sepetiniz şu anda boş.</p>';
+                    cartTotalDiv.innerHTML = '';
+                    return;
+                }
+
+                let tableHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ürün</th>
+                                <th>Fiyat</th>
+                                <th>Miktar</th>
+                                <th>Ara Toplam</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                let total = 0;
+                items.forEach(item => {
+                    const subtotal = item.price * item.quantity;
+                    total += subtotal;
+                    tableHTML += `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${parseFloat(item.price).toFixed(2)} TL</td>
+                            <td>
+                                <div class="quantity-controls">
+                                    <button class="update-quantity" data-product-id="${item.id}" data-new-quantity="${item.quantity - 1}">-</button>
+                                    <span>${item.quantity}</span>
+                                    <button class="update-quantity" data-product-id="${item.id}" data-new-quantity="${item.quantity + 1}">+</button>
+                                </div>
+                            </td>
+                            <td>${subtotal.toFixed(2)} TL</td>
+                            <td><button class="remove-item" data-product-id="${item.id}">Kaldır</button></td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += '</tbody></table>';
+                cartContainer.innerHTML = tableHTML;
+                cartTotalDiv.innerHTML = `Toplam: ${total.toFixed(2)} TL`;
+
+                addEventListeners();
+
+            } catch (error) {
+                console.error('Sepet görüntülenirken hata:', error);
+                cartContainer.innerHTML = '<p>Sepet yüklenirken bir hata oluştu.</p>';
+            }
+        }
+
+        function addEventListeners() {
+            document.querySelectorAll('.update-quantity').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const productId = button.dataset.productId;
+                    const newQuantity = parseInt(button.dataset.newQuantity);
+                    await updateCartItem(productId, newQuantity);
+                });
+            });
+
+            document.querySelectorAll('.remove-item').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const productId = button.dataset.productId;
+                    await removeCartItem(productId);
+                });
+            });
+        }
+
+        async function updateCartItem(productId, quantity) {
+            try {
+                const response = await fetch(`/api/cart/items/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ quantity: quantity })
+                });
+               if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Miktar güncellenemedi.');
+        }
+                displayCart();
+            }
+         catch (error) {
+                console.error(error);
+                alert(error.message);
+            }
+        }
+
+        async function removeCartItem(productId) {
+            if (!confirm('Bu ürünü sepetten kaldırmak istediğinizden emin misiniz?')) return;
+            try {
+                const response = await fetch(`/api/cart/items/${productId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Ürün kaldırılamadı.');
+                displayCart();
+            } catch (error) {
+                console.error(error);
+                alert('Ürün kaldırılırken bir hata oluştu.');
+            }
+        }
+
+        window.onload = displayCart;
+    </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yeni Ürün Ekle</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        input, textarea { padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; font-size: 1rem; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
+        .message { padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <a href="/">&larr; Ana Sayfaya Dön</a>
+    <hr>
+    <h1>Yeni Ürün Ekle</h1>
+
+    <form id="add-product-form">
+        <label for="name">Ürün Adı:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="price">Fiyat:</label>
+        <input type="number" id="price" name="price" step="0.01" required>
+
+        <label for="description">Açıklama:</label>
+        <textarea id="description" name="description" rows="4"></textarea>
+
+        <button type="submit">Ürünü Kaydet</button>
+    </form>
+
+    <div id="message-container" class="message"></div>
+
+    <script>
+        const form = document.getElementById('add-product-form');
+        const messageContainer = document.getElementById('message-container');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const productData = {
+                name: formData.get('name'),
+                price: parseFloat(formData.get('price')),
+                description: formData.get('description')
+            };
+
+            try {
+    const token = localStorage.getItem('token'); // Token'ı al
+    if (!token) {
+        throw new Error("Giriş yapılmamış. Lütfen giriş yapın.");
+    }
+
+    const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Token'ı başlığa ekle
+        },
+        body: JSON.stringify(productData)
+    });
+
+                if (!response.ok) {
+                    throw new Error('Sunucudan hatalı bir cevap geldi.');
+                }
+                
+                messageContainer.textContent = 'Ürün başarıyla eklendi! Ana sayfaya yönlendiriliyorsunuz...';
+                messageContainer.className = 'message success';
+                messageContainer.style.display = 'block';
+                
+                form.reset();
+
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Ürün eklenirken hata oluştu:', error);
+                messageContainer.textContent = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+                messageContainer.className = 'message error';
+                messageContainer.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
