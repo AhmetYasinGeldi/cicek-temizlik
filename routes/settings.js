@@ -38,4 +38,14 @@ router.put('/', [authenticateToken, authorizeAdmin], async (req, res) => {
     }
 });
 
+router.post('/reset-product-overrides', [authenticateToken, authorizeAdmin], async (req, res) => {
+    try {
+        await pool.query("UPDATE products SET out_of_stock_display_rule = 'default'");
+        res.status(200).json({ message: 'Tüm ürünlerin stok davranışı genel ayarlara sıfırlandı.' });
+    } catch (err) {
+        console.error('Ürün ayarları sıfırlanırken hata:', err);
+        res.status(500).json({ error: "Sunucuda bir hata oluştu." });
+    }
+});
+
 module.exports = router;

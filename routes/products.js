@@ -11,18 +11,24 @@ router.get('/', getOptionalUser, async (req, res) => {
     try {
         const settings = await getSettings();
         let query;
+        let params = [];
 
         if (req.user && req.user.role === 'admin') {
             query = 'SELECT * FROM products ORDER BY id';
         } else {
-            if (settings.out_of_stock_behavior === 'show_as_out_of_stock') {
-                query = 'SELECT * FROM products WHERE is_active = true ORDER BY id';
-            } else {
-                query = 'SELECT * FROM products WHERE is_active = true AND stock_quantity > 0 ORDER BY id';
-            }
+            query = `
+                SELECT * FROM products
+                WHERE is_active = true AND (
+                    stock_quantity > 0 OR
+                    out_of_stock_display_rule = 'show' OR
+                    (out_of_stock_display_rule = 'default' AND $1 = 'show_as_out_of_stock')
+                )
+                ORDER BY id;
+            `;
+            params = [settings.out_of_stock_behavior];
         }
         
-        const result = await pool.query(query);
+        const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {
         console.error('Ürünler listelenirken hata:', err);

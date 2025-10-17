@@ -29,6 +29,15 @@
                 <input type="checkbox" id="is_active" name="is_active">
             </div>
 
+            <div class="setting-item">
+                <label for="out_of_stock_display_rule">Stoğu Bittiğinde Davranış:</label>
+                <select id="out_of_stock_display_rule" name="out_of_stock_display_rule">
+                    <option value="default">Genel Ayarı Kullan (Varsayılan)</option>
+                    <option value="show">Her Zaman Göster ("Stokta Yok" olarak)</option>
+                    <option value="hide">Her Zaman Gizle</option>
+                </select>
+                <small>Bu ürüne özel bir kural belirleyebilirsiniz.</small>
+            </div>
             <button type="submit">Değişiklikleri Kaydet</button>
         </form>
     </div>
@@ -42,6 +51,7 @@
         const descriptionInput = document.getElementById('description');
         const stockInput = document.getElementById('stock_quantity');
         const activeCheckbox = document.getElementById('is_active');
+        const displayRuleSelect = document.getElementById('out_of_stock_display_rule');
 
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
@@ -67,6 +77,7 @@
                 descriptionInput.value = product.description;
                 stockInput.value = product.stock_quantity;
                 activeCheckbox.checked = product.is_active;
+                displayRuleSelect.value = product.out_of_stock_display_rule;
 
             } catch (error) {
                 console.error('Hata:', error);
@@ -84,7 +95,8 @@
                 price: parseFloat(priceInput.value),
                 description: descriptionInput.value,
                 stock_quantity: parseInt(stockInput.value),
-                is_active: activeCheckbox.checked
+                is_active: activeCheckbox.checked,
+                out_of_stock_display_rule: displayRuleSelect.value
             };
 
             try {

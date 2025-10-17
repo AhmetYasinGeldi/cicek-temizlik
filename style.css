@@ -34,3 +34,22 @@ th { background-color: #f2f2f2; }
 #toast-container.show { opacity: 1; visibility: visible; bottom: 30px; }
 #toast-container.success { background-color: #28a745; }
 #toast-container.error { background-color: #dc3545; }
+
+.setting-item {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.setting-item label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.setting-item small {
+    color: #6c757d;
+    font-size: 0.9em;
+    margin-top: 5px;
+}

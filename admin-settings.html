@@ -32,30 +32,37 @@
             <input type="number" id="critical_stock_percentage" name="critical_stock_percentage" min="0" max="100">
             <small>Stok bu yüzdenin altına düştüğünde uyarı verilir. (Örn: 30)</small>
         </div>
+        <div class="setting-item">
+            <label for="quick_edit_price_step">Hızlı Fiyat Değişim Adımı:</label>
+            <input type="number" id="quick_edit_price_step" name="quick_edit_price_step" step="0.01" min="0.01">
+            <small>Admin panelindeki fiyat kutucuklarının artış/azalış miktarını belirler. (Örn: 1, 5, 10)</small>
+        </div>
         <button type="submit">Ayarları Kaydet</button>
     </form>
+    
+    <div class="setting-item" style="margin-top: 30px; border-color: #dc3545;">
+        <label>Tehlikeli Alan</label>
+        <button id="reset-overrides-btn" style="background-color: #dc3545; color: white;">Tüm Ürünlerin Stok Davranışını Sıfırla</button>
+        <small>Bu işlem, tüm ürünlerin stoğu bittiğinde nasıl davranacağını yukarıdaki "Genel Ayar"a göre sıfırlar. Ürünlere özel yaptığınız istisna ayarları kaybolur.</small>
+    </div>
     <div id="toast-container"></div>
-
     <script src="/common.js"></script>
     <script>
         const form = document.getElementById('settings-form');
         const token = localStorage.getItem('token');
+        const resetButton = document.getElementById('reset-overrides-btn');
 
         window.onload = async () => {
-            if (!token) {
-                window.location.href = '/login.html';
-                return;
-            }
+            if (!token) { window.location.href = '/login.html'; return; }
             try {
-                const response = await fetch('/api/settings', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const response = await fetch('/api/settings', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!response.ok) throw new Error('Ayarlar yüklenemedi.');
                 const settings = await response.json();
                 
                 form.sales_active.value = settings.sales_active;
                 form.out_of_stock_behavior.value = settings.out_of_stock_behavior;
                 form.critical_stock_percentage.value = settings.critical_stock_percentage;
+                form.quick_edit_price_step.value = settings.quick_edit_price_step;
             } catch (error) {
                 console.error('Hata:', error);
                 showToast(error.message, 'error');
@@ -67,7 +74,8 @@
             const updatedSettings = {
                 sales_active: form.sales_active.value,
                 out_of_stock_behavior: form.out_of_stock_behavior.value,
-                critical_stock_percentage: form.critical_stock_percentage.value
+                critical_stock_percentage: form.critical_stock_percentage.value,
+                quick_edit_price_step: form.quick_edit_price_step.value
             };
             try {
                 const response = await fetch('/api/settings', {
@@ -82,6 +90,21 @@
                 showToast('Ayarlar başarıyla güncellendi!');
             } catch (error) {
                 console.error('Güncelleme hatası:', error);
+                showToast(error.message, 'error');
+            }
+        });
+
+        // YENİ EKLENDİ: Reset butonu mantığı
+        resetButton.addEventListener('click', async () => {
+            if (!confirm('Tüm ürünlerin stok davranışını genel ayara sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz.')) return;
+            try {
+                const response = await fetch('/api/settings/reset-product-overrides', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Sıfırlama işlemi başarısız.');
+                showToast('Tüm ürünler başarıyla genel ayarlara sıfırlandı!');
+            } catch (error) {
                 showToast(error.message, 'error');
             }
         });
