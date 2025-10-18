@@ -93,14 +93,20 @@ router.post('/', [authenticateToken, authorizeAdmin], async (req, res) => {
 router.put('/:id', [authenticateToken, authorizeAdmin], async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, price, description, image_url, stock_quantity, is_active } = req.body;
+        const { name, price, description, image_url, stock_quantity, is_active, out_of_stock_display_rule } = req.body;
+        
         if (!name || price == null) {
             return res.status(400).json({ error: 'İsim ve fiyat alanları zorunludur.' });
         }
+        
         const updatedProduct = await pool.query(
-            'UPDATE products SET name = $1, price = $2, description = $3, image_url = $4, stock_quantity = $5, is_active = $6 WHERE id = $7 RETURNING *',
-            [name, price, description, image_url, stock_quantity, is_active, id]
+            `UPDATE products 
+             SET name = $1, price = $2, description = $3, image_url = $4, stock_quantity = $5, is_active = $6, out_of_stock_display_rule = $7 
+             WHERE id = $8 
+             RETURNING *`,
+            [name, price, description, image_url, stock_quantity, is_active, out_of_stock_display_rule || 'default', id]
         );
+
         if (updatedProduct.rows.length === 0) {
             return res.status(404).json({ error: 'Bu ID ile bir ürün bulunamadı, güncellenemedi.' });
         }

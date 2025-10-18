@@ -7,10 +7,10 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <a href="javascript:history.back()">&larr; Geri Dön</a>
+    <a href="/">&larr; Ana Panele Dön</a>
     <hr>
     <div id="product-form-container">
-        <h1>Ürünü Düzenle</h1>
+        <h1>Ürünü Yönet</h1>
         <form id="edit-product-form">
             <label for="name">Ürün Adı:</label>
             <input type="text" id="name" name="name" required>
@@ -38,8 +38,12 @@
                 </select>
                 <small>Bu ürüne özel bir kural belirleyebilirsiniz.</small>
             </div>
-            <button type="submit">Değişiklikleri Kaydet</button>
-        </form>
+
+            <div class="actions">
+                <button type="submit" style="background-color: #007bff; color: white;">Değişiklikleri Kaydet</button>
+                <button type="button" id="delete-button" style="background-color: #dc3545; color: white;">Bu Ürünü Sil</button>
+            </div>
+            </form>
     </div>
     <div id="toast-container"></div>
 
@@ -52,6 +56,7 @@
         const stockInput = document.getElementById('stock_quantity');
         const activeCheckbox = document.getElementById('is_active');
         const displayRuleSelect = document.getElementById('out_of_stock_display_rule');
+        const deleteButton = document.getElementById('delete-button'); // Sil butonunu tanımla
 
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
@@ -84,6 +89,24 @@
                 showToast(error.message, 'error');
             }
         };
+
+        deleteButton.addEventListener('click', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) { return; }
+            if (!confirm('Bu ürünü kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) { return; }
+
+            try {
+                const response = await fetch(`/api/products/${productId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Silme işlemi başarısız.');
+                showToast('Ürün başarıyla silindi!');
+                setTimeout(() => window.location.href = '/', 2000);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();

@@ -15,6 +15,9 @@
 
     <script src="/common.js"></script>
     <script>
+        function parseJwt(token) {
+            try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
+        }
         const userPanel = document.getElementById('user-panel');
         const adminControls = document.getElementById('admin-controls');
         const productsContainer = document.getElementById('products-container');
@@ -127,7 +130,7 @@
                     productDiv.className = 'product';
 
                     if (isAdmin) {
-                        productDiv.dataset.href = `product.html?id=${product.id}`;
+                        productDiv.dataset.href = `edit_product.html?id=${product.id}`;
                         productDiv.style.cursor = 'pointer';
                         productsContainer.appendChild(productDiv);
 
