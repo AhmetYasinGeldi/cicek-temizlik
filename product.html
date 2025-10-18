@@ -7,18 +7,46 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <a href="/">&larr; Geri Dön</a>
-    <hr>
-    <div id="product-detail-container"></div>
+
+    <header class="site-header">
+        <div class="site-logo"></div>
+        <nav class="center-nav"></nav> 
+        <div class="user-controls" id="user-controls-container">
+            </div>
+    </header>
+
+    <main class="container">
+        <a href="/">&larr; Geri Dön</a>
+        <hr style="margin: 15px 0 20px 0;">
+
+        <div id="product-detail-container">
+            </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
     <div id="toast-container"></div>
 
     <script src="/common.js"></script>
     <script>
-        window.onload = async () => {
+        
+        async function loadProduct() {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
             const container = document.getElementById('product-detail-container');
             const token = localStorage.getItem('token');
+            let user = null;
+            if (token) {
+                user = parseJwt(token);
+            }
 
             if (!productId) {
                 container.innerHTML = '<h1>Ürün ID\'si bulunamadı.</h1>';
@@ -40,22 +68,49 @@
 
                 const product = await response.json();
                 
+                document.title = `${product.name} - Çiçek Temizlik`;
+
                 let cartButtonHTML = '';
+                let priceHTML = '';
+                
                 if (product.stock_quantity > 0) {
-                    cartButtonHTML = '<button id="add-to-cart-btn-detail" style="background-color: #007bff; color: white;">Sepete Ekle</button>';
+                    priceHTML = `<div class="price-detail">${product.price} TL</div>`;
+                    cartButtonHTML = `<button id="add-to-cart-btn-detail" class="add-to-cart-btn-detail">Sepete Ekle</button>`;
                 } else {
-                    cartButtonHTML = '<button disabled style="background-color: #6c757d; cursor: not-allowed;">Stokta Yok</button>';
+                    priceHTML = `<div class="price-detail-out-of-stock">${product.price} TL</div>`;
+                    cartButtonHTML = `<button class="out-of-stock-btn-detail" disabled>Stokta Yok</button>`;
+                }
+                
+                let adminActionsHTML = '';
+                if (user && user.role === 'admin') {
+                    adminActionsHTML = `
+                        <div class="admin-actions-detail">
+                            <a href="edit_product.html?id=${product.id}" class="edit-btn-detail">Düzenle</a>
+                            <button id="delete-button" class="delete-btn-detail">Bu Ürünü Sil</button>
+                        </div>
+                    `;
                 }
 
                 container.innerHTML = `
-                    <div class="product-detail">
-                        <h1>${product.name}</h1>
-                        <h3>Fiyat: ${product.price} TL</h3>
-                        <p>${product.description}</p>
-                        ${cartButtonHTML}
-                        <div class="actions" id="admin-actions" style="margin-top: 20px; display: flex; gap: 10px;"></div>
+                    <div class="product-detail-layout">
+                        <div class="product-image-area">
+                            <div class="placeholder">(Ürün Fotoğrafı)</div>
+                        </div>
+
+                        <div class="product-info-area">
+                            <h1>${product.name}</h1>
+                            ${priceHTML}
+                            <div class="description-detail">
+                                <p>${product.description || 'Bu ürün için açıklama girilmemiştir.'}</p>
+                            </div>
+                            <div class="product-actions-detail">
+                                ${cartButtonHTML}
+                            </div>
+                            ${adminActionsHTML}
+                        </div>
                     </div>
                 `;
+
 
                 const addToCartButton = document.getElementById('add-to-cart-btn-detail');
                 if (addToCartButton) {
@@ -87,15 +142,10 @@
                     });
                 }
                 
-                if (token) {
-                    const user = parseJwt(token);
-                    if (user && user.role === 'admin') {
-                        document.getElementById('admin-actions').innerHTML = `
-                            <a href="edit_product.html?id=${product.id}" style="background-color: #ffc107; color: black; text-decoration: none; padding: 10px; border-radius: 5px;">Düzenle</a>
-                            <button id="delete-button" style="background-color: #dc3545; color: white;">Sil</button>
-                        `;
-
-                        document.getElementById('delete-button').addEventListener('click', async () => {
+                if (user && user.role === 'admin') {
+                    const deleteButton = document.getElementById('delete-button');
+                    if(deleteButton) {
+                        deleteButton.addEventListener('click', async () => {
                             if (!confirm('Bu ürünü kalıcı olarak silmek istediğinizden emin misiniz?')) { return; }
                             try {
                                 const deleteResponse = await fetch(`/api/products/${productId}`, {
@@ -115,10 +165,85 @@
                         });
                     }
                 }
+
             } catch (error) {
                 console.error('Detay verisi çekerken bir hata oluştu:', error);
                 container.innerHTML = '<h1>Bir hata oluştu. Lütfen tekrar deneyin.</h1>';
             }
+        };
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+
+            menuButton.addEventListener('click', () => {
+                dropdown.classList.toggle('show');
+            });
+
+            window.addEventListener('click', (event) => {
+                if (!event.target.matches('#user-menu-button')) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
+                }
+            });
+
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+            }
+        }
+
+        function setupHeader() {
+            const token = localStorage.getItem('token');
+            userControlsContainer.innerHTML = '';
+            if (token) {
+                const user = parseJwt(token);
+                if (user && user.role === 'admin') {
+                    userControlsContainer.innerHTML = `
+                        <div class="user-dropdown">
+                            <button id="user-menu-button" class="user-menu-button">
+                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                            </button>
+                            <div id="user-dropdown-content" class="dropdown-content">
+                                <a href="/admin-settings.html">Site Ayarları</a>
+                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            </div>
+                        </div>
+                    `;
+                } else if (user) {
+                    userControlsContainer.innerHTML = `
+                        <div class="cart-link"><a href="/cart.html">Sepetim</a></div>
+                        <div class="user-dropdown">
+                            <button id="user-menu-button" class="user-menu-button">
+                                ${user.firstName} <span class="arrow">&#9662;</span>
+                            </button>
+                            <div id="user-dropdown-content" class="dropdown-content">
+                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                setupUserMenu();
+            } else {
+                userControlsContainer.innerHTML = `
+                    <div class="cart-link"><a href="/cart.html">Sepetim</a></div>
+                    <div class="user-login-link">
+                        <a href="/login.html">Giriş Yap</a>
+                    </div>
+                `;
+            }
+        }
+
+        window.onload = () => {
+            setupHeader();
+            loadProduct();
         };
     </script>
 </body>

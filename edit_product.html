@@ -3,48 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ürünü Düzenle</title>
+    <title>Ürünü Düzenle - Çiçek Temizlik</title>
     <link rel="stylesheet" href="/style.css">
+    <style>
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .form-actions button {
+            flex-grow: 1;
+            padding: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        .save-btn { background-color: #007bff; color: white; }
+        .save-btn:hover { background-color: #0056b3; }
+        .delete-btn { background-color: #dc3545; color: white; }
+        .delete-btn:hover { background-color: #c82333; }
+    </style>
 </head>
 <body>
-    <a href="/">&larr; Ana Panele Dön</a>
-    <hr>
-    <div id="product-form-container">
-        <h1>Ürünü Yönet</h1>
-        <form id="edit-product-form">
-            <label for="name">Ürün Adı:</label>
-            <input type="text" id="name" name="name" required>
 
-            <label for="price">Fiyat:</label>
-            <input type="number" id="price" name="price" step="0.01" required min="0.01">
-
-            <label for="description">Açıklama:</label>
-            <textarea id="description" name="description" rows="4"></textarea>
-
-            <label for="stock_quantity">Stok Miktarı:</label>
-            <input type="number" id="stock_quantity" name="stock_quantity" required min="0">
-
-            <div class="checkbox-group">
-                <label for="is_active">Satışta mı?</label>
-                <input type="checkbox" id="is_active" name="is_active">
+    <header class="site-header">
+        <div class="site-logo"></div>
+        <nav class="center-nav"></nav> 
+        <div class="user-controls" id="user-controls-container">
             </div>
+    </header>
 
-            <div class="setting-item">
-                <label for="out_of_stock_display_rule">Stoğu Bittiğinde Davranış:</label>
-                <select id="out_of_stock_display_rule" name="out_of_stock_display_rule">
-                    <option value="default">Genel Ayarı Kullan (Varsayılan)</option>
-                    <option value="show">Her Zaman Göster ("Stokta Yok" olarak)</option>
-                    <option value="hide">Her Zaman Gizle</option>
-                </select>
-                <small>Bu ürüne özel bir kural belirleyebilirsiniz.</small>
-            </div>
+    <main class="container">
+        <div class="form-container" id="product-form-container">
+            <h1>Ürünü Yönet</h1>
+            <a href="/">&larr; Ana Panele Dön</a>
+            <hr style="margin: 15px 0;">
 
-            <div class="actions">
-                <button type="submit" style="background-color: #007bff; color: white;">Değişiklikleri Kaydet</button>
-                <button type="button" id="delete-button" style="background-color: #dc3545; color: white;">Bu Ürünü Sil</button>
-            </div>
+            <form id="edit-product-form">
+                <div class="form-group">
+                    <label for="name">Ürün Adı:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="price">Fiyat:</label>
+                    <input type="number" id="price" name="price" step="0.01" required min="0.01">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Açıklama:</label>
+                    <textarea id="description" name="description" rows="4"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="stock_quantity">Stok Miktarı:</label>
+                    <input type="number" id="stock_quantity" name="stock_quantity" required min="0">
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="is_active" name="is_active">
+                    <label for="is_active" style="font-weight: normal; margin-bottom: 0;">Satışta mı?</label>
+                </div>
+
+                <div class="form-group setting-item">
+                    <label for="out_of_stock_display_rule">Stoğu Bittiğinde Davranış:</label>
+                    <select id="out_of_stock_display_rule" name="out_of_stock_display_rule">
+                        <option value="default">Genel Ayarı Kullan (Varsayılan)</option>
+                        <option value="show">Her Zaman Göster ("Stokta Yok" olarak)</option>
+                        <option value="hide">Her Zaman Gizle</option>
+                    </select>
+                    <small>Bu ürüne özel bir kural belirleyebilirsiniz.</small>
+                </div>
+
+                <div class="form-group setting-item">
+                    <label for="critical_stock_threshold">Ürüne Özel Kritik Stok Eşiği (Adet):</label>
+                    <input type="number" id="critical_stock_threshold" name="critical_stock_threshold" min="0" placeholder="Örn: 5">
+                    <small>Stok bu adedin altına düştüğünde uyarılır. Boş bırakırsanız, genel ayar kullanılır.</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="save-btn">Değişiklikleri Kaydet</button>
+                    <button type="button" id="delete-button" class="delete-btn">Bu Ürünü Sil</button>
+                </div>
             </form>
-    </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
     <div id="toast-container"></div>
 
     <script src="/common.js"></script>
@@ -56,20 +113,25 @@
         const stockInput = document.getElementById('stock_quantity');
         const activeCheckbox = document.getElementById('is_active');
         const displayRuleSelect = document.getElementById('out_of_stock_display_rule');
-        const deleteButton = document.getElementById('delete-button'); // Sil butonunu tanımla
+        const deleteButton = document.getElementById('delete-button');
+        const criticalStockInput = document.getElementById('critical_stock_threshold');
 
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
 
-        window.onload = async () => {
+        async function loadProduct() {
+            const token = localStorage.getItem('token');
+            if (!token) { 
+                showToast('Bu sayfayı görmek için giriş yapmalısınız.', 'error');
+                setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+                return; 
+            }
+            
             if (!productId) {
                 document.getElementById('product-form-container').innerHTML = '<h1>Düzenlenecek ürün ID\'si bulunamadı.</h1><a href="/">&larr; Ana Sayfaya Dön</a>';
                 return;
             }
             try {
-                const token = localStorage.getItem('token');
-                if (!token) throw new Error("Giriş yapılmamış. Lütfen giriş yapın.");
-                
                 const headers = { 'Authorization': `Bearer ${token}` };
                 const response = await fetch(`/api/products/${productId}`, { headers: headers });
                 
@@ -77,18 +139,22 @@
                 
                 const product = await response.json();
                 
+                document.title = `Düzenle: ${product.name} - Çiçek Temizlik`;
+
                 nameInput.value = product.name;
                 priceInput.value = product.price;
                 descriptionInput.value = product.description;
                 stockInput.value = product.stock_quantity;
                 activeCheckbox.checked = product.is_active;
                 displayRuleSelect.value = product.out_of_stock_display_rule;
+                criticalStockInput.value = product.critical_stock_threshold ?? '';
 
             } catch (error) {
                 console.error('Hata:', error);
                 showToast(error.message, 'error');
+                document.getElementById('product-form-container').innerHTML = `<h1>Hata</h1><p>${error.message}</p><a href="/">&larr; Ana Sayfaya Dön</a>`;
             }
-        };
+        }
 
         deleteButton.addEventListener('click', async () => {
             const token = localStorage.getItem('token');
@@ -119,6 +185,7 @@
                 description: descriptionInput.value,
                 stock_quantity: parseInt(stockInput.value),
                 is_active: activeCheckbox.checked,
+                critical_stock_threshold: criticalStockInput.value === '' ? null : parseInt(criticalStockInput.value),
                 out_of_stock_display_rule: displayRuleSelect.value
             };
 
@@ -144,6 +211,58 @@
                 showToast(error.message, 'error');
             }
         });
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!event.target.matches('#user-menu-button')) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+            }
+        }
+
+        function setupHeader() {
+            const token = localStorage.getItem('token');
+            userControlsContainer.innerHTML = '';
+            if (token) {
+                const user = parseJwt(token);
+                if (user && user.role === 'admin') {
+                    userControlsContainer.innerHTML = `
+                        <div class="user-dropdown">
+                            <button id="user-menu-button" class="user-menu-button">
+                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                            </button>
+                            <div id="user-dropdown-content" class="dropdown-content">
+                                <a href="/admin-settings.html">Site Ayarları</a>
+                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            </div>
+                        </div>
+                    `;
+                    setupUserMenu();
+                } else {
+                    window.location.href = '/login.html';
+                }
+            } else {
+                window.location.href = '/login.html';
+            }
+        }
+
+        window.onload = () => {
+            setupHeader();
+            loadProduct();
+        };
     </script>
 </body>
 </html>

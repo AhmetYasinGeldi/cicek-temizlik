@@ -3,32 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Temizlik Ürünleri</title>
+    <title>Çiçek Temizlik - Ürünlerimiz</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <div class="user-panel" id="user-panel"></div>
-    <h1>Ürünlerimiz</h1>
-    <div class="admin-controls" id="admin-controls"></div>
-    <div id="products-container"></div>
+
+    <header class="site-header">
+        <div class="site-logo"></div>
+        
+        <nav class="center-nav"></nav> 
+
+        <div class="user-controls" id="user-controls-container">
+            </div>
+    </header>
+
+    <main class="container">
+        <h1>Ürünlerimiz</h1>
+        <div class="admin-controls" id="admin-controls">
+            </div>
+        
+        <div id="products-container"></div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
     <div id="toast-container"></div>
 
     <script src="/common.js"></script>
     <script>
-        function parseJwt(token) {
-            try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
-        }
-        const userPanel = document.getElementById('user-panel');
+
+        const userControlsContainer = document.getElementById('user-controls-container');
         const adminControls = document.getElementById('admin-controls');
         const productsContainer = document.getElementById('products-container');
+        
         let allProductsData = []; 
         let siteSettings = {};
 
-        // Admin'in yaptığı hızlı değişiklikleri kaydeden fonksiyon
         function addAdminSaveListeners() {
             const saveButtons = document.querySelectorAll('.admin-save-btn');
             saveButtons.forEach(button => {
-                button.addEventListener('click', async () => {
+                button.addEventListener('click', async (e) => {
+                    e.stopPropagation();
                     const productId = button.dataset.productId;
                     const token = localStorage.getItem('token');
                     if (!token) return;
@@ -38,11 +61,12 @@
                     const stockInput = document.getElementById(`stock-${productId}`);
 
                     const originalProduct = allProductsData.find(p => p.id == productId);
+                    
                     const updatedData = {
                         ...originalProduct,
                         price: parseFloat(priceInput.value),
                         is_active: activeCheckbox.checked,
-                        stock_quantity: parseInt(stockInput.value)
+                        stock_quantity: parseInt(stockInput.value),
                     };
 
                     try {
@@ -63,7 +87,6 @@
             });
         }
 
-        // Müşterinin sepete ekleme butonlarına tıklama özelliğini ekleyen fonksiyon
         function addCartButtonListeners() {
             const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
             addToCartButtons.forEach(button => {
@@ -72,12 +95,16 @@
                     event.stopPropagation();
                     button.disabled = true;
                     button.textContent = 'Ekleniyor...';
+                    
                     const token = localStorage.getItem('token');
                     if (!token) {
                         showToast('Lütfen önce giriş yapın.', 'error');
                         setTimeout(() => window.location.href = '/login.html', 1500);
+                        button.disabled = false;
+                        button.textContent = 'Sepete Ekle';
                         return;
                     }
+                    
                     const productId = button.dataset.productId;
                     try {
                         const response = await fetch('/api/cart/items', {
@@ -102,7 +129,6 @@
             });
         }
 
-        // Ürünleri getiren ve role göre farklı çizen ana fonksiyon
         async function fetchAndDisplayProducts() {
             try {
                 const token = localStorage.getItem('token');
@@ -126,42 +152,91 @@
                 productsContainer.innerHTML = '';
 
                 products.forEach(product => {
-                    const productDiv = document.createElement('div');
-                    productDiv.className = 'product';
+                    const productCard = document.createElement('div');
+                    productCard.className = 'product';
+
+                    const imagePlaceholder = document.createElement('div');
+                    imagePlaceholder.className = 'product-image-placeholder';
+                    imagePlaceholder.innerHTML = `<span>(Ürün Fotoğrafı)</span>`;
+                    productCard.appendChild(imagePlaceholder);
+
+
+                if (isAdmin) {
+
+                    productCard.dataset.href = `edit_product.html?id=${product.id}`;
+                    productCard.style.cursor = 'pointer';
+
+                    let criticalStockIcon = '';
+                    if (product.is_active && product.stock_quantity > 0) {
+                        let effectiveThreshold = 0;
+                        if (product.critical_stock_threshold != null && product.critical_stock_threshold > 0) {
+                            effectiveThreshold = product.critical_stock_threshold;
+                        } else if (siteSettings.critical_stock_percentage != null && siteSettings.critical_stock_percentage > 0) {
+                            effectiveThreshold = parseInt(siteSettings.critical_stock_percentage);
+                        }
+                        if (effectiveThreshold > 0 && product.stock_quantity <= effectiveThreshold) {
+                            criticalStockIcon = `<span class="critical-stock-warning" title="Stok kritik seviyede!"></span>`;
+                        }
+                    }
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'product-info';
+                    infoDiv.innerHTML = `<h2>${product.name} ${criticalStockIcon}</h2>`;
+
+                    if (!product.is_active) {
+                        productCard.style.opacity = '0.6';
+                        infoDiv.innerHTML += product.stock_quantity <= 0 ? '<p style="color: red; font-weight: bold;">Stok Bitti & Satışta Değil</p>' : '<p style="color: red; font-weight: bold;">Satışta Değil</p>';
+                    } else if (product.stock_quantity <= 0) {
+                        infoDiv.innerHTML += '<p style="color: orange; font-weight: bold;">Stok Bitti</p>';
+                    }
+
+                    productCard.appendChild(infoDiv);
+
+                    const priceStep = siteSettings.quick_edit_price_step || 5;
+                    const adminControlsDiv = document.createElement('div');
+                    adminControlsDiv.className = 'admin-product-controls';
+                    adminControlsDiv.innerHTML = `
+                        <div><label>Fiyat:</label><input type="number" id="price-${product.id}" value="${product.price}" step="${priceStep}"></div>
+                        <div><label>Stok:</label><input type="number" id="stock-${product.id}" value="${product.stock_quantity}" min="0"></div>
+                        <div><label>Satışta mı?</label><input type="checkbox" id="active-${product.id}" ${product.is_active ? 'checked' : ''}></div>
+                        <button class="admin-save-btn" data-product-id="${product.id}">Hızlı Kaydet</button>
+                    `;
+                    productCard.appendChild(adminControlsDiv);
+
+                } else {
+
+                    const link = document.createElement('a');
+                    link.href = `product.html?id=${product.id}`;
+                    link.style.textDecoration = 'none';
+                    link.style.color = 'inherit';
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'product-info';
+
+                    let buttonHTML = '';
+                    let priceClass = '';
+
+                    if (product.stock_quantity > 0) {
+                        buttonHTML = `<button class="add-to-cart-btn" data-product-id="${product.id}">Sepete Ekle</button>`;
+                        priceClass = "price";
+                    } else {
+                        buttonHTML = `<button class="out-of-stock-btn" disabled>Stokta Yok</button>`;
+                        priceClass = "price price-out-of-stock";
+                    }
+
+                    infoDiv.innerHTML = `
+                        <h2>${product.name}</h2>
+                        <p class="${priceClass}">${product.price} TL</p>
+                        ${buttonHTML}
+                    `;
+
+                    productCard.appendChild(infoDiv);
+                    link.appendChild(productCard);
+                    productsContainer.appendChild(link);
+                }
 
                     if (isAdmin) {
-                        productDiv.dataset.href = `edit_product.html?id=${product.id}`;
-                        productDiv.style.cursor = 'pointer';
-                        productsContainer.appendChild(productDiv);
-
-                        let warningMessage = '';
-                        if (!product.is_active) {
-                            productDiv.style.opacity = '0.5';
-                            warningMessage = product.stock_quantity <= 0 ? '<p style="color: red; font-weight: bold;">Stok Bitti & Satışta Değil</p>' : '<p style="color: red; font-weight: bold;">Satışta Değil</p>';
-                        } else if (product.stock_quantity <= 0) {
-                            warningMessage = '<p style="color: orange; font-weight: bold;">Stok Bitti</p>';
-                        }
-                        
-                        const priceStep = siteSettings.quick_edit_price_step || 5;
-
-                        productDiv.innerHTML = `
-                            <h2>${product.name}</h2>
-                            ${warningMessage} 
-                            <div><label>Fiyat: </label><input type="number" id="price-${product.id}" value="${product.price}" step="${priceStep}" style="width: 80px;"> TL</div>
-                            <div><label>Stok: </label><input type="number" id="stock-${product.id}" value="${product.stock_quantity}" style="width: 60px;"></div>
-                            <div style="margin-top: 10px;"><label>Satışta mı? </label><input type="checkbox" id="active-${product.id}" ${product.is_active ? 'checked' : ''}></div>
-                            <button class="admin-save-btn" data-product-id="${product.id}" style="margin-top: 10px; background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Kaydet</button>
-                        `;
-                    } else {
-                        const link = document.createElement('a');
-                        link.href = `product.html?id=${product.id}`;
-                        link.style.textDecoration = 'none';
-                        link.style.color = 'inherit';
-                        link.appendChild(productDiv);
-                        productsContainer.appendChild(link);
-
-                        let buttonHTML = product.stock_quantity > 0 ? `<button class="add-to-cart-btn" data-product-id="${product.id}">Sepete Ekle</button>` : `<button disabled style="background-color: #6c757d; cursor: not-allowed;">Stokta Yok</button>`;
-                        productDiv.innerHTML = `<h2>${product.name}</h2><p>Fiyat: ${product.price} TL</p>${buttonHTML}`;
+                        productsContainer.appendChild(productCard);
                     }
                 });
 
@@ -177,29 +252,89 @@
         }
         
         productsContainer.addEventListener('click', (event) => {
-            if (event.target.tagName === 'BUTTON' || event.target.tagName === 'INPUT' || event.target.tagName === 'LABEL') { return; }
+            if (event.target.closest('input, button, label')) {
+                return;
+            }
             const productCard = event.target.closest('.product');
-            if (productCard && productCard.dataset.href) { window.location.href = productCard.dataset.href; }
+            if (productCard && productCard.dataset.href) {
+                window.location.href = productCard.dataset.href;
+            }
         });
         
-        window.onload = () => {
-            const token = localStorage.getItem('token');
-            adminControls.innerHTML = '';
-            if (token) {
-                const user = parseJwt(token);
-                if (user && user.role === 'admin') {
-                    userPanel.innerHTML = `<span>Hoş geldin, <strong>${user.email}</strong> (Admin) | </span><a href="/admin-settings.html">Site Ayarları</a> | <button id="logout-button">Çıkış Yap</button>`;
-                    adminControls.innerHTML = '<a href="/add_product.html">+ Yeni Ürün Ekle</a>';
-                } else {
-                    userPanel.innerHTML = `<span>Hoş geldin, <strong>${user.email}</strong> | </span><a href="/cart.html">Sepetim</a> | <button id="logout-button">Çıkış Yap</button>`;
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+
+            menuButton.addEventListener('click', () => {
+                dropdown.classList.toggle('show');
+            });
+
+            window.addEventListener('click', (event) => {
+                if (!event.target.matches('#user-menu-button')) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
                 }
-                document.getElementById('logout-button').addEventListener('click', () => {
+            });
+
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
                     localStorage.removeItem('token');
                     window.location.reload();
                 });
-            } else {
-                userPanel.innerHTML = '<a href="/login.html">Giriş Yap</a>';
             }
+        }
+
+        window.onload = () => {
+            const token = localStorage.getItem('token');
+            adminControls.innerHTML = '';
+            userControlsContainer.innerHTML = '';
+
+            if (token) {
+                const user = parseJwt(token);
+                if (user && user.role === 'admin') {
+                    userControlsContainer.innerHTML = `
+                        <div class="user-dropdown">
+                            <button id="user-menu-button" class="user-menu-button">
+                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                            </button>
+                            <div id="user-dropdown-content" class="dropdown-content">
+                                <a href="/admin-settings.html">Site Ayarları</a>
+                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            </div>
+                        </div>
+                    `;
+                    adminControls.innerHTML = '<a href="/add_product.html">+ Yeni Ürün Ekle</a>';
+                
+                } else if (user) {
+                    userControlsContainer.innerHTML = `
+                        <div class="cart-link" id="cart-link-container">
+                            <a href="/cart.html">Sepetim</a>
+                        </div>
+                        <div class="user-dropdown">
+                            <button id="user-menu-button" class="user-menu-button">
+                                ${user.firstName} <span class="arrow">&#9662;</span>
+                            </button>
+                            <div id="user-dropdown-content" class="dropdown-content">
+                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                setupUserMenu();
+            } else {
+                userControlsContainer.innerHTML = `
+                    <div class="cart-link" id="cart-link-container">
+                        <a href="/cart.html">Sepetim</a>
+                    </div>
+                    <div class="user-login-link">
+                        <a href="/login.html">Giriş Yap</a>
+                    </div>
+                `;
+            }
+            
             fetchAndDisplayProducts();
         };
     </script>

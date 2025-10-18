@@ -3,16 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sepetim</title>
+    <title>Sepetim - Çiçek Temizlik</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <a href="/">&larr; Alışverişe Devam Et</a>
-    <hr>
-    <h1>Sepetim</h1>
 
-    <div id="cart-container"></div>
-    <div id="cart-total" class="cart-total"></div>
+    <header class="site-header">
+        <div class="site-logo"></div>
+        <nav class="center-nav"></nav> 
+        <div class="user-controls" id="user-controls-container">
+            </div>
+    </header>
+
+    <main class="container">
+        <h1>Sepetim</h1>
+        <a href="/">&larr; Alışverişe Devam Et</a>
+        <hr style="margin: 15px 0;">
+
+        <div id="cart-container"></div>
+        <div id="cart-total" class="cart-total"></div>
+        
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
     <div id="toast-container"></div>
 
     <script src="/common.js"></script>
@@ -42,17 +64,18 @@
                 }
 
                 let tableHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Ürün</th>
-                                <th>Fiyat</th>
-                                <th>Miktar</th>
-                                <th>Ara Toplam</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ürün</th>
+                                    <th>Fiyat</th>
+                                    <th>Miktar</th>
+                                    <th>Ara Toplam</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
                 `;
                 let total = 0;
                 items.forEach(item => {
@@ -74,7 +97,7 @@
                         </tr>
                     `;
                 });
-                tableHTML += '</tbody></table>';
+                tableHTML += '</tbody></table></div>';
                 cartContainer.innerHTML = tableHTML;
                 cartTotalDiv.innerHTML = `Toplam: ${total.toFixed(2)} TL`;
                 addEventListeners();
@@ -138,7 +161,88 @@
             }
         }
 
-        window.onload = displayCart;
+        const userControlsContainer = document.getElementById('user-controls-container');
+
+        if (typeof parseJwt !== 'function') {
+            function parseJwt(token) {
+                try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
+            }
+        }
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+
+            menuButton.addEventListener('click', () => {
+                dropdown.classList.toggle('show');
+            });
+
+            window.addEventListener('click', (event) => {
+                if (!event.target.matches('#user-menu-button')) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
+                }
+            });
+
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+            }
+        }
+
+        function setupHeader() {
+            userControlsContainer.innerHTML = '';
+            if (token) {
+                const user = parseJwt(token);
+                if (user && user.role === 'admin') {
+                    userControlsContainer.innerHTML = `
+                        <div class="user-dropdown">
+                            <button id="user-menu-button" class="user-menu-button">
+                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                            </button>
+                            <div id="user-dropdown-content" class="dropdown-content">
+                                <a href="/admin-settings.html">Site Ayarları</a>
+                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            </div>
+                        </div>
+                    `;
+                } else if (user) {
+                    userControlsContainer.innerHTML = `
+                        <div class="cart-link" id="cart-link-container">
+                            <a href="/cart.html">Sepetim</a>
+                        </div>
+                        <div class="user-dropdown">
+                            <button id="user-menu-button" class="user-menu-button">
+                                ${user.firstName} <span class="arrow">&#9662;</span>
+                            </button>
+                            <div id="user-dropdown-content" class="dropdown-content">
+                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                setupUserMenu();
+            } else {
+                userControlsContainer.innerHTML = `
+                    <div class="cart-link" id="cart-link-container">
+                        <a href="/cart.html">Sepetim</a>
+                    </div>
+                    <div class="user-login-link">
+                        <a href="/login.html">Giriş Yap</a>
+                    </div>
+                `;
+            }
+        }
+
+        window.onload = () => {
+            setupHeader();
+            displayCart();
+        };
     </script>
 </body>
 </html>

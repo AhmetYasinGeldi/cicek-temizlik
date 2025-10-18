@@ -1,3 +1,12 @@
+const SITE_NAME = "ÇİÇEK TEMİZLİK";
+
+document.addEventListener('DOMContentLoaded', () => {
+    const logoEl = document.querySelector('.site-logo');
+    if (logoEl) {
+        logoEl.textContent = SITE_NAME;
+    }
+});
+
 function parseJwt(token) {
     try {
         return JSON.parse(atob(token.split('.')[1]));

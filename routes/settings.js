@@ -48,4 +48,14 @@ router.post('/reset-product-overrides', [authenticateToken, authorizeAdmin], asy
     }
 });
 
+router.post('/reset-critical-stock', [authenticateToken, authorizeAdmin], async (req, res) => {
+    try {
+        await pool.query("UPDATE products SET critical_stock_threshold = NULL");
+        res.status(200).json({ message: 'Tüm ürünlerin kritik stok eşiği genel ayarlara sıfırlandı.' });
+    } catch (err) {
+        console.error('Ürün kritik stok ayarları sıfırlanırken hata:', err);
+        res.status(500).json({ error: "Sunucuda bir hata oluştu." });
+    }
+});
+
 module.exports = router;

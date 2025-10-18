@@ -62,7 +62,8 @@ router.get('/:id', getOptionalUser, async (req, res) => {
 router.post('/', [authenticateToken, authorizeAdmin], async (req, res) => {
     try {
         const { name, price, description, image_url, stock_quantity, is_active } = req.body;
-      
+        let { critical_stock_threshold } = req.body;
+
         if (!name || price == null) {
             return res.status(400).json({ error: 'İsim ve fiyat alanları zorunludur.' });
         }
@@ -72,10 +73,17 @@ router.post('/', [authenticateToken, authorizeAdmin], async (req, res) => {
         if (stock_quantity < 0) {
             return res.status(400).json({ error: 'Stok miktarı 0\'dan küçük olamaz.' });
         }
+        if (critical_stock_threshold == null || critical_stock_threshold === '') {
+            const settings = await getSettings();
+            const percentage = parseFloat(settings.critical_stock_percentage) || 30;
+            critical_stock_threshold = Math.ceil(stock_quantity * (percentage / 100));
+        } else {
+            critical_stock_threshold = parseInt(critical_stock_threshold);
+        }
 
         const newProduct = await pool.query(
-            'INSERT INTO products (name, price, description, image_url, stock_quantity, is_active) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [name, price, description, image_url, stock_quantity || 0, is_active != null ? is_active : true]
+            'INSERT INTO products (name, price, description, image_url, stock_quantity, is_active, critical_stock_threshold) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            [name, price, description, image_url, stock_quantity || 0, is_active != null ? is_active : true, critical_stock_threshold]
         );
       
         res.status(201).json(newProduct.rows[0]);
@@ -93,7 +101,7 @@ router.post('/', [authenticateToken, authorizeAdmin], async (req, res) => {
 router.put('/:id', [authenticateToken, authorizeAdmin], async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, price, description, image_url, stock_quantity, is_active, out_of_stock_display_rule } = req.body;
+        const { name, price, description, image_url, stock_quantity, is_active, out_of_stock_display_rule, critical_stock_threshold } = req.body;
         
         if (!name || price == null) {
             return res.status(400).json({ error: 'İsim ve fiyat alanları zorunludur.' });
@@ -101,10 +109,12 @@ router.put('/:id', [authenticateToken, authorizeAdmin], async (req, res) => {
         
         const updatedProduct = await pool.query(
             `UPDATE products 
-             SET name = $1, price = $2, description = $3, image_url = $4, stock_quantity = $5, is_active = $6, out_of_stock_display_rule = $7 
-             WHERE id = $8 
+             SET name = $1, price = $2, description = $3, image_url = $4, 
+                 stock_quantity = $5, is_active = $6, out_of_stock_display_rule = $7, 
+                 critical_stock_threshold = $8 
+             WHERE id = $9 
              RETURNING *`,
-            [name, price, description, image_url, stock_quantity, is_active, out_of_stock_display_rule || 'default', id]
+            [name, price, description, image_url, stock_quantity, is_active, out_of_stock_display_rule || 'default', critical_stock_threshold || null, id]
         );
 
         if (updatedProduct.rows.length === 0) {

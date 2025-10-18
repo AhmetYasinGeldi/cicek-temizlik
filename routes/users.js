@@ -8,16 +8,20 @@ const SECRET_KEY = process.env.JWT_SECRET;
 // YENİ KULLANICI KAYDI
 router.post('/register', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ error: 'E-posta ve şifre alanları zorunludur.' });
+        const { firstName, lastName, email, password } = req.body;
+
+        if (!firstName || !lastName || !email || !password) {
+            return res.status(400).json({ error: 'Ad, Soyad, E-posta ve Şifre alanları zorunludur.' });
         }
+
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
+
         const newUser = await pool.query(
-            'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at',
-            [email, passwordHash]
+            'INSERT INTO users (first_name, last_name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, first_name, last_name, email, created_at',
+            [firstName, lastName, email, passwordHash]
         );
+
         res.status(201).json(newUser.rows[0]);
     } catch (err) {
         console.error('Kullanıcı kaydı sırasında hata:', err);
@@ -47,7 +51,8 @@ router.post('/login', async (req, res) => {
         const payload = {
             userId: user.id,
             email: user.email,
-            role: user.role
+            role: user.role,
+            firstName: user.first_name
         };
         const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' });
         res.status(200).json({ 

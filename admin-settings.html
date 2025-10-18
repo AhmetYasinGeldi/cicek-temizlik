@@ -3,57 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genel Ayarlar</title>
+    <title>Genel Ayarlar - Çiçek Temizlik</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <a href="/">&larr; Ana Panele Dön</a>
-    <hr>
-    <h1>Genel Site Ayarları</h1>
 
-    <form id="settings-form">
-        <div class="setting-item">
-            <label for="sales_active">Genel Satış Durumu:</label>
-            <select id="sales_active" name="sales_active">
-                <option value="true">Satışlar Aktif</option>
-                <option value="false">Satışları Durdur</option>
-            </select>
-            <small>Satışları durdurduğunuzda, müşteriler ürünleri görebilir ancak sepete ekleyemez.</small>
+    <header class="site-header">
+        <div class="site-logo"></div>
+        <nav class="center-nav"></nav> 
+        <div class="user-controls" id="user-controls-container">
+            </div>
+    </header>
+
+    <main class="container">
+        <div class="form-container">
+            <h1>Genel Site Ayarları</h1>
+            <a href="/">&larr; Ana Panele Dön</a>
+            <hr style="margin: 15px 0;">
+
+            <form id="settings-form">
+                <div class="form-group setting-item">
+                    <label for="sales_active">Genel Satış Durumu:</label>
+                    <select id="sales_active" name="sales_active">
+                        <option value="true">Satışlar Aktif</option>
+                        <option value="false">Satışları Durdur</option>
+                    </select>
+                    <small>Satışları durdurduğunuzda, müşteriler ürünleri görebilir ancak sepete ekleyemez.</small>
+                </div>
+                <div class="form-group setting-item">
+                    <label for="out_of_stock_behavior">Stoğu Biten Ürünler:</label>
+                    <select id="out_of_stock_behavior" name="out_of_stock_behavior">
+                        <option value="hide">Listeden Gizle</option>
+                        <option value="show_as_out_of_stock">"Stokta Yok" olarak göster</option>
+                    </select>
+                </div>
+                <div class="form-group setting-item">
+                    <label for="critical_stock_percentage">Genel Kritik Stok Eşiği (Adet):</label>
+                    <input type="number" id="critical_stock_percentage" name="critical_stock_percentage" min="0">
+                    <small>Stok bu adedin altına düştüğünde uyarı verilir. (Örn: 5). Ürüne özel bir ayar girilmezse bu değer kullanılır.</small>
+                </div>
+                <div class="form-group setting-item">
+                    <label for="quick_edit_price_step">Hızlı Fiyat Değişim Adımı:</label>
+                    <input type="number" id="quick_edit_price_step" name="quick_edit_price_step" step="0.01" min="0.01">
+                    <small>Admin panelindeki fiyat kutucuklarının artış/azalış miktarını belirler. (Örn: 1, 5, 10)</small>
+                </div>
+                <button type="submit">Ayarları Kaydet</button>
+            </form>
+            
+            <div class="setting-item" style="margin-top: 30px; border-color: #dc3545;">
+                <label>Tehlikeli Alan</label>
+
+                <button id="reset-overrides-btn" style="background-color: #dc3545; color: white;">Tüm Ürünlerin Stok Davranışını Sıfırla</button>
+                <small>Bu işlem, tüm ürünlerin stoğu bittiğinde nasıl davranacağını yukarıdaki "Genel Ayar"a göre sıfırlar. Ürünlere özel yaptığınız istisna ayarları kaybolur.</small>
+
+                <button id="reset-critical-stock-btn" style="background-color: #dc3545; color: white; margin-top: 15px;">Tüm Ürünlerin Kritik Stok Eşiğini Sıfırla</button>
+                <small>Bu işlem, tüm ürünlerin "ürüne özel kritik stok eşiğini" sıfırlar. Hepsi yukarıdaki "Genel Eşik" ayarını kullanmaya başlar.</small>
+            </div>
         </div>
-        <div class="setting-item">
-            <label for="out_of_stock_behavior">Stoğu Biten Ürünler:</label>
-            <select id="out_of_stock_behavior" name="out_of_stock_behavior">
-                <option value="hide">Listeden Gizle</option>
-                <option value="show_as_out_of_stock">"Stokta Yok" olarak göster</option>
-            </select>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
         </div>
-        <div class="setting-item">
-            <label for="critical_stock_percentage">Kritik Stok Yüzdesi (%):</label>
-            <input type="number" id="critical_stock_percentage" name="critical_stock_percentage" min="0" max="100">
-            <small>Stok bu yüzdenin altına düştüğünde uyarı verilir. (Örn: 30)</small>
-        </div>
-        <div class="setting-item">
-            <label for="quick_edit_price_step">Hızlı Fiyat Değişim Adımı:</label>
-            <input type="number" id="quick_edit_price_step" name="quick_edit_price_step" step="0.01" min="0.01">
-            <small>Admin panelindeki fiyat kutucuklarının artış/azalış miktarını belirler. (Örn: 1, 5, 10)</small>
-        </div>
-        <button type="submit">Ayarları Kaydet</button>
-    </form>
-    
-    <div class="setting-item" style="margin-top: 30px; border-color: #dc3545;">
-        <label>Tehlikeli Alan</label>
-        <button id="reset-overrides-btn" style="background-color: #dc3545; color: white;">Tüm Ürünlerin Stok Davranışını Sıfırla</button>
-        <small>Bu işlem, tüm ürünlerin stoğu bittiğinde nasıl davranacağını yukarıdaki "Genel Ayar"a göre sıfırlar. Ürünlere özel yaptığınız istisna ayarları kaybolur.</small>
-    </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
     <div id="toast-container"></div>
     <script src="/common.js"></script>
     <script>
         const form = document.getElementById('settings-form');
         const token = localStorage.getItem('token');
         const resetButton = document.getElementById('reset-overrides-btn');
+        const resetCriticalStockButton = document.getElementById('reset-critical-stock-btn');
 
-        window.onload = async () => {
-            if (!token) { window.location.href = '/login.html'; return; }
+        async function loadSettings() {
+            if (!token) { 
+                showToast('Bu sayfayı görmek için giriş yapmalısınız.', 'error');
+                setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+                return; 
+            }
             try {
                 const response = await fetch('/api/settings', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!response.ok) throw new Error('Ayarlar yüklenemedi.');
@@ -67,7 +99,7 @@
                 console.error('Hata:', error);
                 showToast(error.message, 'error');
             }
-        };
+        }
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -94,7 +126,6 @@
             }
         });
 
-        // YENİ EKLENDİ: Reset butonu mantığı
         resetButton.addEventListener('click', async () => {
             if (!confirm('Tüm ürünlerin stok davranışını genel ayara sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz.')) return;
             try {
@@ -108,6 +139,71 @@
                 showToast(error.message, 'error');
             }
         });
+
+        resetCriticalStockButton.addEventListener('click', async () => {
+            if (!confirm('Tüm ürünlerin kritik stok eşiğini genel ayara sıfırlamak istediğinizden emin misiniz? Ürünlere özel girdiğiniz tüm "adet" ayarları kaybolur.')) return;
+            try {
+                const response = await fetch('/api/settings/reset-critical-stock', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Kritik stok sıfırlama işlemi başarısız.');
+                showToast('Tüm ürünlerin kritik stok ayarları başarıyla genel ayarlara sıfırlandı!');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!event.target.matches('#user-menu-button')) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+            }
+        }
+
+        function setupHeader() {
+            userControlsContainer.innerHTML = '';
+            if (token) {
+                const user = parseJwt(token);
+                if (user && user.role === 'admin') {
+                    userControlsContainer.innerHTML = `
+                        <div class="user-dropdown">
+                            <button id="user-menu-button" class="user-menu-button">
+                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                            </button>
+                            <div id="user-dropdown-content" class="dropdown-content">
+                                <a href="/admin-settings.html">Site Ayarları</a>
+                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            </div>
+                        </div>
+                    `;
+                    setupUserMenu();
+                } else {
+                    window.location.href = '/login.html';
+                }
+            } else {
+                window.location.href = '/login.html';
+            }
+        }
+        
+        window.onload = () => {
+            setupHeader();
+            loadSettings();
+        };
     </script>
 </body>
 </html>
