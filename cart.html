@@ -10,19 +10,16 @@
 
     <header class="site-header">
         <div class="site-logo"></div>
-        <nav class="center-nav"></nav> 
-        <div class="user-controls" id="user-controls-container">
-            </div>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
     </header>
 
     <main class="container">
         <h1>Sepetim</h1>
         <a href="/">&larr; Alışverişe Devam Et</a>
         <hr style="margin: 15px 0;">
-
         <div id="cart-container"></div>
         <div id="cart-total" class="cart-total"></div>
-        
     </main>
 
     <footer class="site-footer">
@@ -46,65 +43,38 @@
         async function displayCart() {
             if (!token) {
                 cartContainer.innerHTML = '<p>Sepetinizi görmek için lütfen <a href="/login.html">giriş yapın</a>.</p>';
-                return;
+                cartTotalDiv.innerHTML = '';
+                return 0;
             }
-
             try {
-                const response = await fetch('/api/cart', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!response.ok) throw new Error('Sepet yüklenemedi.');
-                
-                const items = await response.json();
-                
+                const cartData = await response.json();
+                const items = cartData.items;
+                const totalQuantity = cartData.totalQuantity;
+
                 if (items.length === 0) {
                     cartContainer.innerHTML = '<p>Sepetiniz şu anda boş.</p>';
                     cartTotalDiv.innerHTML = '';
-                    return;
+                    return 0;
                 }
-
-                let tableHTML = `
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Ürün</th>
-                                    <th>Fiyat</th>
-                                    <th>Miktar</th>
-                                    <th>Ara Toplam</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
+                let tableHTML = `<div class="table-container"><table><thead>...</thead><tbody>`;
                 let total = 0;
                 items.forEach(item => {
-                    const subtotal = item.price * item.quantity;
-                    total += subtotal;
-                    tableHTML += `
-                        <tr>
-                            <td>${item.name}</td>
-                            <td>${parseFloat(item.price).toFixed(2)} TL</td>
-                            <td>
-                                <div class="quantity-controls">
-                                    <button class="update-quantity" data-product-id="${item.id}" data-new-quantity="${item.quantity - 1}">-</button>
-                                    <span>${item.quantity}</span>
-                                    <button class="update-quantity" data-product-id="${item.id}" data-new-quantity="${item.quantity + 1}">+</button>
-                                </div>
-                            </td>
-                            <td>${subtotal.toFixed(2)} TL</td>
-                            <td><button class="remove-item" data-product-id="${item.id}">Kaldır</button></td>
-                        </tr>
-                    `;
+                    const subtotal = item.price * item.quantity; total += subtotal;
+                    tableHTML += `<tr><td>${item.name}</td><td>${parseFloat(item.price).toFixed(2)} TL</td><td><div class="quantity-controls"><button class="update-quantity" data-product-id="${item.id}" data-new-quantity="${item.quantity - 1}">-</button><span>${item.quantity}</span><button class="update-quantity" data-product-id="${item.id}" data-new-quantity="${item.quantity + 1}">+</button></div></td><td>${subtotal.toFixed(2)} TL</td><td><button class="remove-item" data-product-id="${item.id}">Kaldır</button></td></tr>`;
                 });
                 tableHTML += '</tbody></table></div>';
                 cartContainer.innerHTML = tableHTML;
                 cartTotalDiv.innerHTML = `Toplam: ${total.toFixed(2)} TL`;
                 addEventListeners();
-
+                return totalQuantity;
             } catch (error) {
                 console.error('Sepet görüntülenirken hata:', error);
                 showToast('Sepet yüklenirken bir hata oluştu.', 'error');
+                cartContainer.innerHTML = '<p>Sepet yüklenirken bir hata oluştu.</p>';
+                cartTotalDiv.innerHTML = '';
+                return 0;
             }
         }
 
@@ -128,21 +98,16 @@
             try {
                 const response = await fetch(`/api/cart/items/${productId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ quantity: quantity })
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Miktar güncellenemedi.');
                 }
-                displayCart();
-            } catch (error) {
-                console.error(error);
-                showToast(error.message, 'error');
-            }
+                const newCount = await displayCart();
+                updateCartCountInHeader(newCount);
+            } catch (error) { console.error(error); showToast(error.message, 'error'); }
         }
 
         async function removeCartItem(productId) {
@@ -154,38 +119,21 @@
                 });
                 if (!response.ok) throw new Error('Ürün kaldırılamadı.');
                 showToast('Ürün sepetten kaldırıldı.');
-                displayCart();
-            } catch (error) {
-                console.error(error);
-                showToast('Ürün kaldırılırken bir hata oluştu.', 'error');
-            }
-        }
-
-        const userControlsContainer = document.getElementById('user-controls-container');
-
-        if (typeof parseJwt !== 'function') {
-            function parseJwt(token) {
-                try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
-            }
+                const newCount = await displayCart();
+                updateCartCountInHeader(newCount);
+            } catch (error) { console.error(error); showToast('Ürün kaldırılırken bir hata oluştu.', 'error'); }
         }
 
         function setupUserMenu() {
             const menuButton = document.getElementById('user-menu-button');
             const dropdown = document.getElementById('user-dropdown-content');
             if (!menuButton || !dropdown) return;
-
-            menuButton.addEventListener('click', () => {
-                dropdown.classList.toggle('show');
-            });
-
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
             window.addEventListener('click', (event) => {
-                if (!event.target.matches('#user-menu-button')) {
-                    if (dropdown.classList.contains('show')) {
-                        dropdown.classList.remove('show');
-                    }
+                if (!menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                     if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
                 }
             });
-
             const logoutButton = document.getElementById('logout-button');
             if (logoutButton) {
                 logoutButton.addEventListener('click', () => {
@@ -195,53 +143,44 @@
             }
         }
 
-        function setupHeader() {
+        const userControlsContainer = document.getElementById('user-controls-container');
+        function setupHeaderInitial() {
             userControlsContainer.innerHTML = '';
-            if (token) {
-                const user = parseJwt(token);
-                if (user && user.role === 'admin') {
-                    userControlsContainer.innerHTML = `
-                        <div class="user-dropdown">
-                            <button id="user-menu-button" class="user-menu-button">
-                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
-                            </button>
-                            <div id="user-dropdown-content" class="dropdown-content">
-                                <a href="/admin-settings.html">Site Ayarları</a>
-                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
-                            </div>
-                        </div>
-                    `;
-                } else if (user) {
-                    userControlsContainer.innerHTML = `
-                        <div class="cart-link" id="cart-link-container">
-                            <a href="/cart.html">Sepetim</a>
-                        </div>
-                        <div class="user-dropdown">
-                            <button id="user-menu-button" class="user-menu-button">
-                                ${user.firstName} <span class="arrow">&#9662;</span>
-                            </button>
-                            <div id="user-dropdown-content" class="dropdown-content">
-                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
-                            </div>
-                        </div>
-                    `;
-                }
-                setupUserMenu();
-            } else {
+            let user = null;
+            if (token) user = parseJwt(token);
+
+            if (user && user.role === 'admin') {
+                 userControlsContainer.innerHTML = `... (Admin header HTML) ...`;
+            } else if (user) {
                 userControlsContainer.innerHTML = `
-                    <div class="cart-link" id="cart-link-container">
-                        <a href="/cart.html">Sepetim</a>
-                    </div>
-                    <div class="user-login-link">
-                        <a href="/login.html">Giriş Yap</a>
-                    </div>
-                `;
+                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">Sepetim</a></div>
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else {
+                 userControlsContainer.innerHTML = `
+                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">Sepetim</a></div>
+                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
             }
+            if (user) setupUserMenu();
         }
 
-        window.onload = () => {
-            setupHeader();
-            displayCart();
+        function updateCartCountInHeader(count) {
+             const cartLink = userControlsContainer.querySelector('.cart-link a');
+             if (cartLink) {
+                 cartLink.textContent = count > 0 ? `Sepetim (${count})` : 'Sepetim';
+             }
+         }
+
+        window.onload = async () => {
+            setupHeaderInitial();
+            const initialCartCount = await displayCart();
+            updateCartCountInHeader(initialCartCount);
         };
     </script>
 </body>

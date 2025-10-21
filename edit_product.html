@@ -3,265 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ürünü Düzenle - Çiçek Temizlik</title>
+    <title>Genel Ayarlar - Çiçek Temizlik</title>
     <link rel="stylesheet" href="/style.css">
-    <style>
-        .form-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        .form-actions button {
-            flex-grow: 1;
-            padding: 12px;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            font-weight: 500;
-        }
-        .save-btn { background-color: #007bff; color: white; }
-        .save-btn:hover { background-color: #0056b3; }
-        .delete-btn { background-color: #dc3545; color: white; }
-        .delete-btn:hover { background-color: #c82333; }
-    </style>
 </head>
 <body>
 
     <header class="site-header">
         <div class="site-logo"></div>
-        <nav class="center-nav"></nav> 
-        <div class="user-controls" id="user-controls-container">
-            </div>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
     </header>
 
     <main class="container">
-        <div class="form-container" id="product-form-container">
-            <h1>Ürünü Yönet</h1>
+        <div class="form-container">
+            <h1>Genel Site Ayarları</h1>
             <a href="/">&larr; Ana Panele Dön</a>
             <hr style="margin: 15px 0;">
-
-            <form id="edit-product-form">
-                <div class="form-group">
-                    <label for="name">Ürün Adı:</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="price">Fiyat:</label>
-                    <input type="number" id="price" name="price" step="0.01" required min="0.01">
-                </div>
-
-                <div class="form-group">
-                    <label for="description">Açıklama:</label>
-                    <textarea id="description" name="description" rows="4"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="stock_quantity">Stok Miktarı:</label>
-                    <input type="number" id="stock_quantity" name="stock_quantity" required min="0">
-                </div>
-
-                <div class="form-group checkbox-group">
-                    <input type="checkbox" id="is_active" name="is_active">
-                    <label for="is_active" style="font-weight: normal; margin-bottom: 0;">Satışta mı?</label>
-                </div>
-
+            <form id="settings-form">
                 <div class="form-group setting-item">
-                    <label for="out_of_stock_display_rule">Stoğu Bittiğinde Davranış:</label>
-                    <select id="out_of_stock_display_rule" name="out_of_stock_display_rule">
-                        <option value="default">Genel Ayarı Kullan (Varsayılan)</option>
-                        <option value="show">Her Zaman Göster ("Stokta Yok" olarak)</option>
-                        <option value="hide">Her Zaman Gizle</option>
+                    <label for="sales_active">Genel Satış Durumu:</label>
+                    <select id="sales_active" name="sales_active">
+                        <option value="true">Satışlar Aktif</option>
+                        <option value="false">Satışları Durdur</option>
                     </select>
-                    <small>Bu ürüne özel bir kural belirleyebilirsiniz.</small>
+                    <small>Satışları durdurduğunuzda, müşteriler ürünleri görebilir ancak sepete ekleyemez.</small>
                 </div>
-
                 <div class="form-group setting-item">
-                    <label for="critical_stock_threshold">Ürüne Özel Kritik Stok Eşiği (Adet):</label>
-                    <input type="number" id="critical_stock_threshold" name="critical_stock_threshold" min="0" placeholder="Örn: 5">
-                    <small>Stok bu adedin altına düştüğünde uyarılır. Boş bırakırsanız, genel ayar kullanılır.</small>
+                    <label for="out_of_stock_behavior">Stoğu Biten Ürünler:</label>
+                    <select id="out_of_stock_behavior" name="out_of_stock_behavior">
+                        <option value="hide">Listeden Gizle</option>
+                        <option value="show_as_out_of_stock">"Stokta Yok" olarak göster</option>
+                    </select>
                 </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="save-btn">Değişiklikleri Kaydet</button>
-                    <button type="button" id="delete-button" class="delete-btn">Bu Ürünü Sil</button>
+                <div class="form-group setting-item">
+                    <label for="critical_stock_percentage">Genel Kritik Stok Eşiği (Adet):</label>
+                    <input type="number" id="critical_stock_percentage" name="critical_stock_percentage" min="0">
+                    <small>Stok bu adedin altına düştüğünde uyarı verilir. (Örn: 5). Ürüne özel bir ayar girilmezse bu değer kullanılır.</small>
                 </div>
+                <div class="form-group setting-item">
+                    <label for="quick_edit_price_step">Hızlı Fiyat Değişim Adımı:</label>
+                    <input type="number" id="quick_edit_price_step" name="quick_edit_price_step" step="0.01" min="0.01">
+                    <small>Admin panelindeki fiyat kutucuklarının artış/azalış miktarını belirler. (Örn: 1, 5, 10)</small>
+                </div>
+                <button type="submit">Ayarları Kaydet</button>
             </form>
+            <div class="setting-item" style="margin-top: 30px; border-color: #dc3545;">
+                <label>Tehlikeli Alan</label>
+                <button id="reset-overrides-btn" style="background-color: #dc3545; color: white;">Tüm Ürünlerin Stok Davranışını Sıfırla</button>
+                <small>Bu işlem, tüm ürünlerin stoğu bittiğinde nasıl davranacağını yukarıdaki "Genel Ayar"a göre sıfırlar. Ürünlere özel yaptığınız istisna ayarları kaybolur.</small>
+                <button id="reset-critical-stock-btn" style="background-color: #dc3545; color: white; margin-top: 15px;">Tüm Ürünlerin Kritik Stok Eşiğini Sıfırla</button>
+                <small>Bu işlem, tüm ürünlerin "ürüne özel kritik stok eşiğini" sıfırlar. Hepsi yukarıdaki "Genel Eşik" ayarını kullanmaya başlar.</small>
+            </div>
         </div>
     </main>
 
     <footer class="site-footer">
         <div class="footer-links">
-            <a href="#">Yardım</a>
-            <a href="#">Sıkça Sorulan Sorular</a>
-            <a href="#">Hakkımızda</a>
-            <a href="#">İletişim</a>
+             <a href="#">Yardım</a><a href="#">Sıkça Sorulan Sorular</a><a href="#">Hakkımızda</a><a href="#">İletişim</a>
         </div>
         <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
     </footer>
 
     <div id="toast-container"></div>
-
     <script src="/common.js"></script>
     <script>
-        const form = document.getElementById('edit-product-form');
-        const nameInput = document.getElementById('name');
-        const priceInput = document.getElementById('price');
-        const descriptionInput = document.getElementById('description');
-        const stockInput = document.getElementById('stock_quantity');
-        const activeCheckbox = document.getElementById('is_active');
-        const displayRuleSelect = document.getElementById('out_of_stock_display_rule');
-        const deleteButton = document.getElementById('delete-button');
-        const criticalStockInput = document.getElementById('critical_stock_threshold');
+        const form = document.getElementById('settings-form');
+        const token = localStorage.getItem('token');
+        const resetButton = document.getElementById('reset-overrides-btn');
+        const resetCriticalStockButton = document.getElementById('reset-critical-stock-btn');
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-
-        async function loadProduct() {
-            const token = localStorage.getItem('token');
-            if (!token) { 
-                showToast('Bu sayfayı görmek için giriş yapmalısınız.', 'error');
-                setTimeout(() => { window.location.href = '/login.html'; }, 1500);
-                return; 
-            }
-            
-            if (!productId) {
-                document.getElementById('product-form-container').innerHTML = '<h1>Düzenlenecek ürün ID\'si bulunamadı.</h1><a href="/">&larr; Ana Sayfaya Dön</a>';
-                return;
-            }
-            try {
-                const headers = { 'Authorization': `Bearer ${token}` };
-                const response = await fetch(`/api/products/${productId}`, { headers: headers });
-                
-                if (!response.ok) throw new Error('Ürün bilgileri getirilemedi veya görme yetkiniz yok.');
-                
-                const product = await response.json();
-                
-                document.title = `Düzenle: ${product.name} - Çiçek Temizlik`;
-
-                nameInput.value = product.name;
-                priceInput.value = product.price;
-                descriptionInput.value = product.description;
-                stockInput.value = product.stock_quantity;
-                activeCheckbox.checked = product.is_active;
-                displayRuleSelect.value = product.out_of_stock_display_rule;
-                criticalStockInput.value = product.critical_stock_threshold ?? '';
-
-            } catch (error) {
-                console.error('Hata:', error);
-                showToast(error.message, 'error');
-                document.getElementById('product-form-container').innerHTML = `<h1>Hata</h1><p>${error.message}</p><a href="/">&larr; Ana Sayfaya Dön</a>`;
-            }
+        async function loadSettings() {
+             if (!token) { return; }
+             try {
+                 const response = await fetch('/api/settings', { headers: { 'Authorization': `Bearer ${token}` } });
+                 if (!response.ok) throw new Error('Ayarlar yüklenemedi.');
+                 const settings = await response.json();
+                 form.sales_active.value = settings.sales_active;
+                 form.out_of_stock_behavior.value = settings.out_of_stock_behavior;
+                 form.critical_stock_percentage.value = settings.critical_stock_percentage;
+                 form.quick_edit_price_step.value = settings.quick_edit_price_step;
+             } catch (error) { console.error('Hata:', error); showToast(error.message, 'error'); }
         }
 
-        deleteButton.addEventListener('click', async () => {
-            const token = localStorage.getItem('token');
-            if (!token) { return; }
-            if (!confirm('Bu ürünü kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) { return; }
-
-            try {
-                const response = await fetch(`/api/products/${productId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) throw new Error('Silme işlemi başarısız.');
-                showToast('Ürün başarıyla silindi!');
-                setTimeout(() => window.location.href = '/', 2000);
-            } catch (error) {
-                showToast(error.message, 'error');
-            }
-        });
-
         form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const token = localStorage.getItem('token');
-            if (!token) { return; }
-
-            const updatedData = {
-                name: nameInput.value,
-                price: parseFloat(priceInput.value),
-                description: descriptionInput.value,
-                stock_quantity: parseInt(stockInput.value),
-                is_active: activeCheckbox.checked,
-                critical_stock_threshold: criticalStockInput.value === '' ? null : parseInt(criticalStockInput.value),
-                out_of_stock_display_rule: displayRuleSelect.value
-            };
-
-            try {
-                const response = await fetch(`/api/products/${productId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(updatedData)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Güncelleme başarısız.');
-                }
-
-                showToast('Ürün başarıyla güncellendi!');
-                setTimeout(() => {
-                    window.location.href = `/product.html?id=${productId}`;
-                }, 2000);
-
-            } catch (error) {
-                console.error('Güncelleme hatası:', error);
-                showToast(error.message, 'error');
-            }
+             event.preventDefault();
+             if (!token) { showToast('Bu işlem için giriş yapmalısınız.', 'error'); return; }
+             const updatedSettings = {
+                 sales_active: form.sales_active.value, out_of_stock_behavior: form.out_of_stock_behavior.value,
+                 critical_stock_percentage: form.critical_stock_percentage.value, quick_edit_price_step: form.quick_edit_price_step.value
+             };
+             try {
+                 const response = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(updatedSettings) });
+                 if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.error || 'Güncelleme başarısız.'); }
+                 showToast('Ayarlar başarıyla güncellendi!');
+             } catch (error) { console.error('Güncelleme hatası:', error); showToast(error.message, 'error'); }
         });
 
-        const userControlsContainer = document.getElementById('user-controls-container');
+        resetButton.addEventListener('click', async () => {
+            if (!token) { showToast('Bu işlem için giriş yapmalısınız.', 'error'); return; }
+             if (!confirm('Tüm ürünlerin stok davranışını genel ayara sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz.')) return;
+             try {
+                 const response = await fetch('/api/settings/reset-product-overrides', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                 if (!response.ok) throw new Error('Sıfırlama işlemi başarısız.');
+                 showToast('Tüm ürünler başarıyla genel ayarlara sıfırlandı!');
+             } catch (error) { showToast(error.message, 'error'); }
+        });
+
+        resetCriticalStockButton.addEventListener('click', async () => {
+             if (!token) { showToast('Bu işlem için giriş yapmalısınız.', 'error'); return; }
+             if (!confirm('Tüm ürünlerin kritik stok eşiğini genel ayara sıfırlamak istediğinizden emin misiniz? Ürünlere özel girdiğiniz tüm "adet" ayarları kaybolur.')) return;
+             try {
+                 const response = await fetch('/api/settings/reset-critical-stock', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                 if (!response.ok) throw new Error('Kritik stok sıfırlama işlemi başarısız.');
+                 showToast('Tüm ürünlerin kritik stok ayarları başarıyla genel ayarlara sıfırlandı!');
+             } catch (error) { showToast(error.message, 'error'); }
+        });
 
         function setupUserMenu() {
             const menuButton = document.getElementById('user-menu-button');
             const dropdown = document.getElementById('user-dropdown-content');
             if (!menuButton || !dropdown) return;
-            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
-            window.addEventListener('click', (event) => {
-                if (!event.target.matches('#user-menu-button')) {
-                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
-                }
-            });
+             menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+             window.addEventListener('click', (event) => {
+                 if (!menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                      if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                 }
+             });
             const logoutButton = document.getElementById('logout-button');
             if (logoutButton) {
-                logoutButton.addEventListener('click', () => {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login.html';
-                });
+                logoutButton.addEventListener('click', () => { localStorage.removeItem('token'); window.location.href = '/login.html'; });
             }
         }
 
+        const userControlsContainer = document.getElementById('user-controls-container');
         function setupHeader() {
             const token = localStorage.getItem('token');
             userControlsContainer.innerHTML = '';
-            if (token) {
-                const user = parseJwt(token);
-                if (user && user.role === 'admin') {
-                    userControlsContainer.innerHTML = `
-                        <div class="user-dropdown">
-                            <button id="user-menu-button" class="user-menu-button">
-                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
-                            </button>
-                            <div id="user-dropdown-content" class="dropdown-content">
-                                <a href="/admin-settings.html">Site Ayarları</a>
-                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
-                            </div>
+            let user = null;
+            if (token) user = parseJwt(token);
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-settings.html">Site Ayarları</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
                         </div>
-                    `;
-                    setupUserMenu();
-                } else {
-                    window.location.href = '/login.html';
-                }
+                    </div>`;
+                 setupUserMenu();
+                 return true;
             } else {
-                window.location.href = '/login.html';
+                 showToast('Bu sayfaya erişim yetkiniz yok.', 'error');
+                 setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+                 return false;
             }
         }
 
-        window.onload = () => {
-            setupHeader();
-            loadProduct();
+        window.onload = async () => {
+            const isAdmin = setupHeader();
+            if (isAdmin) {
+                await loadSettings();
+            }
         };
     </script>
 </body>

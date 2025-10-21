@@ -10,50 +10,26 @@
 
     <header class="site-header">
         <div class="site-logo"></div>
-        <nav class="center-nav"></nav> 
-        <div class="user-controls" id="user-controls-container">
-            </div>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
     </header>
 
     <main class="container">
         <div class="form-container">
             <h1>Yeni Ürün Ekle</h1>
-
             <a href="/">&larr; Ana Panele Dön</a>
             <hr style="margin: 15px 0;">
-
             <form id="add-product-form">
-                <div class="form-group">
-                    <label for="name">Ürün Adı:</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="price">Fiyat (TL):</label>
-                    <input type="number" id="price" name="price" step="0.01" required min="0.01">
-                </div>
-
-                <div class="form-group">
-                    <label for="description">Açıklama:</label>
-                    <textarea id="description" name="description" rows="4"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="stock_quantity">Stok Miktarı:</label>
-                    <input type="number" id="stock_quantity" name="stock_quantity" required min="0" value="0">
-                </div>
-                
+                <div class="form-group"><label for="name">Ürün Adı:</label><input type="text" id="name" name="name" required></div>
+                <div class="form-group"><label for="price">Fiyat (TL):</label><input type="number" id="price" name="price" step="0.01" required min="0.01"></div>
+                <div class="form-group"><label for="description">Açıklama:</label><textarea id="description" name="description" rows="4"></textarea></div>
+                <div class="form-group"><label for="stock_quantity">Stok Miktarı:</label><input type="number" id="stock_quantity" name="stock_quantity" required min="0" value="0"></div>
                 <div class="form-group setting-item" style="background-color: #f9f9f9; padding: 15px; border-radius: 8px;">
                     <label for="critical_stock_threshold">Ürüne Özel Kritik Stok Eşiği (Adet):</label>
                     <input type="number" id="critical_stock_threshold" name="critical_stock_threshold" min="0" placeholder="Örn: 5">
                     <small>Stok bu adedin altına düştüğünde uyarılır. Boş bırakırsanız, genel ayar kullanılır.</small>
                 </div>
-
-                <div class="form-group checkbox-group">
-                    <input type="checkbox" id="is_active" name="is_active" checked>
-                    <label for="is_active" style="font-weight: normal; margin-bottom: 0;">Satışa Açık mı?</label>
-                </div>
-
+                <div class="form-group checkbox-group"><input type="checkbox" id="is_active" name="is_active" checked><label for="is_active" style="font-weight: normal; margin-bottom: 0;">Satışa Açık mı?</label></div>
                 <button type="submit">Ürünü Kaydet</button>
             </form>
         </div>
@@ -61,10 +37,7 @@
 
     <footer class="site-footer">
         <div class="footer-links">
-            <a href="#">Yardım</a>
-            <a href="#">Sıkça Sorulan Sorular</a>
-            <a href="#">Hakkımızda</a>
-            <a href="#">İletişim</a>
+            <a href="#">Yardım</a><a href="#">Sıkça Sorulan Sorular</a><a href="#">Hakkımızda</a><a href="#">İletişim</a>
         </div>
         <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
     </footer>
@@ -74,117 +47,71 @@
     <script src="/common.js"></script>
     <script>
         const form = document.getElementById('add-product-form');
-
         form.addEventListener('submit', async (event) => {
-            event.preventDefault();
+             event.preventDefault();
             const token = localStorage.getItem('token');
-            if (!token) {
-                showToast('Bu işlem için giriş yapmalısınız.', 'error');
-                return;
-            }
-
+            if (!token) { showToast('Bu işlem için giriş yapmalısınız.', 'error'); return; }
             const criticalStockInput = document.getElementById('critical_stock_threshold');
-            
             const productData = {
-                name: form.name.value,
-                price: parseFloat(form.price.value),
-                description: form.description.value,
-                stock_quantity: parseInt(form.stock_quantity.value),
-                is_active: form.is_active.checked,
+                name: form.name.value, price: parseFloat(form.price.value), description: form.description.value,
+                stock_quantity: parseInt(form.stock_quantity.value), is_active: form.is_active.checked,
                 critical_stock_threshold: criticalStockInput.value === '' ? null : parseInt(criticalStockInput.value)
             };
-
             try {
                 const response = await fetch('/api/products', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(productData)
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Ürün eklenemedi.');
-                }
-                
-                showToast('Ürün başarıyla eklendi!');
-                form.reset();
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
-
-            } catch (error) {
-                console.error('Ürün eklenirken hata oluştu:', error);
-                showToast(error.message, 'error');
-            }
+                if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.error || 'Ürün eklenemedi.'); }
+                showToast('Ürün başarıyla eklendi!'); form.reset();
+                setTimeout(() => { window.location.href = '/'; }, 2000);
+            } catch (error) { console.error('Ürün eklenirken hata oluştu:', error); showToast(error.message, 'error'); }
         });
-
-        const userControlsContainer = document.getElementById('user-controls-container');
 
         function setupUserMenu() {
             const menuButton = document.getElementById('user-menu-button');
             const dropdown = document.getElementById('user-dropdown-content');
             if (!menuButton || !dropdown) return;
-
-            menuButton.addEventListener('click', () => {
-                dropdown.classList.toggle('show');
-            });
-
-            window.addEventListener('click', (event) => {
-                if (!event.target.matches('#user-menu-button')) {
-                    if (dropdown.classList.contains('show')) {
-                        dropdown.classList.remove('show');
-                    }
-                }
-            });
-
+             menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+             window.addEventListener('click', (event) => {
+                 if (!menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                      if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                 }
+             });
             const logoutButton = document.getElementById('logout-button');
             if (logoutButton) {
-                logoutButton.addEventListener('click', () => {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login.html';
-                });
+                logoutButton.addEventListener('click', () => { localStorage.removeItem('token'); window.location.href = '/login.html'; });
+            }
+        }
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+        function setupHeader() {
+            const token = localStorage.getItem('token');
+            userControlsContainer.innerHTML = '';
+            let user = null;
+            if (token) user = parseJwt(token);
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-settings.html">Site Ayarları</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+                 setupUserMenu();
+            } else {
+                 showToast('Bu sayfaya erişim yetkiniz yok.', 'error');
+                 setTimeout(() => { window.location.href = '/login.html'; }, 1500);
             }
         }
 
         window.onload = () => {
-            const token = localStorage.getItem('token');
-            userControlsContainer.innerHTML = '';
-
-            if (token) {
-                const user = parseJwt(token);
-                if (user && user.role === 'admin') {
-                    userControlsContainer.innerHTML = `
-                        <div class="user-dropdown">
-                            <button id="user-menu-button" class="user-menu-button">
-                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
-                            </button>
-                            <div id="user-dropdown-content" class="dropdown-content">
-                                <a href="/admin-settings.html">Site Ayarları</a>
-                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
-                            </div>
-                        </div>
-                    `;
-                } else if (user) {
-                    userControlsContainer.innerHTML = `
-                        <div class="cart-link"><a href="/cart.html">Sepetim</a></div>
-                        <div class="user-dropdown">
-                            <button id="user-menu-button" class="user-menu-button">
-                                ${user.firstName} <span class="arrow">&#9662;</span>
-                            </button>
-                            <div id="user-dropdown-content" class="dropdown-content">
-                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
-                            </div>
-                        </div>
-                    `;
-                }
-                setupUserMenu();
-            } else {
-                showToast('Bu sayfayı görmek için giriş yapmalısınız.', 'error');
-                setTimeout(() => { window.location.href = '/login.html'; }, 1500);
-            }
+            setupHeader();
         };
     </script>
 </body>

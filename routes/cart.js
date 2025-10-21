@@ -74,11 +74,11 @@ router.get('/', authenticateToken, async (req, res) => {
 
     try {
         const query = `
-            SELECT 
-                p.id, 
-                p.name, 
-                p.price, 
-                ci.quantity 
+            SELECT
+                p.id,
+                p.name,
+                p.price,
+                ci.quantity
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
             JOIN carts c ON ci.cart_id = c.id
@@ -86,12 +86,21 @@ router.get('/', authenticateToken, async (req, res) => {
         `;
 
         const cartItemsResult = await pool.query(query, [userId]);
+        const items = cartItemsResult.rows;
 
-        res.status(200).json(cartItemsResult.rows);
+        let totalQuantity = 0;
+        items.forEach(item => {
+            totalQuantity += item.quantity;
+        });
+
+        res.status(200).json({
+            items: items,
+            totalQuantity: totalQuantity
+        });
 
     } catch (err) {
         console.error('Sepet getirilirken hata:', err);
-        res.status(500).json({ error: 'Sunucuda bir hata oluştu' });
+        res.status(500).json({ items: [], totalQuantity: 0, error: 'Sunucuda bir hata oluştu' });
     }
 });
 

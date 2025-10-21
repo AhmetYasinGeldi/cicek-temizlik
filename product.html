@@ -11,16 +11,13 @@
     <header class="site-header">
         <div class="site-logo"></div>
         <nav class="center-nav"></nav> 
-        <div class="user-controls" id="user-controls-container">
-            </div>
+        <div class="user-controls" id="user-controls-container"></div>
     </header>
 
     <main class="container">
         <a href="/">&larr; Geri Dön</a>
         <hr style="margin: 15px 0 20px 0;">
-
-        <div id="product-detail-container">
-            </div>
+        <div id="product-detail-container"></div>
     </main>
 
     <footer class="site-footer">
@@ -37,41 +34,30 @@
 
     <script src="/common.js"></script>
     <script>
-        
         async function loadProduct() {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
             const container = document.getElementById('product-detail-container');
             const token = localStorage.getItem('token');
             let user = null;
-            if (token) {
-                user = parseJwt(token);
-            }
+            if (token) user = parseJwt(token);
 
             if (!productId) {
-                container.innerHTML = '<h1>Ürün ID\'si bulunamadı.</h1>';
-                return;
+                container.innerHTML = '<h1>Ürün ID\'si bulunamadı.</h1>'; return;
             }
 
             try {
                 const headers = {};
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-
+                if (token) headers['Authorization'] = `Bearer ${token}`;
                 const response = await fetch(`/api/products/${productId}`, { headers: headers });
                 
                 if (!response.ok) {
-                    container.innerHTML = '<h1>Ürün bulunamadı veya görme yetkiniz yok.</h1>';
-                    return;
+                    container.innerHTML = '<h1>Ürün bulunamadı veya görme yetkiniz yok.</h1>'; return;
                 }
 
                 const product = await response.json();
-                
                 document.title = `${product.name} - Çiçek Temizlik`;
-
-                let cartButtonHTML = '';
-                let priceHTML = '';
+                let cartButtonHTML = ''; let priceHTML = '';
                 
                 if (product.stock_quantity > 0) {
                     priceHTML = `<div class="price-detail">${product.price} TL</div>`;
@@ -87,58 +73,42 @@
                         <div class="admin-actions-detail">
                             <a href="edit_product.html?id=${product.id}" class="edit-btn-detail">Düzenle</a>
                             <button id="delete-button" class="delete-btn-detail">Bu Ürünü Sil</button>
-                        </div>
-                    `;
+                        </div>`;
                 }
 
                 container.innerHTML = `
                     <div class="product-detail-layout">
-                        <div class="product-image-area">
-                            <div class="placeholder">(Ürün Fotoğrafı)</div>
-                        </div>
-
+                        <div class="product-image-area"><div class="placeholder">(Ürün Fotoğrafı)</div></div>
                         <div class="product-info-area">
                             <h1>${product.name}</h1>
                             ${priceHTML}
-                            <div class="description-detail">
-                                <p>${product.description || 'Bu ürün için açıklama girilmemiştir.'}</p>
-                            </div>
-                            <div class="product-actions-detail">
-                                ${cartButtonHTML}
-                            </div>
+                            <div class="description-detail"><p>${product.description || 'Bu ürün için açıklama girilmemiştir.'}</p></div>
+                            <div class="product-actions-detail">${cartButtonHTML}</div>
                             ${adminActionsHTML}
                         </div>
-                    </div>
-                `;
-
+                    </div>`;
 
                 const addToCartButton = document.getElementById('add-to-cart-btn-detail');
                 if (addToCartButton) {
                     addToCartButton.addEventListener('click', async () => {
                         if (!token) {
                             showToast('Lütfen önce giriş yapın.', 'error');
-                            setTimeout(() => window.location.href = '/login.html', 1500);
-                            return;
+                            setTimeout(() => window.location.href = '/login.html', 1500); return;
                         }
                         try {
                             const cartResponse = await fetch('/api/cart/items', {
                                 method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                                 body: JSON.stringify({ productId: parseInt(productId), quantity: 1 })
                             });
                             if (cartResponse.ok) {
                                 showToast('Ürün sepete eklendi!');
+                                setupHeader(); 
                             } else {
                                 const errorData = await cartResponse.json();
                                 showToast(errorData.error || 'Ürün eklenemedi.', 'error');
                             }
-                        } catch (error) {
-                            console.error('Sepete ekleme hatası:', error);
-                            showToast('Bir hata oluştu.', 'error');
-                        }
+                        } catch (error) { console.error('Sepete ekleme hatası:', error); showToast('Bir hata oluştu.', 'error'); }
                     });
                 }
                 
@@ -146,104 +116,98 @@
                     const deleteButton = document.getElementById('delete-button');
                     if(deleteButton) {
                         deleteButton.addEventListener('click', async () => {
-                            if (!confirm('Bu ürünü kalıcı olarak silmek istediğinizden emin misiniz?')) { return; }
+                            if (!confirm('Bu ürünü kalıcı olarak silmek istediğinizden emin misiniz?')) return;
                             try {
-                                const deleteResponse = await fetch(`/api/products/${productId}`, {
-                                    method: 'DELETE',
-                                    headers: { 'Authorization': `Bearer ${token}` }
-                                });
+                                const deleteResponse = await fetch(`/api/products/${productId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
                                 if (deleteResponse.ok) {
                                     showToast('Ürün başarıyla silindi!');
                                     setTimeout(() => window.location.href = '/', 1500);
-                                } else {
-                                    showToast('Ürün silinirken bir hata oluştu.', 'error');
-                                }
-                            } catch (error) {
-                                console.error('Silme hatası:', error);
-                                showToast('Bir hata oluştu.', 'error');
-                            }
+                                } else { showToast('Ürün silinirken bir hata oluştu.', 'error'); }
+                            } catch (error) { console.error('Silme hatası:', error); showToast('Bir hata oluştu.', 'error'); }
                         });
                     }
                 }
-
             } catch (error) {
                 console.error('Detay verisi çekerken bir hata oluştu:', error);
                 container.innerHTML = '<h1>Bir hata oluştu. Lütfen tekrar deneyin.</h1>';
             }
         };
 
-        const userControlsContainer = document.getElementById('user-controls-container');
-
-        function setupUserMenu() {
+            function setupUserMenu() {
             const menuButton = document.getElementById('user-menu-button');
             const dropdown = document.getElementById('user-dropdown-content');
             if (!menuButton || !dropdown) return;
-
-            menuButton.addEventListener('click', () => {
-                dropdown.classList.toggle('show');
-            });
-
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
             window.addEventListener('click', (event) => {
                 if (!event.target.matches('#user-menu-button')) {
-                    if (dropdown.classList.contains('show')) {
-                        dropdown.classList.remove('show');
-                    }
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
                 }
             });
-
             const logoutButton = document.getElementById('logout-button');
             if (logoutButton) {
                 logoutButton.addEventListener('click', () => {
                     localStorage.removeItem('token');
-                    window.location.href = '/login.html';
+                    window.location.reload();
                 });
             }
-        }
+        } 
 
-        function setupHeader() {
+        const userControlsContainer = document.getElementById('user-controls-container');
+        async function setupHeader() { 
             const token = localStorage.getItem('token');
-            userControlsContainer.innerHTML = '';
+            userControlsContainer.innerHTML = ''; 
+            let cartItemCount = 0; 
+            let isCustomer = false; 
+            let user = null;
             if (token) {
-                const user = parseJwt(token);
-                if (user && user.role === 'admin') {
-                    userControlsContainer.innerHTML = `
-                        <div class="user-dropdown">
-                            <button id="user-menu-button" class="user-menu-button">
-                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
-                            </button>
-                            <div id="user-dropdown-content" class="dropdown-content">
-                                <a href="/admin-settings.html">Site Ayarları</a>
-                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
-                            </div>
-                        </div>
-                    `;
-                } else if (user) {
-                    userControlsContainer.innerHTML = `
-                        <div class="cart-link"><a href="/cart.html">Sepetim</a></div>
-                        <div class="user-dropdown">
-                            <button id="user-menu-button" class="user-menu-button">
-                                ${user.firstName} <span class="arrow">&#9662;</span>
-                            </button>
-                            <div id="user-dropdown-content" class="dropdown-content">
-                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
-                            </div>
-                        </div>
-                    `;
+                user = parseJwt(token);
+                if (user && user.role !== 'admin') isCustomer = true;
+            }
+            if (isCustomer) {
+            try {
+                const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (response.ok) {
+                    const cartData = await response.json();
+                    cartItemCount = cartData.totalQuantity;
+                } else {
+                    console.error('Sepet sayısı alınamadı.');
                 }
-                setupUserMenu();
+            } catch (error) { console.error('Sepet sayısı alınırken hata:', error); }
+            }
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-settings.html">Site Ayarları</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else if (user) {
+                const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
+                userControlsContainer.innerHTML = `
+                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">${cartText}</a></div>
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
             } else {
                 userControlsContainer.innerHTML = `
-                    <div class="cart-link"><a href="/cart.html">Sepetim</a></div>
-                    <div class="user-login-link">
-                        <a href="/login.html">Giriş Yap</a>
-                    </div>
-                `;
+                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">Sepetim</a></div>
+                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
             }
+            if (user) setupUserMenu(); 
         }
 
-        window.onload = () => {
-            setupHeader();
-            loadProduct();
+        window.onload = async () => {
+            await setupHeader();
+            loadProduct();  
         };
     </script>
 </body>

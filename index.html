@@ -10,18 +10,13 @@
 
     <header class="site-header">
         <div class="site-logo"></div>
-        
         <nav class="center-nav"></nav> 
-
-        <div class="user-controls" id="user-controls-container">
-            </div>
+        <div class="user-controls" id="user-controls-container"></div>
     </header>
 
     <main class="container">
         <h1>Ürünlerimiz</h1>
-        <div class="admin-controls" id="admin-controls">
-            </div>
-        
+        <div class="admin-controls" id="admin-controls"></div>
         <div id="products-container"></div>
     </main>
 
@@ -39,7 +34,6 @@
 
     <script src="/common.js"></script>
     <script>
-
         const userControlsContainer = document.getElementById('user-controls-container');
         const adminControls = document.getElementById('admin-controls');
         const productsContainer = document.getElementById('products-container');
@@ -51,7 +45,7 @@
             const saveButtons = document.querySelectorAll('.admin-save-btn');
             saveButtons.forEach(button => {
                 button.addEventListener('click', async (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); 
                     const productId = button.dataset.productId;
                     const token = localStorage.getItem('token');
                     if (!token) return;
@@ -59,7 +53,6 @@
                     const priceInput = document.getElementById(`price-${productId}`);
                     const activeCheckbox = document.getElementById(`active-${productId}`);
                     const stockInput = document.getElementById(`stock-${productId}`);
-
                     const originalProduct = allProductsData.find(p => p.id == productId);
                     
                     const updatedData = {
@@ -76,7 +69,6 @@
                             body: JSON.stringify(updatedData)
                         });
                         if (!response.ok) throw new Error('Güncelleme başarısız.');
-
                         showToast('Değişiklikler kaydedildi!');
                         fetchAndDisplayProducts(); 
                     } catch (error) {
@@ -91,7 +83,7 @@
             const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
             addToCartButtons.forEach(button => {
                 button.addEventListener('click', async (event) => {
-                    event.preventDefault();
+                    event.preventDefault(); 
                     event.stopPropagation();
                     button.disabled = true;
                     button.textContent = 'Ekleniyor...';
@@ -100,9 +92,7 @@
                     if (!token) {
                         showToast('Lütfen önce giriş yapın.', 'error');
                         setTimeout(() => window.location.href = '/login.html', 1500);
-                        button.disabled = false;
-                        button.textContent = 'Sepete Ekle';
-                        return;
+                        button.disabled = false; button.textContent = 'Sepete Ekle'; return;
                     }
                     
                     const productId = button.dataset.productId;
@@ -114,6 +104,7 @@
                         });
                         if (response.ok) {
                             showToast('Ürün sepete eklendi!');
+                            setupHeader(); 
                         } else {
                             const errorData = await response.json();
                             showToast(errorData.error || 'Ürün eklenemedi.', 'error');
@@ -122,8 +113,7 @@
                         console.error('Sepete ekleme hatası:', error);
                         showToast('Bir hata oluştu.', 'error');
                     } finally {
-                        button.disabled = false;
-                        button.textContent = 'Sepete Ekle';
+                        button.disabled = false; button.textContent = 'Sepete Ekle';
                     }
                 });
             });
@@ -139,9 +129,7 @@
 
                 if (isAdmin) {
                     const settingsResponse = await fetch('/api/settings', { headers: headers });
-                    if(settingsResponse.ok) {
-                        siteSettings = await settingsResponse.json();
-                    }
+                    if(settingsResponse.ok) siteSettings = await settingsResponse.json();
                 }
 
                 const response = await fetch('/api/products', { headers: headers });
@@ -149,102 +137,75 @@
                 
                 const products = await response.json();
                 allProductsData = products;
-                productsContainer.innerHTML = '';
+                productsContainer.innerHTML = ''; 
 
                 products.forEach(product => {
                     const productCard = document.createElement('div');
                     productCard.className = 'product';
-
                     const imagePlaceholder = document.createElement('div');
                     imagePlaceholder.className = 'product-image-placeholder';
                     imagePlaceholder.innerHTML = `<span>(Ürün Fotoğrafı)</span>`;
                     productCard.appendChild(imagePlaceholder);
 
-
-                if (isAdmin) {
-
-                    productCard.dataset.href = `edit_product.html?id=${product.id}`;
-                    productCard.style.cursor = 'pointer';
-
-                    let criticalStockIcon = '';
-                    if (product.is_active && product.stock_quantity > 0) {
-                        let effectiveThreshold = 0;
-                        if (product.critical_stock_threshold != null && product.critical_stock_threshold > 0) {
-                            effectiveThreshold = product.critical_stock_threshold;
-                        } else if (siteSettings.critical_stock_percentage != null && siteSettings.critical_stock_percentage > 0) {
-                            effectiveThreshold = parseInt(siteSettings.critical_stock_percentage);
-                        }
-                        if (effectiveThreshold > 0 && product.stock_quantity <= effectiveThreshold) {
-                            criticalStockIcon = `<span class="critical-stock-warning" title="Stok kritik seviyede!"></span>`;
-                        }
-                    }
-
-                    const infoDiv = document.createElement('div');
-                    infoDiv.className = 'product-info';
-                    infoDiv.innerHTML = `<h2>${product.name} ${criticalStockIcon}</h2>`;
-
-                    if (!product.is_active) {
-                        productCard.style.opacity = '0.6';
-                        infoDiv.innerHTML += product.stock_quantity <= 0 ? '<p style="color: red; font-weight: bold;">Stok Bitti & Satışta Değil</p>' : '<p style="color: red; font-weight: bold;">Satışta Değil</p>';
-                    } else if (product.stock_quantity <= 0) {
-                        infoDiv.innerHTML += '<p style="color: orange; font-weight: bold;">Stok Bitti</p>';
-                    }
-
-                    productCard.appendChild(infoDiv);
-
-                    const priceStep = siteSettings.quick_edit_price_step || 5;
-                    const adminControlsDiv = document.createElement('div');
-                    adminControlsDiv.className = 'admin-product-controls';
-                    adminControlsDiv.innerHTML = `
-                        <div><label>Fiyat:</label><input type="number" id="price-${product.id}" value="${product.price}" step="${priceStep}"></div>
-                        <div><label>Stok:</label><input type="number" id="stock-${product.id}" value="${product.stock_quantity}" min="0"></div>
-                        <div><label>Satışta mı?</label><input type="checkbox" id="active-${product.id}" ${product.is_active ? 'checked' : ''}></div>
-                        <button class="admin-save-btn" data-product-id="${product.id}">Hızlı Kaydet</button>
-                    `;
-                    productCard.appendChild(adminControlsDiv);
-
-                } else {
-
-                    const link = document.createElement('a');
-                    link.href = `product.html?id=${product.id}`;
-                    link.style.textDecoration = 'none';
-                    link.style.color = 'inherit';
-
-                    const infoDiv = document.createElement('div');
-                    infoDiv.className = 'product-info';
-
-                    let buttonHTML = '';
-                    let priceClass = '';
-
-                    if (product.stock_quantity > 0) {
-                        buttonHTML = `<button class="add-to-cart-btn" data-product-id="${product.id}">Sepete Ekle</button>`;
-                        priceClass = "price";
-                    } else {
-                        buttonHTML = `<button class="out-of-stock-btn" disabled>Stokta Yok</button>`;
-                        priceClass = "price price-out-of-stock";
-                    }
-
-                    infoDiv.innerHTML = `
-                        <h2>${product.name}</h2>
-                        <p class="${priceClass}">${product.price} TL</p>
-                        ${buttonHTML}
-                    `;
-
-                    productCard.appendChild(infoDiv);
-                    link.appendChild(productCard);
-                    productsContainer.appendChild(link);
-                }
-
                     if (isAdmin) {
+                        productCard.dataset.href = `edit_product.html?id=${product.id}`;
+                        productCard.style.cursor = 'pointer';
+                        let criticalStockIcon = '';
+                        if (product.is_active && product.stock_quantity > 0) {
+                            let effectiveThreshold = 0;
+                            if (product.critical_stock_threshold != null && product.critical_stock_threshold > 0) {
+                                effectiveThreshold = product.critical_stock_threshold;
+                            } else if (siteSettings.critical_stock_percentage != null && siteSettings.critical_stock_percentage > 0) {
+                                effectiveThreshold = parseInt(siteSettings.critical_stock_percentage);
+                            }
+                            if (effectiveThreshold > 0 && product.stock_quantity <= effectiveThreshold) {
+                                criticalStockIcon = `<span class="critical-stock-warning" title="Stok kritik seviyede!"></span>`;
+                            }
+                        }
+                        const infoDiv = document.createElement('div');
+                        infoDiv.className = 'product-info';
+                        infoDiv.innerHTML = `<h2>${product.name} ${criticalStockIcon}</h2>`;
+                        if (!product.is_active) {
+                            productCard.style.opacity = '0.6';
+                            infoDiv.innerHTML += product.stock_quantity <= 0 ? '<p style="color: red; font-weight: bold;">Stok Bitti & Satışta Değil</p>' : '<p style="color: red; font-weight: bold;">Satışta Değil</p>';
+                        } else if (product.stock_quantity <= 0) {
+                            infoDiv.innerHTML += '<p style="color: orange; font-weight: bold;">Stok Bitti</p>';
+                        }
+                        productCard.appendChild(infoDiv);
+                        const priceStep = siteSettings.quick_edit_price_step || 5;
+                        const adminControlsDiv = document.createElement('div');
+                        adminControlsDiv.className = 'admin-product-controls';
+                        adminControlsDiv.innerHTML = `
+                            <div><label>Fiyat:</label><input type="number" id="price-${product.id}" value="${product.price}" step="${priceStep}"></div>
+                            <div><label>Stok:</label><input type="number" id="stock-${product.id}" value="${product.stock_quantity}" min="0"></div>
+                            <div><label>Satışta mı?</label><input type="checkbox" id="active-${product.id}" ${product.is_active ? 'checked' : ''}></div>
+                            <button class="admin-save-btn" data-product-id="${product.id}">Hızlı Kaydet</button>
+                        `;
+                        productCard.appendChild(adminControlsDiv);
                         productsContainer.appendChild(productCard);
+                    } else {
+                        const link = document.createElement('a');
+                        link.href = `product.html?id=${product.id}`;
+                        link.style.textDecoration = 'none'; link.style.color = 'inherit';
+                        const infoDiv = document.createElement('div');
+                        infoDiv.className = 'product-info';
+                        let buttonHTML = ''; let priceClass = '';
+                        if (product.stock_quantity > 0) {
+                            buttonHTML = `<button class="add-to-cart-btn" data-product-id="${product.id}">Sepete Ekle</button>`;
+                            priceClass = "price";
+                        } else {
+                            buttonHTML = `<button class="out-of-stock-btn" disabled>Stokta Yok</button>`;
+                            priceClass = "price price-out-of-stock";
+                        }
+                        infoDiv.innerHTML = `<h2>${product.name}</h2><p class="${priceClass}">${product.price} TL</p>${buttonHTML}`;
+                        productCard.appendChild(infoDiv);
+                        link.appendChild(productCard);
+                        productsContainer.appendChild(link);
                     }
                 });
 
-                if (isAdmin) {
-                    addAdminSaveListeners();
-                } else {
-                    addCartButtonListeners();
-                }
+                if (isAdmin) addAdminSaveListeners();
+                else addCartButtonListeners();
             } catch (error) {
                 console.error('Veri çekerken bir hata oluştu:', error);
                 productsContainer.innerText = 'Ürünler yüklenemedi.';
@@ -252,32 +213,21 @@
         }
         
         productsContainer.addEventListener('click', (event) => {
-            if (event.target.closest('input, button, label')) {
-                return;
-            }
+            if (event.target.closest('input, button, label')) return;
             const productCard = event.target.closest('.product');
-            if (productCard && productCard.dataset.href) {
-                window.location.href = productCard.dataset.href;
-            }
+            if (productCard && productCard.dataset.href) window.location.href = productCard.dataset.href;
         });
         
         function setupUserMenu() {
             const menuButton = document.getElementById('user-menu-button');
             const dropdown = document.getElementById('user-dropdown-content');
             if (!menuButton || !dropdown) return;
-
-            menuButton.addEventListener('click', () => {
-                dropdown.classList.toggle('show');
-            });
-
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
             window.addEventListener('click', (event) => {
                 if (!event.target.matches('#user-menu-button')) {
-                    if (dropdown.classList.contains('show')) {
-                        dropdown.classList.remove('show');
-                    }
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
                 }
             });
-
             const logoutButton = document.getElementById('logout-button');
             if (logoutButton) {
                 logoutButton.addEventListener('click', () => {
@@ -287,52 +237,67 @@
             }
         }
 
-        window.onload = () => {
+        async function setupHeader() { 
             const token = localStorage.getItem('token');
-            adminControls.innerHTML = '';
-            userControlsContainer.innerHTML = '';
-
+            userControlsContainer.innerHTML = ''; 
+            let cartItemCount = 0; 
+            let isCustomer = false; 
+            let user = null;
             if (token) {
-                const user = parseJwt(token);
-                if (user && user.role === 'admin') {
-                    userControlsContainer.innerHTML = `
-                        <div class="user-dropdown">
-                            <button id="user-menu-button" class="user-menu-button">
-                                ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
-                            </button>
-                            <div id="user-dropdown-content" class="dropdown-content">
-                                <a href="/admin-settings.html">Site Ayarları</a>
-                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
-                            </div>
-                        </div>
-                    `;
-                    adminControls.innerHTML = '<a href="/add_product.html">+ Yeni Ürün Ekle</a>';
-                
-                } else if (user) {
-                    userControlsContainer.innerHTML = `
-                        <div class="cart-link" id="cart-link-container">
-                            <a href="/cart.html">Sepetim</a>
-                        </div>
-                        <div class="user-dropdown">
-                            <button id="user-menu-button" class="user-menu-button">
-                                ${user.firstName} <span class="arrow">&#9662;</span>
-                            </button>
-                            <div id="user-dropdown-content" class="dropdown-content">
-                                <button id="logout-button" class="logout-button">Çıkış Yap</button>
-                            </div>
-                        </div>
-                    `;
+                user = parseJwt(token);
+                if (user && user.role !== 'admin') isCustomer = true;
+            }
+            if (isCustomer) {
+            try {
+                const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (response.ok) {
+                    const cartData = await response.json();
+                    cartItemCount = cartData.totalQuantity;
+                } else {
+                    console.error('Sepet sayısı alınamadı.');
                 }
-                setupUserMenu();
+            } catch (error) { console.error('Sepet sayısı alınırken hata:', error); }
+            }
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-settings.html">Site Ayarları</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else if (user) {
+                const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
+                userControlsContainer.innerHTML = `
+                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">${cartText}</a></div>
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
             } else {
                 userControlsContainer.innerHTML = `
-                    <div class="cart-link" id="cart-link-container">
-                        <a href="/cart.html">Sepetim</a>
-                    </div>
-                    <div class="user-login-link">
-                        <a href="/login.html">Giriş Yap</a>
-                    </div>
-                `;
+                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">Sepetim</a></div>
+                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
+            }
+            if (user) setupUserMenu(); 
+        }
+
+        window.onload = async () => {
+            await setupHeader();
+            
+            const token = localStorage.getItem('token');
+            const user = token ? parseJwt(token) : null;
+            if (user && user.role === 'admin') {
+                adminControls.innerHTML = '<a href="/add_product.html">+ Yeni Ürün Ekle</a>';
+            } else {
+                adminControls.innerHTML = '';
             }
             
             fetchAndDisplayProducts();
