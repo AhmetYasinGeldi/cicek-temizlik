@@ -14,21 +14,34 @@ This project is a full-featured e-commerce platform for "Çiçek Temizlik," a fa
 
 ### ✨ Features
 
-- **User Management:**
-  - [x] User registration and login
-  - [x] Role-based authorization (Customer & Admin)
-- **Product Management:**
-  - [x] List all products and view details
-  - [ ] Product searching and filtering
-  - [x] Admin panel for product creation, deletion, and updates (CRUD)
-- **Shopping Cart:**
-  - [x] Add products to cart and remove them
-  - [x] Update product quantity in the cart
-- **Order Management:**
-  - [ ] Checkout process and order creation
-  - [ ] Ability for users to view their order history
-  - [ ] Ability for admins to view and manage all orders
-- *... and many more features are planned!*
+   * User Management:
+       * Secure user registration and login (passwords are hashed).
+       * JWT-based authentication and authorization.
+       * Admin and regular user roles.
+   * Product Management (Admin Panel):
+       * Add, edit, and delete products.
+       * Manage product name, price, description, stock quantity, and active status.
+       * Product image upload and cropping feature.
+       * Set product-specific critical stock thresholds.
+       * Define product-specific out-of-stock display rules (hide/show).
+       * Quick editing for products on the homepage (price, stock, active status).
+   * Cart Management:
+       * Users can add, remove, and update product quantities in their cart.
+       * Stock control and insufficient stock warnings.
+       * View cart contents and total price.
+   * System Settings (Admin Panel):
+       * Enable/disable general sales status.
+       * Define general out-of-stock product display rules.
+       * Set a general critical stock threshold.
+       * Configure quick price adjustment step for admin panel.
+       * Reset all product stock behavior or critical stock thresholds to general
+         settings.
+   * User Interface and Experience:
+       * Modern and responsive design.
+       * Light and Dark Mode theme support.
+       * Toast notifications for user feedback.
+       * Confirmation modals for critical actions.
+   *   * ... and many more features are planned!
 
 ---
 
@@ -37,7 +50,9 @@ This project is a full-featured e-commerce platform for "Çiçek Temizlik," a fa
 - **Backend:** Node.js, Express.js
 - **Database:** PostgreSQL
 - **Frontend:** HTML, CSS, JavaScript
-- **Others:** JWT (for Authentication)
+- **Authentication:** JWT, bcrypt
+- **File Uploads:** Multer
+- **Image Processing:** Jimp (for product image cropping)
 
 ---
 
@@ -99,21 +114,33 @@ Bu proje, bir aile şirketi olan "Çiçek Temizlik" için geliştirilmiş tam ö
 
 ### ✨ Özellikler
 
-- **Kullanıcı Yönetimi:**
-  - [x] Üye olma ve giriş yapma
-  - [x] Rol tabanlı yetkilendirme (Müşteri ve Yönetici)
-- **Ürün Yönetimi:**
-  - [x] Tüm ürünleri listeleme ve detaylarını görme
-  - [ ] Ürün arama ve filtreleme
-  - [x] Yönetici panelinden ürün ekleme, silme ve güncelleme (CRUD)
-- **Alışveriş Sepeti:**
-  - [x] Ürünleri sepete ekleme ve sepetten çıkarma
-  - [x] Sepetteki ürün miktarını güncelleme
-- **Sipariş Yönetimi:**
-  - [ ] Ödeme adımları ve sipariş oluşturma
-  - [ ] Kullanıcının geçmiş siparişlerini görmesi
-  - [ ] Yöneticinin tüm siparişleri görmesi ve yönetmesi
-- *... ve daha birçok özellik planlanmaktadır!*
+   * Kullanıcı Yönetimi:
+       * Güvenli kullanıcı kaydı ve girişi (şifreler hash'lenir).
+       * JWT tabanlı kimlik doğrulama ve yetkilendirme.
+       * Admin ve normal kullanıcı rolleri.
+   * Ürün Yönetimi (Admin Paneli):
+       * Ürün ekleme, düzenleme ve silme.
+       * Ürün adı, fiyatı, açıklaması, stok miktarı, aktiflik durumu yönetimi.
+       * Ürün resmi yükleme ve kırpma özelliği.
+       * Ürüne özel kritik stok eşiği belirleme.
+       * Ürüne özel stokta yoksa gösterim kuralı (gizle/göster) belirleme.
+       * Ana sayfada ürünler için hızlı düzenleme (fiyat, stok, aktiflik).
+   * Sepet Yönetimi:
+       * Kullanıcıların sepete ürün eklemesi, çıkarması ve miktarını güncellemesi.
+       * Stok kontrolü ve yetersiz stok uyarısı.
+       * Sepet içeriğini ve toplam fiyatı görüntüleme.
+   * Sistem Ayarları (Admin Paneli):
+       * Genel satış durumunu açma/kapama.
+       * Genel stokta yoksa ürün gösterim kuralı belirleme.
+       * Genel kritik stok eşiği belirleme.
+       * Hızlı fiyat değişim adımı ayarlama.
+       * Tüm ürünlerin stok davranışını veya kritik stok eşiğini genel ayarlara sıfırlama.
+   * Kullanıcı Arayüzü ve Deneyimi:
+       * Modern ve duyarlı tasarım.
+       * Açık ve koyu tema (Dark Mode) desteği.
+       * Toast bildirimleri ile kullanıcı geri bildirimi.
+       * Onay modal pencereleri ile kritik işlemler için doğrulama.
+   *   * ... ve daha birçok özellik planlanmaktadır!*
 
 ---
 
@@ -122,7 +149,9 @@ Bu proje, bir aile şirketi olan "Çiçek Temizlik" için geliştirilmiş tam ö
 - **Backend:** Node.js, Express.js
 - **Veritabanı:** PostgreSQL
 - **Frontend:** HTML, CSS, JavaScript
-- **Diğer:** JWT (Kimlik Doğrulama için)
+- **Kimlik Doğrulama:** JWT, bcrypt
+- **Diğer:** Dosya Yükleme: Multer
+- **Görüntü İşleme:** Jimp (ürün resmi kırpma için)
 
 ---
 
