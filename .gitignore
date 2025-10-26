@@ -1,5 +1,6 @@
 node_modules
 .env
+GEMINI.md
 
 *.rsuser
 *.suo

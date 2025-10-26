@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ürün Detayı</title>
+    <title>Ödeme - Çiçek Temizlik</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -27,9 +27,32 @@
     </header>
 
     <main class="container">
-        <a href="/" class="btn btn-link">&larr; Geri Dön</a>
-        <hr style="margin: 15px 0 20px 0;">
-        <div id="product-detail-container"></div>
+        <div class="checkout-container">
+            <h1>Ödeme</h1>
+            
+            <!-- Sipariş Özeti -->
+            <div id="order-summary-section" class="checkout-section">
+                <h2>Sipariş Özeti</h2>
+                <div id="summary-cart-items"></div>
+                <div id="summary-total"></div>
+            </div>
+
+            <!-- Teslimat Adresi -->
+            <div id="address-section" class="checkout-section">
+                <h2>Teslimat Adresi</h2>
+                <div id="saved-addresses"></div>
+                <div id="new-address-form"></div>
+            </div>
+
+            <!-- Ödeme Bilgileri -->
+            <div id="payment-section" class="checkout-section">
+                <h2>Ödeme Bilgileri</h2>
+                <div id="saved-cards"></div>
+                <div id="new-card-form"></div>
+            </div>
+
+            <button id="place-order-btn" class="btn btn-primary btn-block">Siparişi Tamamla</button>
+        </div>
     </main>
 
     <footer class="site-footer">
@@ -46,111 +69,139 @@
 
     <script src="/common.js"></script>
     <script>
-        async function loadProduct() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const productId = urlParams.get('id');
-            const container = document.getElementById('product-detail-container');
-            const token = localStorage.getItem('token');
-            let user = null;
-            if (token) user = parseJwt(token);
+        // Mock Data
+        const mockAddresses = [
+            { id: 1, name: 'Ev Adresi', address: 'Karanfil Sokak, No: 12, Daire: 3, Beşiktaş, İstanbul' },
+            { id: 2, name: 'İş Adresi', address: 'Levent Caddesi, No: 45, Ofis: 10, Şişli, İstanbul' }
+        ];
 
-            if (!productId) {
-                container.innerHTML = '<h1>Ürün ID\'si bulunamadı.</h1>'; return;
+        const mockCards = [
+            { id: 1, name: 'Garanti Kartım', last4: '1234' },
+            { id: 2, name: 'İş Bankası Kartım', last4: '5678' }
+        ];
+
+        async function displayOrderSummary() {
+            const summaryItemsContainer = document.getElementById('summary-cart-items');
+            const summaryTotalContainer = document.getElementById('summary-total');
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                summaryItemsContainer.innerHTML = '<p>Sipariş özetini görmek için lütfen <a href="/login.html">giriş yapın</a>.</p>';
+                return;
             }
 
             try {
-                const headers = {};
-                if (token) headers['Authorization'] = `Bearer ${token}`;
-                const response = await fetch(`/api/products/${productId}`, { headers: headers });
-                
-                if (!response.ok) {
-                    container.innerHTML = '<h1>Ürün bulunamadı veya görme yetkiniz yok.</h1>'; return;
+                const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Sepet yüklenemedi.');
+                const cartData = await response.json();
+
+                if (cartData.items.length === 0) {
+                    summaryItemsContainer.innerHTML = '<p>Sepetiniz boş.</p>';
+                    summaryTotalContainer.innerHTML = ''; // Clear total if cart is empty
+                    document.getElementById('place-order-btn').disabled = true; // Disable checkout button
+                    return;
                 }
 
-                const product = await response.json();
-                document.title = `${product.name} - Çiçek Temizlik`;
-                let cartButtonHTML = ''; let priceHTML = '';
-                
-                if (product.stock_quantity > 0) {
-                    priceHTML = `<div class="price-detail">${product.price} TL</div>`;
-                    cartButtonHTML = `<button id="add-to-cart-btn-detail" class="btn btn-primary">Sepete Ekle</button>`;
-                } else {
-                    priceHTML = `<div class="price-detail-out-of-stock">${product.price} TL</div>`;
-                    cartButtonHTML = `<button class="btn" disabled>Stokta Yok</button>`;
-                }
-                
-                let adminActionsHTML = '';
-                if (user && user.role === 'admin') {
-                    adminActionsHTML = `
-                        <div class="admin-actions-detail">
-                            <a href="edit_product.html?id=${product.id}" class="edit-btn-detail">Düzenle</a>
-                            <button id="delete-button" class="delete-btn-detail">Bu Ürünü Sil</button>
-                        </div>`;
-                }
+                summaryItemsContainer.innerHTML = cartData.items.map(item => {
+                    const price = parseFloat(item.price);
+                    return `
+                    <div class="summary-item">
+                        <span class="summary-item-name">${item.name}</span>
+                        <span class="summary-item-calc">${item.quantity} x ${price.toFixed(2)} TL</span>
+                        <span class="summary-item-subtotal">${(price * item.quantity).toFixed(2)} TL</span>
+                    </div>
+                `}).join('');
 
-                container.innerHTML = `
-                    <div class="product-detail-layout">
-                    <div class="product-image-area">
-                        ${product.image_url
-                            ? `<img src="${product.image_url}" alt="${product.name}">` // Sadece img
-                            : `<div class="product-image-placeholder-content"><span>(Ürün Fotoğrafı)</span></div>` // Sadece placeholder content
-                        }
-                        </div>                      
-                        <div class="product-info-area">
-                            <h1>${product.name}</h1>
-                            ${priceHTML}
-                            <div class="description-detail"><p>${product.description || 'Bu ürün için açıklama girilmemiştir.'}</p></div>
-                            <div class="product-actions-detail">${cartButtonHTML}</div>
-                            ${adminActionsHTML}
-                        </div>
+                const total = cartData.items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+                summaryTotalContainer.innerHTML = `<div class="summary-total-line">
+                        <span class="summary-total-label">Toplam</span>
+                        <span class="summary-total-amount">${total.toFixed(2)} TL</span>
                     </div>`;
 
-                const addToCartButton = document.getElementById('add-to-cart-btn-detail');
-                if (addToCartButton) {
-                    addToCartButton.addEventListener('click', async () => {
-                        if (!token) {
-                            showToast('Lütfen önce giriş yapın.', 'error');
-                            setTimeout(() => window.location.href = '/login.html', 1500); return;
-                        }
-                        try {
-                            const cartResponse = await fetch('/api/cart/items', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                body: JSON.stringify({ productId: parseInt(productId), quantity: 1 })
-                            });
-                            if (cartResponse.ok) {
-                                showToast('Ürün sepete eklendi!');
-                                setupHeader(); 
-                            } else {
-                                const errorData = await cartResponse.json();
-                                showToast(errorData.error || 'Ürün eklenemedi.', 'error');
-                            }
-                        } catch (error) { console.error('Sepete ekleme hatası:', error); showToast('Bir hata oluştu.', 'error'); }
-                    });
-                }
-                
-                if (user && user.role === 'admin') {
-                    const deleteButton = document.getElementById('delete-button');
-                    if(deleteButton) {
-                                deleteButton.addEventListener('click', async () => {
-                                    const confirmed = await showConfirm('Bu ürünü kalıcı olarak silmek istediğinizden emin misiniz?');
-                                    if (!confirmed) return;                            try {
-                                const deleteResponse = await fetch(`/api/products/${productId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                                if (deleteResponse.ok) {
-                                    showToast('Ürün başarıyla silindi!');
-                                    setTimeout(() => window.location.href = '/', 1500);
-                                } else { showToast('Ürün silinirken bir hata oluştu.', 'error'); }
-                            } catch (error) { console.error('Silme hatası:', error); showToast('Bir hata oluştu.', 'error'); }
-                        });
-                    }
-                }
             } catch (error) {
-                console.error('Detay verisi çekerken bir hata oluştu:', error);
-                container.innerHTML = '<h1>Bir hata oluştu. Lütfen tekrar deneyin.</h1>';
+                console.error('Sipariş özeti yüklenirken hata:', error);
+                summaryItemsContainer.innerHTML = '<p>Sipariş özeti yüklenirken bir hata oluştu.</p>';
             }
+        }
+
+        function displayAddresses() {
+            const savedAddressesContainer = document.getElementById('saved-addresses');
+            const newAddressFormContainer = document.getElementById('new-address-form');
+
+            savedAddressesContainer.innerHTML = mockAddresses.map((address, index) => `
+                <div class="address-option">
+                    <input type="radio" id="address-${address.id}" name="address" value="${address.id}" ${index === 0 ? 'checked' : ''}>
+                    <label for="address-${address.id}">
+                        <strong>${address.name}</strong><br>
+                        ${address.address}
+                    </label>
+                </div>
+            `).join('') + `
+                <div class="address-option">
+                    <input type="radio" id="new-address" name="address" value="new">
+                    <label for="new-address"><strong>Yeni bir adres kullan</strong></label>
+                </div>
+            `;
+
+            newAddressFormContainer.innerHTML = `
+                <div id="new-address-fields" style="display: none;">
+                    <div class="form-group"><label for="street">Sokak:</label><input type="text" id="street" name="street"></div>
+                    <div class="form-group"><label for="city">Şehir:</label><input type="text" id="city" name="city"></div>
+                    <div class="form-group"><label for="zip">Posta Kodu:</label><input type="text" id="zip" name="zip"></div>
+                </div>
+            `;
+
+            document.querySelectorAll('input[name="address"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    document.getElementById('new-address-fields').style.display = e.target.value === 'new' ? 'block' : 'none';
+                });
+            });
+        }
+
+        function displayPaymentMethods() {
+            const savedCardsContainer = document.getElementById('saved-cards');
+            const newCardFormContainer = document.getElementById('new-card-form');
+
+            savedCardsContainer.innerHTML = mockCards.map((card, index) => `
+                <div class="card-option">
+                    <input type="radio" id="card-${card.id}" name="card" value="${card.id}" ${index === 0 ? 'checked' : ''}>
+                    <label for="card-${card.id}">
+                        <strong>${card.name}</strong> (**** **** **** ${card.last4})
+                    </label>
+                </div>
+            `).join('') + `
+                <div class="card-option">
+                    <input type="radio" id="new-card" name="card" value="new">
+                    <label for="new-card"><strong>Yeni bir kart kullan</strong></label>
+                </div>
+            `;
+
+            newCardFormContainer.innerHTML = `
+                <div id="new-card-fields" style="display: none;">
+                    <div class="form-group"><label for="card-name">Kart Üzerindeki İsim:</label><input type="text" id="card-name" name="card-name"></div>
+                    <div class="form-group"><label for="card-number">Kart Numarası:</label><input type="text" id="card-number" name="card-number"></div>
+                    <div class="form-group"><label for="card-expiry">Son Kullanma Tarihi (AA/YY):</label><input type="text" id="card-expiry" name="card-expiry"></div>
+                    <div class="form-group"><label for="card-cvc">CVC:</label><input type="text" id="card-cvc" name="card-cvc"></div>
+                </div>
+            `;
+
+            document.querySelectorAll('input[name="card"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    document.getElementById('new-card-fields').style.display = e.target.value === 'new' ? 'block' : 'none';
+                });
+            });
+        }
+
+        window.onload = async () => {
+            await setupHeader();
+            await displayOrderSummary();
+            displayAddresses();
+            displayPaymentMethods();
         };
 
-            function setupUserMenu() {
+        const userControlsContainer = document.getElementById('user-controls-container');
+        
+        function setupUserMenu() {
             const menuButton = document.getElementById('user-menu-button');
             const dropdown = document.getElementById('user-dropdown-content');
             if (!menuButton || !dropdown) return;
@@ -167,9 +218,8 @@
                     window.location.reload();
                 });
             }
-        } 
+        }
 
-        const userControlsContainer = document.getElementById('user-controls-container');
         async function setupHeader() { 
             const token = localStorage.getItem('token');
             userControlsContainer.innerHTML = ''; 
@@ -268,11 +318,6 @@
 
             updateButtons();
         }
-
-        window.onload = async () => {
-            await setupHeader();
-            loadProduct();  
-        };
     </script>
 </body>
 </html>

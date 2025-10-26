@@ -78,6 +78,8 @@ router.get('/', authenticateToken, async (req, res) => {
                 p.id,
                 p.name,
                 p.price,
+                p.description,
+                p.image_url,
                 ci.quantity
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id

@@ -3,59 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genel Ayarlar - Çiçek Temizlik</title>
+    <title>Ürünü Düzenle - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script>
+        // Prevents flash of wrong theme
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        .form-actions { display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; }
+        .form-actions button { flex-grow: 1; padding: 12px; font-size: 1rem; cursor: pointer; border: none; border-radius: 5px; font-weight: 500; }
+        .save-btn { background-color: var(--color-primary); color: var(--color-white); }
+        .save-btn:hover { background-color: var(--color-primary-hover); }
+        .delete-btn { background-color: var(--color-danger); color: var(--color-white); }
+        .delete-btn:hover { background-color: var(--color-danger-hover); }
+        #current-image-container img { max-width: 200px; max-height: 200px; border-radius: 5px; border: 1px solid #ccc; display: block; }
+        .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); padding-top: 60px; }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 8px; position: relative; }
+        .close-modal-btn { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-modal-btn:hover, .close-modal-btn:focus { color: black; text-decoration: none; }
+        .crop-image-container { width: 100%; max-height: 50vh; margin-bottom: 20px; overflow: hidden; }
+        #image-to-crop { display: block; max-width: 100%; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .modal-actions button { padding: 10px 20px; }
+    </style>
 </head>
 <body>
 
     <header class="site-header">
-        <div class="site-logo"></div>
+        <a href="/" class="site-logo"></a>
         <nav class="center-nav"></nav>
         <div class="user-controls" id="user-controls-container"></div>
     </header>
 
     <main class="container">
-        <div class="form-container">
-            <h1>Genel Site Ayarları</h1>
+        <div class="form-container" id="product-form-container">
+            <h1>Ürünü Yönet</h1>
             <a href="/">&larr; Ana Panele Dön</a>
             <hr style="margin: 15px 0;">
-            <form id="settings-form">
+            <form id="edit-product-form">
+                <div class="form-group">
+                    <label for="name">Ürün Adı:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="price">Fiyat:</label>
+                    <input type="number" id="price" name="price" step="0.01" required min="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="description">Açıklama:</label>
+                    <textarea id="description" name="description" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Mevcut Fotoğraf:</label>
+                    <div id="current-image-container" style="margin-bottom: 15px;"><p><i>Yükleniyor...</i></p></div>
+                    <label for="productImage">Fotoğrafı Değiştir/Ekle:</label>
+                    <div class="file-input-wrapper">
+                        <label for="productImage" class="file-input-label">Dosya Seç</label>
+                        <input type="file" id="productImage" name="productImage" accept="image/*">
+                    </div>
+                    <small>Yeni bir fotoğraf seçerseniz mevcut olan silinir.</small>
+                    <div class="checkbox-group" id="remove-image-checkbox-container" style="margin-top: 10px; display: none;">
+                       <input type="checkbox" id="removeCurrentImage" name="removeCurrentImage" value="true">
+                       <label for="removeCurrentImage" style="font-weight: normal; margin-bottom: 0;">Mevcut fotoğrafı kaldır</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                   <label for="stock_quantity">Stok Miktarı:</label>
+                   <input type="number" id="stock_quantity" name="stock_quantity" required min="0">
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="is_active" name="is_active">
+                    <label for="is_active" style="font-weight: normal; margin-bottom: 0;">Satışta mı?</label>
+                </div>
                 <div class="form-group setting-item">
-                    <label for="sales_active">Genel Satış Durumu:</label>
-                    <select id="sales_active" name="sales_active">
-                        <option value="true">Satışlar Aktif</option>
-                        <option value="false">Satışları Durdur</option>
+                    <label for="out_of_stock_display_rule">Stoğu Bittiğinde Davranış:</label>
+                    <select id="out_of_stock_display_rule" name="out_of_stock_display_rule">
+                        <option value="default">Genel Ayarı Kullan (Varsayılan)</option>
+                        <option value="show">Her Zaman Göster ("Stokta Yok" olarak)</option>
+                        <option value="hide">Her Zaman Gizle</option>
                     </select>
-                    <small>Satışları durdurduğunuzda, müşteriler ürünleri görebilir ancak sepete ekleyemez.</small>
+                    <small>Bu ürüne özel bir kural belirleyebilirsiniz.</small>
                 </div>
                 <div class="form-group setting-item">
-                    <label for="out_of_stock_behavior">Stoğu Biten Ürünler:</label>
-                    <select id="out_of_stock_behavior" name="out_of_stock_behavior">
-                        <option value="hide">Listeden Gizle</option>
-                        <option value="show_as_out_of_stock">"Stokta Yok" olarak göster</option>
-                    </select>
+                    <label for="critical_stock_threshold">Ürüne Özel Kritik Stok Eşiği (Adet):</label>
+                    <input type="number" id="critical_stock_threshold" name="critical_stock_threshold" min="0" placeholder="Örn: 5">
+                    <small>Stok bu adedin altına düştüğünde uyarılır. Boş bırakırsanız, genel ayar kullanılır.</small>
                 </div>
-                <div class="form-group setting-item">
-                    <label for="critical_stock_percentage">Genel Kritik Stok Eşiği (Adet):</label>
-                    <input type="number" id="critical_stock_percentage" name="critical_stock_percentage" min="0">
-                    <small>Stok bu adedin altına düştüğünde uyarı verilir. (Örn: 5). Ürüne özel bir ayar girilmezse bu değer kullanılır.</small>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
+                    <button type="button" id="delete-button" class="btn btn-danger">Bu Ürünü Sil</button>
                 </div>
-                <div class="form-group setting-item">
-                    <label for="quick_edit_price_step">Hızlı Fiyat Değişim Adımı:</label>
-                    <input type="number" id="quick_edit_price_step" name="quick_edit_price_step" step="0.01" min="0.01">
-                    <small>Admin panelindeki fiyat kutucuklarının artış/azalış miktarını belirler. (Örn: 1, 5, 10)</small>
-                </div>
-                <button type="submit">Ayarları Kaydet</button>
             </form>
-            <div class="setting-item" style="margin-top: 30px; border-color: #dc3545;">
-                <label>Tehlikeli Alan</label>
-                <button id="reset-overrides-btn" style="background-color: #dc3545; color: white;">Tüm Ürünlerin Stok Davranışını Sıfırla</button>
-                <small>Bu işlem, tüm ürünlerin stoğu bittiğinde nasıl davranacağını yukarıdaki "Genel Ayar"a göre sıfırlar. Ürünlere özel yaptığınız istisna ayarları kaybolur.</small>
-                <button id="reset-critical-stock-btn" style="background-color: #dc3545; color: white; margin-top: 15px;">Tüm Ürünlerin Kritik Stok Eşiğini Sıfırla</button>
-                <small>Bu işlem, tüm ürünlerin "ürüne özel kritik stok eşiğini" sıfırlar. Hepsi yukarıdaki "Genel Eşik" ayarını kullanmaya başlar.</small>
-            </div>
         </div>
     </main>
+
+     <div id="crop-modal" class="modal">
+         <div class="modal-content">
+             <span class="close-modal-btn">&times;</span>
+             <h2>Fotoğrafı Kırp</h2>
+             <div class="crop-image-container">
+                 <img id="image-to-crop" src="#" alt="Kırpılacak Resim">
+             </div>
+             <div class="modal-actions">
+                 <button id="crop-button" class="save-btn">Kırp ve Kullan</button>
+                 <button type="button" class="cancel-modal-btn delete-btn">İptal</button>
+             </div>
+         </div>
+     </div>
 
     <footer class="site-footer">
         <div class="footer-links">
@@ -65,58 +128,182 @@
     </footer>
 
     <div id="toast-container"></div>
-    <script src="/common.js"></script>
-    <script>
-        const form = document.getElementById('settings-form');
-        const token = localStorage.getItem('token');
-        const resetButton = document.getElementById('reset-overrides-btn');
-        const resetCriticalStockButton = document.getElementById('reset-critical-stock-btn');
 
-        async function loadSettings() {
-             if (!token) { return; }
-             try {
-                 const response = await fetch('/api/settings', { headers: { 'Authorization': `Bearer ${token}` } });
-                 if (!response.ok) throw new Error('Ayarlar yüklenemedi.');
-                 const settings = await response.json();
-                 form.sales_active.value = settings.sales_active;
-                 form.out_of_stock_behavior.value = settings.out_of_stock_behavior;
-                 form.critical_stock_percentage.value = settings.critical_stock_percentage;
-                 form.quick_edit_price_step.value = settings.quick_edit_price_step;
-             } catch (error) { console.error('Hata:', error); showToast(error.message, 'error'); }
+    <script src="/common.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        const form = document.getElementById('edit-product-form');
+        const nameInput = document.getElementById('name'); const priceInput = document.getElementById('price');
+        const descriptionInput = document.getElementById('description'); const stockInput = document.getElementById('stock_quantity');
+        const activeCheckbox = document.getElementById('is_active'); const displayRuleSelect = document.getElementById('out_of_stock_display_rule');
+        const deleteButton = document.getElementById('delete-button'); const criticalStockInput = document.getElementById('critical_stock_threshold');
+        const imageInput = document.getElementById('productImage');
+        const removeImageCheckbox = document.getElementById('removeCurrentImage');
+        const urlParams = new URLSearchParams(window.location.search); const productId = urlParams.get('id');
+
+        const modal = document.getElementById('crop-modal');
+        const imageToCrop = document.getElementById('image-to-crop');
+        const cropButton = document.getElementById('crop-button');
+        const closeModalBtn = modal.querySelector('.close-modal-btn');
+        const cancelModalBtn = modal.querySelector('.cancel-modal-btn');
+        let cropper = null;
+        let croppedImageBlob = null;
+        let originalFileName = '';
+
+        function openModal() { modal.style.display = 'block'; }
+        function closeModal() {
+            modal.style.display = 'none';
+            if (cropper) { cropper.destroy(); cropper = null; }
+            imageToCrop.src = '#';
+            imageInput.value = '';
         }
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelModalBtn.addEventListener('click', closeModal);
+        window.addEventListener('click', (event) => { if (event.target == modal) closeModal(); });
+
+        async function loadProduct() {
+            const token = localStorage.getItem('token');
+            if (!productId) { document.getElementById('product-form-container').innerHTML = '<h1>Düzenlenecek ürün ID\'si bulunamadı.</h1><a href="/">&larr; Ana Sayfaya Dön</a>'; return; }
+
+            try {
+                const headers = { 'Authorization': `Bearer ${token}` };
+                const response = await fetch(`/api/products/${productId}`, { headers: headers });
+                if (!response.ok) {
+                     const status = response.status;
+                     if (status !== 401 && status !== 403) {
+                         throw new Error('Ürün bilgileri getirilemedi.');
+                     } else {
+                         throw new Error('Ürün bilgilerini getirme yetkiniz yok.');
+                     }
+                }
+                const product = await response.json();
+
+                document.title = `Düzenle: ${product.name} - Çiçek Temizlik`;
+                nameInput.value = product.name;
+                priceInput.value = product.price;
+                descriptionInput.value = product.description;
+                stockInput.value = product.stock_quantity;
+                activeCheckbox.checked = product.is_active;
+                displayRuleSelect.value = product.out_of_stock_display_rule;
+                criticalStockInput.value = product.critical_stock_threshold ?? '';
+
+                const imageContainer = document.getElementById('current-image-container');
+                const removeCheckboxContainer = document.getElementById('remove-image-checkbox-container');
+                if (product.image_url) {
+                    imageContainer.innerHTML = `<img src="${product.image_url}" alt="${product.name}">`;
+                    removeCheckboxContainer.style.display = 'flex';
+                    removeImageCheckbox.checked = false;
+                } else {
+                    imageContainer.innerHTML = `<p><i>Bu ürün için fotoğraf yüklenmemiş.</i></p>`;
+                    removeCheckboxContainer.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast(error.message, 'error');
+                document.getElementById('product-form-container').innerHTML = `<h1>Hata</h1><p>${error.message}</p><a href="/">&larr; Ana Sayfaya Dön</a>`;
+            }
+        }
+
+        imageInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (files && files.length > 0) {
+                removeImageCheckbox.checked = false;
+                croppedImageBlob = null;
+
+                const file = files[0];
+                originalFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageToCrop.src = e.target.result;
+                    openModal();
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 1 / 1,
+                        viewMode: 1,
+                        background: false,
+                        autoCropArea: 0.8
+                    });
+                };
+                reader.readAsDataURL(file);
+            } else {
+                 croppedImageBlob = null;
+                 originalFileName = '';
+            }
+        });
+
+        cropButton.addEventListener('click', () => {
+            if (!cropper) return;
+            const canvas = cropper.getCroppedCanvas({ width: 500, height: 500, imageSmoothingQuality: 'high' });
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    croppedImageBlob = blob;
+                    removeImageCheckbox.checked = false;
+                    console.log('Yeni resim kırpıldı:', croppedImageBlob);
+                    const previewUrl = URL.createObjectURL(blob);
+                    document.getElementById('current-image-container').innerHTML = `<img src="${previewUrl}" alt="Yeni Resim Önizleme">`;
+                    document.getElementById('remove-image-checkbox-container').style.display = 'flex';
+                    closeModal();
+                } else {
+                    console.error('Blob oluşturulamadı.');
+                    showToast('Resim kırpılırken bir hata oluştu.', 'error');
+                    closeModal();
+                }
+            }, 'image/jpeg', 0.9);
+        });
+
+        deleteButton.addEventListener('click', async () => {
+             const token = localStorage.getItem('token');
+             if (!token) { showToast('Bu işlem için giriş yapmalısınız.', 'error'); return; }
+             const confirmed = await showConfirm('Bu ürünü kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.');
+             if (!confirmed) { return; }
+             try {
+                 const response = await fetch(`/api/products/${productId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                 if (!response.ok) throw new Error('Silme işlemi başarısız.');
+                 showToast('Ürün başarıyla silindi!');
+                 setTimeout(() => window.location.href = '/', 2000);
+             } catch (error) { showToast(error.message, 'error'); }
+        });
 
         form.addEventListener('submit', async (event) => {
              event.preventDefault();
+             const token = localStorage.getItem('token');
              if (!token) { showToast('Bu işlem için giriş yapmalısınız.', 'error'); return; }
-             const updatedSettings = {
-                 sales_active: form.sales_active.value, out_of_stock_behavior: form.out_of_stock_behavior.value,
-                 critical_stock_percentage: form.critical_stock_percentage.value, quick_edit_price_step: form.quick_edit_price_step.value
-             };
-             try {
-                 const response = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(updatedSettings) });
-                 if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.error || 'Güncelleme başarısız.'); }
-                 showToast('Ayarlar başarıyla güncellendi!');
-             } catch (error) { console.error('Güncelleme hatası:', error); showToast(error.message, 'error'); }
-        });
 
-        resetButton.addEventListener('click', async () => {
-            if (!token) { showToast('Bu işlem için giriş yapmalısınız.', 'error'); return; }
-             if (!confirm('Tüm ürünlerin stok davranışını genel ayara sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz.')) return;
-             try {
-                 const response = await fetch('/api/settings/reset-product-overrides', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-                 if (!response.ok) throw new Error('Sıfırlama işlemi başarısız.');
-                 showToast('Tüm ürünler başarıyla genel ayarlara sıfırlandı!');
-             } catch (error) { showToast(error.message, 'error'); }
-        });
+             const formData = new FormData();
+             formData.append('name', nameInput.value);
+             formData.append('price', parseFloat(priceInput.value));
+             formData.append('description', descriptionInput.value);
+             formData.append('stock_quantity', parseInt(stockInput.value));
+             formData.append('is_active', activeCheckbox.checked);
+             formData.append('out_of_stock_display_rule', displayRuleSelect.value);
+             if (criticalStockInput.value !== '') {
+                 formData.append('critical_stock_threshold', parseInt(criticalStockInput.value));
+             }
 
-        resetCriticalStockButton.addEventListener('click', async () => {
-             if (!token) { showToast('Bu işlem için giriş yapmalısınız.', 'error'); return; }
-             if (!confirm('Tüm ürünlerin kritik stok eşiğini genel ayara sıfırlamak istediğinizden emin misiniz? Ürünlere özel girdiğiniz tüm "adet" ayarları kaybolur.')) return;
+             if (croppedImageBlob) {
+                 let fileName = originalFileName || 'edited_image.jpg';
+                 const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+                 fileName = nameWithoutExt + '.jpg';
+                 formData.append('productImage', croppedImageBlob, fileName);
+             } else if (removeImageCheckbox.checked) {
+                 formData.append('removeCurrentImage', 'true');
+             }
+
              try {
-                 const response = await fetch('/api/settings/reset-critical-stock', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-                 if (!response.ok) throw new Error('Kritik stok sıfırlama işlemi başarısız.');
-                 showToast('Tüm ürünlerin kritik stok ayarları başarıyla genel ayarlara sıfırlandı!');
-             } catch (error) { showToast(error.message, 'error'); }
+                 const response = await fetch(`/api/products/${productId}`, {
+                     method: 'PUT',
+                     headers: { 'Authorization': `Bearer ${token}` },
+                     body: formData
+                 });
+                 if (!response.ok) {
+                     const errorData = await response.json();
+                     throw new Error(errorData.error || 'Güncelleme başarısız.');
+                 }
+                 showToast('Ürün başarıyla güncellendi!');
+                 setTimeout(() => { window.location.href = `/product.html?id=${productId}`; }, 1500);
+             } catch (error) {
+                 console.error('Güncelleme hatası:', error);
+                 showToast(error.message, 'error');
+             }
         });
 
         function setupUserMenu() {
@@ -144,6 +331,14 @@
 
             if (user && user.role === 'admin') {
                 userControlsContainer.innerHTML = `
+                    <div class="theme-toggle-group">
+                        <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        </button>
+                        <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        </button>
+                    </div>
                     <div class="user-dropdown">
                         <button id="user-menu-button" class="user-menu-button">
                             ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
@@ -154,6 +349,7 @@
                         </div>
                     </div>`;
                  setupUserMenu();
+                 setupThemeToggle();
                  return true;
             } else {
                  showToast('Bu sayfaya erişim yetkiniz yok.', 'error');
@@ -162,10 +358,42 @@
             }
         }
 
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
         window.onload = async () => {
             const isAdmin = setupHeader();
             if (isAdmin) {
-                await loadSettings();
+                await loadProduct();
             }
         };
     </script>
