@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adreslerim - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container">
+        <h1>Adreslerim</h1>
+        <a href="/" class="btn btn-link">&larr; Ana Sayfaya Dön</a>
+        <hr style="margin: 15px 0;">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <p style="color: var(--color-text-muted);">Kayıtlı adreslerinizi yönetin</p>
+            <button id="add-address-btn" class="btn btn-primary">+ Yeni Adres Ekle</button>
+        </div>
+
+        <div id="addresses-container"></div>
+
+        <!-- Adres Ekleme/Düzenleme Modal -->
+        <div class="modal-overlay" id="address-modal-overlay">
+            <div class="modal-content" style="max-width: 600px;">
+                <h2 id="modal-title">Yeni Adres Ekle</h2>
+                <form id="address-form">
+                    <input type="hidden" id="address-id">
+                    
+                    <div class="form-group">
+                        <label for="address-title">Adres Başlığı *</label>
+                        <input type="text" id="address-title" placeholder="Örn: Ev, İş, Ofis" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="full-name">Ad Soyad *</label>
+                            <input type="text" id="full-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Telefon *</label>
+                            <input type="tel" id="phone" placeholder="0555 555 55 55" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="use-account-name" style="margin-right: 8px;">
+                            <span>Hesap sahibi adını kullan</span>
+                        </label>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">İl *</label>
+                            <input type="text" id="city" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="district">İlçe *</label>
+                            <input type="text" id="district" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="neighborhood">Mahalle</label>
+                            <input type="text" id="neighborhood">
+                        </div>
+                        <div class="form-group">
+                            <label for="postal-code">Posta Kodu</label>
+                            <input type="text" id="postal-code" placeholder="34000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address-line">Adres *</label>
+                        <textarea id="address-line" rows="3" placeholder="Sokak, cadde, apartman no, daire no..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="is-default" style="margin-right: 8px;">
+                            <span>Varsayılan adres olarak ayarla</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" id="cancel-modal-btn">İptal</button>
+                        <button type="submit" class="btn btn-primary" id="save-address-btn">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        const addressesContainer = document.getElementById('addresses-container');
+        const addAddressBtn = document.getElementById('add-address-btn');
+        const modalOverlay = document.getElementById('address-modal-overlay');
+        const addressForm = document.getElementById('address-form');
+        const cancelModalBtn = document.getElementById('cancel-modal-btn');
+        const modalTitle = document.getElementById('modal-title');
+
+        // Modal'ı aç
+        function openModal(address = null) {
+            if (address) {
+                // Düzenleme modu
+                modalTitle.textContent = 'Adresi Düzenle';
+                document.getElementById('address-id').value = address.id;
+                document.getElementById('address-title').value = address.address_title;
+                document.getElementById('full-name').value = address.full_name;
+                document.getElementById('phone').value = address.phone;
+                document.getElementById('city').value = address.city;
+                document.getElementById('district').value = address.district;
+                document.getElementById('neighborhood').value = address.neighborhood || '';
+                document.getElementById('address-line').value = address.address_line;
+                document.getElementById('postal-code').value = address.postal_code || '';
+                document.getElementById('is-default').checked = address.is_default;
+            } else {
+                // Yeni ekleme modu
+                modalTitle.textContent = 'Yeni Adres Ekle';
+                addressForm.reset();
+                document.getElementById('address-id').value = '';
+            }
+            modalOverlay.classList.add('visible');
+        }
+
+        // Modal'ı kapat
+        function closeModal() {
+            modalOverlay.classList.remove('visible');
+            addressForm.reset();
+        }
+
+        // Adresleri yükle
+        async function loadAddresses() {
+            try {
+                const response = await fetch('/api/addresses', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Adresler yüklenemedi');
+
+                const addresses = await response.json();
+
+                if (addresses.length === 0) {
+                    addressesContainer.innerHTML = `
+                        <div class="empty-state">
+                            <p>Henüz kayıtlı adresiniz bulunmuyor.</p>
+                            <p style="color: var(--color-text-muted); font-size: 0.9rem; margin-top: 5px;">
+                                Hızlı teslimat için adres ekleyin.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                addressesContainer.innerHTML = addresses.map(address => `
+                    <div class="address-card ${address.is_default ? 'default-address' : ''}">
+                        <div class="address-card-header">
+                            <div>
+                                <h3>${address.address_title}</h3>
+                                ${address.is_default ? '<span class="default-badge">Varsayılan</span>' : ''}
+                            </div>
+                            <div class="address-actions">
+                                ${!address.is_default ? `
+                                    <button class="btn-icon" onclick="window.setDefaultAddress('${address.id}')" title="Varsayılan yap">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                                        </svg>
+                                    </button>
+                                ` : ''}
+                                <button class="btn-icon" onclick='window.editAddress(${JSON.stringify(address)})' title="Düzenle">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                </button>
+                                <button class="btn-icon btn-icon-danger" onclick="window.deleteAddress('${address.id}')" title="Sil">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="address-card-body">
+                            <p><strong>${address.full_name}</strong></p>
+                            <p>${address.phone}</p>
+                            <p>${address.address_line}</p>
+                            <p>${[address.neighborhood, address.district, address.city].filter(Boolean).join(', ')}${address.postal_code ? ' - ' + address.postal_code : ''}</p>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Adresler yüklenirken hata:', error);
+                showToast('Adresler yüklenemedi', 'error');
+            }
+        }
+
+        // Hesap sahibi adını kullan checkbox fonksiyonu
+        document.getElementById('use-account-name').addEventListener('change', function() {
+            const fullNameInput = document.getElementById('full-name');
+            if (this.checked) {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    const user = parseJwt(token);
+                    if (user && user.firstName) {
+                        let fullName = user.firstName;
+                        if (user.lastName) {
+                            fullName += ` ${user.lastName}`;
+                        }
+                        fullNameInput.value = fullName;
+                    }
+                }
+            } else {
+                fullNameInput.value = '';
+            }
+        });
+
+        // Yeni adres ekle / Düzenle
+        addressForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const addressId = document.getElementById('address-id').value;
+            const addressData = {
+                address_title: document.getElementById('address-title').value,
+                full_name: document.getElementById('full-name').value,
+                phone: document.getElementById('phone').value,
+                city: document.getElementById('city').value,
+                district: document.getElementById('district').value,
+                neighborhood: document.getElementById('neighborhood').value,
+                address_line: document.getElementById('address-line').value,
+                postal_code: document.getElementById('postal-code').value,
+                is_default: document.getElementById('is-default').checked
+            };
+
+            try {
+                const url = addressId ? `/api/addresses/${addressId}` : '/api/addresses';
+                const method = addressId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(addressData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'İşlem başarısız');
+                }
+
+                showToast(addressId ? 'Adres güncellendi!' : 'Adres eklendi!', 'success');
+                closeModal();
+                loadAddresses();
+
+            } catch (error) {
+                console.error('Adres kaydedilirken hata:', error);
+                showToast(error.message, 'error');
+            }
+        });
+
+        // Adresi varsayılan yap (GLOBAL fonksiyon)
+        window.setDefaultAddress = async function(addressId) {
+            try {
+                const response = await fetch(`/api/addresses/${addressId}/set-default`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('İşlem başarısız');
+
+                showToast('Varsayılan adres güncellendi!', 'success');
+                loadAddresses();
+
+            } catch (error) {
+                console.error('Varsayılan adres ayarlanırken hata:', error);
+                showToast('Bir hata oluştu', 'error');
+            }
+        }
+
+        // Adresi düzenle (GLOBAL fonksiyon)
+        window.editAddress = function(address) {
+            openModal(address);
+        };
+
+        // Adresi sil (GLOBAL fonksiyon)
+        window.deleteAddress = async function(addressId) {
+            const confirmed = await showConfirm('Bu adresi silmek istediğinizden emin misiniz?');
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/api/addresses/${addressId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Silme işlemi başarısız');
+
+                showToast('Adres silindi!', 'success');
+                loadAddresses();
+
+            } catch (error) {
+                console.error('Adres silinirken hata:', error);
+                showToast('Bir hata oluştu', 'error');
+            }
+        }
+
+        // Event listeners
+        addAddressBtn.addEventListener('click', () => openModal());
+        cancelModalBtn.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        // Header setup (kullanıcı menüsü için)
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => { 
+                    localStorage.removeItem('token'); 
+                    window.location.href = '/login.html'; 
+                });
+            }
+        }
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+        async function setupHeader() {
+            const token = localStorage.getItem('token');
+            userControlsContainer.innerHTML = '';
+            let cartItemCount = 0;
+            let isCustomer = false;
+            let user = null;
+            if (token) {
+                user = parseJwt(token);
+                if (user && user.role !== 'admin') isCustomer = true;
+            }
+            if (isCustomer) {
+                try {
+                    const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.ok) {
+                        const cartData = await response.json();
+                        cartItemCount = cartData.totalQuantity;
+                    } else {
+                        console.error('Sepet sayısı alınamadı.');
+                    }
+                } catch (error) { console.error('Sepet sayısı alınırken hata:', error); }
+            }
+
+            let themeToggleButtons = `
+                <div class="theme-toggle-group">
+                    <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                    <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>`;
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-settings.html">Site Ayarları</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else if (user) {
+                const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/user-settings.html">Ayarlarım</a>
+                            <a href="/my-cards.html">Kartlarım</a>
+                            <a href="/my-addresses.html">Adreslerim</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else {
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
+                    ${themeToggleButtons}
+                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
+            }
+            if (user) setupUserMenu();
+            setupThemeToggle();
+        }
+
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
+        // Sayfa yüklendiğinde adresleri getir ve header'ı kur
+        window.onload = async () => {
+            await setupHeader();
+            loadAddresses();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kategorizasyon - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container">
+        <h1>Kategori Yönetimi</h1>
+        <a href="/" class="btn btn-link">&larr; Ana Panele Dön</a>
+        <hr style="margin: 15px 0;">
+
+        <!-- Kategori Yönetimi Bölümü -->
+        <div class="form-container" style="margin-bottom: 30px;">
+            <h2>Kategoriler</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="new-category-name" placeholder="Yeni kategori adı" style="flex: 1;">
+                <button id="add-category-btn" class="btn btn-primary">Kategori Ekle</button>
+            </div>
+            <div id="categories-list"></div>
+        </div>
+
+        <!-- Toplu Kategori Atama Bölümü -->
+        <div class="form-container">
+            <h2>Ürünlere Toplu Kategori Ata</h2>
+            <div class="form-group">
+                <label for="bulk-category-select">Kategori Seç:</label>
+                <select id="bulk-category-select">
+                    <option value="">-- Kategori Seçin --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="text" id="product-search" placeholder="Ürün ara...">
+            </div>
+            <div id="products-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: 8px; padding: 15px;">
+                <p style="color: var(--color-text-muted);">Ürünler yükleniyor...</p>
+            </div>
+            <div style="margin-top: 20px;">
+                <button id="bulk-assign-btn" class="btn btn-primary">Seçili Ürünlere Kategori Ekle</button>
+                <span id="selected-count" style="margin-left: 15px; color: var(--color-text-muted);">0 ürün seçildi</span>
+            </div>
+        </div>
+
+        <!-- Kategori Düzenleme Modal -->
+        <div class="modal-overlay" id="edit-category-modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <h2>Kategoriyi Düzenle</h2>
+                <form id="edit-category-form">
+                    <input type="hidden" id="edit-category-id">
+                    <div class="form-group">
+                        <label for="edit-category-name">Kategori Adı:</label>
+                        <input type="text" id="edit-category-name" required>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" id="cancel-edit-btn">İptal</button>
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                    </div>
+                </form>
+                <hr style="margin: 20px 0;">
+                <h3>Bu Kategorideki Ürünler</h3>
+                <div id="category-products-list" style="max-height: 300px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        let allProducts = [];
+        let categories = [];
+
+        // Kategorileri yükle
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                if (!response.ok) throw new Error('Kategoriler yüklenemedi');
+                categories = await response.json();
+                
+                displayCategories();
+                updateCategorySelect();
+            } catch (error) {
+                console.error('Kategoriler yüklenirken hata:', error);
+                showToast('Kategoriler yüklenemedi', 'error');
+            }
+        }
+
+        // Kategorileri listele
+        function displayCategories() {
+            const container = document.getElementById('categories-list');
+            
+            if (categories.length === 0) {
+                container.innerHTML = '<p style="color: var(--color-text-muted);">Henüz kategori eklenmemiş.</p>';
+                return;
+            }
+
+            container.innerHTML = categories.map(cat => `
+                <div class="address-card" style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>${cat.name}</strong>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="editCategory(${cat.id}, '${cat.name.replace(/'/g, "\\'")}')">Düzenle</button>
+                        <button class="btn btn-danger" onclick="deleteCategory(${cat.id}, '${cat.name.replace(/'/g, "\\'")}')">Sil</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Kategori select'ini güncelle
+        function updateCategorySelect() {
+            const select = document.getElementById('bulk-category-select');
+            select.innerHTML = '<option value="">-- Kategori Seçin --</option>' +
+                categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+        }
+
+        // Yeni kategori ekle
+        document.getElementById('add-category-btn').addEventListener('click', async () => {
+            const nameInput = document.getElementById('new-category-name');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                showToast('Kategori adı gerekli', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Kategori eklenemedi');
+                }
+
+                showToast('Kategori eklendi!', 'success');
+                nameInput.value = '';
+                loadCategories();
+            } catch (error) {
+                console.error('Kategori eklenirken hata:', error);
+                showToast(error.message, 'error');
+            }
+        });
+
+        // Kategori düzenle
+        window.editCategory = async function(id, name) {
+            document.getElementById('edit-category-id').value = id;
+            document.getElementById('edit-category-name').value = name;
+            
+            // Bu kategorideki ürünleri yükle
+            try {
+                const response = await fetch(`/api/categories/${id}`);
+                if (!response.ok) throw new Error('Kategori detayları yüklenemedi');
+                const data = await response.json();
+                
+                const productsList = document.getElementById('category-products-list');
+                if (data.products.length === 0) {
+                    productsList.innerHTML = '<p style="color: var(--color-text-muted);">Bu kategoride ürün yok.</p>';
+                } else {
+                    productsList.innerHTML = data.products.map(p => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--color-border);">
+                            <span>${p.name}</span>
+                            <button class="btn btn-danger btn-sm" onclick="removeProductFromCategory(${p.id}, ${id})">Kaldır</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Kategori detayları yüklenirken hata:', error);
+            }
+            
+            document.getElementById('edit-category-modal').classList.add('visible');
+        };
+
+        // Kategori güncelleme formu
+        document.getElementById('edit-category-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('edit-category-id').value;
+            const name = document.getElementById('edit-category-name').value.trim();
+
+            try {
+                const response = await fetch(`/api/categories/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Kategori güncellenemedi');
+                }
+
+                showToast('Kategori güncellendi!', 'success');
+                document.getElementById('edit-category-modal').classList.remove('visible');
+                loadCategories();
+            } catch (error) {
+                console.error('Kategori güncellenirken hata:', error);
+                showToast(error.message, 'error');
+            }
+        });
+
+        // Modal kapat
+        document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+            document.getElementById('edit-category-modal').classList.remove('visible');
+        });
+
+        // Kategori sil
+        window.deleteCategory = async function(id, name) {
+            const confirmed = await showConfirm(`"${name}" kategorisini silmek istediğinizden emin misiniz?`);
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/api/categories/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Kategori silinemedi');
+                }
+
+                showToast('Kategori silindi!', 'success');
+                loadCategories();
+            } catch (error) {
+                console.error('Kategori silinirken hata:', error);
+                showToast(error.message, 'error');
+            }
+        };
+
+        // Üründen kategori kaldır
+        window.removeProductFromCategory = async function(productId, categoryId) {
+            try {
+                const response = await fetch(`/api/categories/product/${productId}/category/${categoryId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Kategori kaldırılamadı');
+
+                showToast('Ürün kategoriden kaldırıldı!', 'success');
+                editCategory(categoryId, categories.find(c => c.id === categoryId)?.name || '');
+            } catch (error) {
+                console.error('Kategori kaldırılırken hata:', error);
+                showToast('Bir hata oluştu', 'error');
+            }
+        };
+
+        // Ürünleri yükle
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) throw new Error('Ürünler yüklenemedi');
+                allProducts = await response.json();
+                displayProducts(allProducts);
+            } catch (error) {
+                console.error('Ürünler yüklenirken hata:', error);
+                showToast('Ürünler yüklenemedi', 'error');
+            }
+        }
+
+        // Ürünleri listele
+        function displayProducts(products) {
+            const container = document.getElementById('products-list');
+            
+            if (products.length === 0) {
+                container.innerHTML = '<p style="color: var(--color-text-muted);">Ürün bulunamadı.</p>';
+                return;
+            }
+
+            container.innerHTML = products.map(p => `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid var(--color-border);">
+                    <input type="checkbox" class="product-checkbox" value="${p.id}" onchange="updateSelectedCount()">
+                    <label style="flex: 1; margin: 0; cursor: pointer;" onclick="event.target.previousElementSibling.click()">
+                        ${p.name} - ${parseFloat(p.price).toFixed(2)} TL
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        // Ürün arama
+        document.getElementById('product-search').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allProducts.filter(p => 
+                p.name.toLowerCase().includes(searchTerm)
+            );
+            displayProducts(filtered);
+        });
+
+        // Seçili ürün sayısını güncelle
+        window.updateSelectedCount = function() {
+            const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+            document.getElementById('selected-count').textContent = `${checkboxes.length} ürün seçildi`;
+        };
+
+        // Toplu kategori atama
+        document.getElementById('bulk-assign-btn').addEventListener('click', async () => {
+            const categoryId = document.getElementById('bulk-category-select').value;
+            const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+            const productIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            if (!categoryId) {
+                showToast('Lütfen bir kategori seçin', 'error');
+                return;
+            }
+
+            if (productIds.length === 0) {
+                showToast('Lütfen en az bir ürün seçin', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/categories/bulk-assign', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ productIds, categoryId })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Kategoriler atanamadı');
+                }
+
+                const data = await response.json();
+                showToast(data.message, 'success');
+                
+                // Checkbox'ları temizle
+                checkboxes.forEach(cb => cb.checked = false);
+                updateSelectedCount();
+            } catch (error) {
+                console.error('Toplu atama hatası:', error);
+                showToast(error.message, 'error');
+            }
+        });
+
+        // Header setup
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+            }
+        }
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+        function setupHeader() {
+            userControlsContainer.innerHTML = '';
+            let user = null;
+            if (token) user = parseJwt(token);
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    <div class="theme-toggle-group">
+                        <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        </button>
+                        <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        </button>
+                    </div>
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-profile.html">Profil Ayarları</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+                setupUserMenu();
+                setupThemeToggle();
+                return true;
+            } else {
+                showToast('Bu sayfaya erişim yetkiniz yok.', 'error');
+                setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+                return false;
+            }
+        }
+
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
+        window.onload = () => {
+            if (setupHeader()) {
+                loadCategories();
+                loadProducts();
+            }
+        };
+    </script>
+</body>
+</html>

@@ -22,6 +22,11 @@
 <body>
 
     <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <a href="/" class="site-logo"></a>
         <nav class="center-nav"></nav>
         <div class="user-controls" id="user-controls-container"></div>
@@ -38,11 +43,14 @@
                 <div class="form-group"><label for="description">Açıklama:</label><textarea id="description" name="description" rows="4"></textarea></div>
                 <div class="form-group">
                     <label for="productImage">Ürün Fotoğrafı:</label>
-                    <div class="file-input-wrapper">
-                        <label for="productImage" class="file-input-label">Dosya Seç</label>
-                        <input type="file" id="productImage" name="productImage" accept="image/*">
+                    <div style="display: flex; align-items: center;">
+                        <div class="file-input-wrapper">
+                            <label for="productImage" class="file-input-label">Dosya Seç</label>
+                            <input type="file" id="productImage" name="productImage" accept="image/*">
+                            <span class="file-name"></span>
+                        </div>
+                        <small style="margin-left: 10px;">Ürün için bir fotoğraf seçin (isteğe bağlı).</small>
                     </div>
-                    <small>Ürün için bir fotoğraf seçin (isteğe bağlı).</small>
                 </div>
                 <div class="form-group"><label for="stock_quantity">Stok Miktarı:</label><input type="number" id="stock_quantity" name="stock_quantity" required min="0" value="0"></div>
                 <div class="form-group setting-item">
@@ -65,17 +73,18 @@
 
     <div id="toast-container"></div>
     <div id="crop-modal" class="modal">
-        <div class="modal-content">
-                <span class="close-modal-btn">&times;</span>
-                <h2>Fotoğrafı Kırp</h2>
-                <div class="crop-image-container">
-                    <img id="image-to-crop" src="#" alt="Kırpılacak Resim">
-                </div>
-                <div class="modal-actions">
-                    <button id="crop-button" class="save-btn">Kırp ve Kullan</button>
-                    <button type="button" class="cancel-modal-btn delete-btn">İptal</button>
-                </div>
+        <div class="modal-content" style="width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; margin: 2% auto;">
+            <span class="close-modal-btn" style="z-index: 10;">&times;</span>
+            <h2>Fotoğrafı Kırp</h2>
+            <p style="color: var(--color-text-muted); margin-bottom: 15px;">Fotoğrafı sürükleyerek konumlandırın, köşelerden boyutlandırın</p>
+            <div class="crop-image-container" style="width: 100%; height: 500px; margin-bottom: 20px; overflow: hidden; border: 2px solid #ddd; border-radius: 8px; background-color: #f5f5f5;">
+                <img id="image-to-crop" src="#" alt="Kırpılacak Resim" style="display: block; max-width: 100%; max-height: 100%;">
             </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 20px;">
+                <button type="button" class="cancel-modal-btn btn btn-secondary">İptal</button>
+                <button id="crop-button" class="btn btn-primary">Kırp ve Kullan</button>
+            </div>
+        </div>
     </div>
 
     <script src="/common.js"></script>
@@ -87,6 +96,7 @@
         const cropButton = document.getElementById('crop-button');
         const closeModalBtn = modal.querySelector('.close-modal-btn');
         const cancelModalBtn = modal.querySelector('.cancel-modal-btn');
+        const fileNameSpan = document.querySelector('.file-name');
 
         let cropper = null;
         let croppedImageBlob = null;
@@ -118,6 +128,7 @@
     if (files && files.length > 0) {
         const file = files[0];
         originalFileName = file.name;
+        fileNameSpan.textContent = originalFileName;
         const reader = new FileReader();
 
         reader.onload = (e) => {
@@ -128,17 +139,28 @@
                 aspectRatio: 1 / 1,
                 viewMode: 1,
                 background: false,
-                autoCropArea: 0.8
+                autoCropArea: 0.9,
+                responsive: true,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false
             });
         };
         reader.readAsDataURL(file);
     } else {
-         croppedImageBlob = null;
-         originalFileName = '';
+        croppedImageBlob = null;
+        originalFileName = '';
+        fileNameSpan.textContent = '';
     }
-    });
+});
 
-    cropButton.addEventListener('click', () => {
+});
+
+cropButton.addEventListener('click', () => {
     if (!cropper) {
         return;
     }

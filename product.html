@@ -21,6 +21,11 @@
 <body>
 
     <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <a href="/" class="site-logo"></a>
         <nav class="center-nav"></nav> 
         <div class="user-controls" id="user-controls-container"></div>
@@ -69,6 +74,21 @@
 
                 const product = await response.json();
                 document.title = `${product.name} - Çiçek Temizlik`;
+                
+                // Kategorileri yükle
+                const categoriesResponse = await fetch(`/api/categories/product/${productId}`);
+                let categoriesHTML = '';
+                if (categoriesResponse.ok) {
+                    const categories = await categoriesResponse.json();
+                    if (categories.length > 0) {
+                        categoriesHTML = `
+                            <div style="margin-bottom: 15px;">
+                                <strong>Kategoriler:</strong>
+                                ${categories.map(cat => `<a href="/category.html?id=${cat.id}" style="display: inline-block; background-color: var(--color-primary); color: white; padding: 4px 12px; border-radius: 15px; margin-right: 8px; margin-top: 5px; font-size: 0.9rem; text-decoration: none; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">${cat.name}</a>`).join('')}
+                            </div>`;
+                    }
+                }
+                
                 let cartButtonHTML = ''; let priceHTML = '';
                 
                 if (product.stock_quantity > 0) {
@@ -98,6 +118,7 @@
                         </div>                      
                         <div class="product-info-area">
                             <h1>${product.name}</h1>
+                            ${categoriesHTML}
                             ${priceHTML}
                             <div class="description-detail"><p>${product.description || 'Bu ürün için açıklama girilmemiştir.'}</p></div>
                             <div class="product-actions-detail">${cartButtonHTML}</div>
@@ -210,26 +231,27 @@
                             ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
                         </button>
                         <div id="user-dropdown-content" class="dropdown-content">
-                            <a href="/admin-settings.html">Site Ayarları</a>
-                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            <a href="/admin-profile.html">Profil Ayarları</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
                         </div>
                     </div>`;
             } else if (user) {
                 const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
                 userControlsContainer.innerHTML = `
-                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">${cartText}</a></div>
+                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
                     ${themeToggleButtons}
                     <div class="user-dropdown">
                         <button id="user-menu-button" class="user-menu-button">
                             ${user.firstName} <span class="arrow">&#9662;</span>
                         </button>
                         <div id="user-dropdown-content" class="dropdown-content">
-                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            <a href="/user-settings.html">Ayarlarım</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
                         </div>
                     </div>`;
             } else {
                 userControlsContainer.innerHTML = `
-                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">Sepetim</a></div>
+                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
                     ${themeToggleButtons}
                     <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
             }

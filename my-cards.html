@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kartlarım - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        // Prevents flash of wrong theme
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav> 
+        <div class="user-controls" id="user-controls-container">
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="form-container">
+            <h1>Kartlarım</h1>
+            <a href="/">&larr; Ana Sayfaya Dön</a>
+            <hr style="margin: 15px 0;">
+
+            <h2>Kayıtlı Kartlarım</h2>
+            <div id="saved-cards-list">
+                <!-- Saved cards will be loaded here -->
+                <p>Yükleniyor...</p>
+            </div>
+            <button type="button" id="add-new-card-btn" class="btn btn-primary" style="margin-top: 20px;">+ Yeni Kart Ekle</button>
+
+            <div id="new-card-form-container" style="display: none; margin-top: 30px;">
+                <h2>Yeni Kart Ekle</h2>
+                <form id="new-card-form">
+                    <div class="form-group">
+                        <label for="cardHolderName">Kart Üzerindeki İsim:</label>
+                        <input type="text" id="cardHolderName" name="cardHolderName" placeholder="Ad Soyad" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cardNumber">Kart Numarası:</label>
+                        <!-- In a real app, this would be handled by a secure payment gateway field -->
+                        <input type="text" id="cardNumber" name="cardNumber" placeholder="XXXX XXXX XXXX XXXX" maxlength="19" required>
+                        <small>Sadece son 4 hanesini saklayacağız.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="expiryMonth">Son Kullanma Tarihi (Ay):</label>
+                        <input type="number" id="expiryMonth" name="expiryMonth" placeholder="AA" min="1" max="12" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expiryYear">Son Kullanma Tarihi (Yıl):</label>
+                        <input type="number" id="expiryYear" name="expiryYear" placeholder="YY" min="23" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cardType">Kart Tipi:</label>
+                        <select id="cardType" name="cardType">
+                            <option value="Visa">Visa</option>
+                            <option value="Mastercard">Mastercard</option>
+                            <option value="Amex">Amex</option>
+                            <option value="Discover">Discover</option>
+                            <option value="Other">Diğer</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Kartı Kaydet</button>
+                    <button type="button" id="cancel-add-card-btn" class="btn btn-secondary" style="margin-left: 10px;">İptal</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+    <script src="/common.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const savedCardsList = document.getElementById('saved-cards-list');
+        const addNewCardBtn = document.getElementById('add-new-card-btn');
+        const newCardFormContainer = document.getElementById('new-card-form-container');
+        const newCardForm = document.getElementById('new-card-form');
+        const cancelAddCardBtn = document.getElementById('cancel-add-card-btn');
+
+        async function loadUserCards() {
+            if (!token) {
+                showToast('Giriş yapmanız gerekiyor.', 'error');
+                setTimeout(() => window.location.href = '/login.html', 1500);
+                return;
+            }
+            try {
+                const response = await fetch('/api/cards', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Kartlar yüklenemedi.');
+                const cards = await response.json();
+
+                if (cards.length === 0) {
+                    savedCardsList.innerHTML = '<p>Henüz kayıtlı kartınız bulunmamaktadır.</p>';
+                    return;
+                }
+
+                savedCardsList.innerHTML = cards.map(card => `
+                    <div class="card-option">
+                        <label>
+                            <strong>${card.card_holder_name}</strong><br>
+                            ${card.card_type} **** **** **** ${card.last_four_digits} (Son K.T.: ${card.expiry_month}/${card.expiry_year})
+                        </label>
+                        <button class="btn btn-danger btn-sm delete-card-btn" data-card-id="${card.id}">Sil</button>
+                    </div>
+                `).join('');
+
+                document.querySelectorAll('.delete-card-btn').forEach(button => {
+                    button.addEventListener('click', async (event) => {
+                        const cardId = event.target.dataset.cardId;
+                        const confirmed = await showConfirm('Bu kartı silmek istediğinizden emin misiniz?');
+                        if (!confirmed) return;
+                        await deleteCard(cardId);
+                    });
+                });
+
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast(error.message, 'error');
+            }
+        }
+
+        async function deleteCard(cardId) {
+            try {
+                const response = await fetch(`/api/cards/${cardId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Kart silinemedi.');
+                }
+                showToast('Kart başarıyla silindi!', 'success');
+                loadUserCards(); // Reload cards after deletion
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast(error.message, 'error');
+            }
+        }
+
+        addNewCardBtn.addEventListener('click', () => {
+            newCardFormContainer.style.display = 'block';
+            addNewCardBtn.style.display = 'none'; // Hide add button when form is open
+        });
+
+        cancelAddCardBtn.addEventListener('click', () => {
+            newCardFormContainer.style.display = 'none';
+            addNewCardBtn.style.display = 'block'; // Show add button
+            newCardForm.reset(); // Clear form fields
+        });
+
+        newCardForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!token) {
+                showToast('Giriş yapmanız gerekiyor.', 'error');
+                return;
+            }
+
+            const cardHolderName = document.getElementById('cardHolderName').value;
+            const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, ''); // Remove spaces
+            const expiryMonth = parseInt(document.getElementById('expiryMonth').value);
+            const expiryYear = parseInt(document.getElementById('expiryYear').value);
+            const cardType = document.getElementById('cardType').value;
+
+            if (cardNumber.length < 16) { // Basic validation
+                showToast('Kart numarası en az 16 hane olmalı.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cards', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        card_holder_name: cardHolderName,
+                        last_four_digits: cardNumber.slice(-4), // Only store last 4 digits
+                        card_type: cardType,
+                        expiry_month: expiryMonth,
+                        expiry_year: expiryYear
+                    })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Kart kaydedilemedi.');
+                }
+                showToast('Kart başarıyla kaydedildi!', 'success');
+                newCardForm.reset();
+                newCardFormContainer.style.display = 'none';
+                addNewCardBtn.style.display = 'block';
+                loadUserCards(); // Reload cards after saving new one
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast(error.message, 'error');
+            }
+        });
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => { localStorage.removeItem('token'); window.location.href = '/login.html'; });
+            }
+        }
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+        async function setupHeader() {
+            const token = localStorage.getItem('token');
+            userControlsContainer.innerHTML = '';
+            let cartItemCount = 0;
+            let isCustomer = false;
+            let user = null;
+            if (token) {
+                user = parseJwt(token);
+                if (user && user.role !== 'admin') isCustomer = true;
+            }
+            if (isCustomer) {
+                try {
+                    const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.ok) {
+                        const cartData = await response.json();
+                        cartItemCount = cartData.totalQuantity;
+                    } else {
+                        console.error('Sepet sayısı alınamadı.');
+                    }
+                } catch (error) { console.error('Sepet sayısı alınırken hata:', error); }
+            }
+
+            let themeToggleButtons = `
+                <div class="theme-toggle-group">
+                    <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                    <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>`;
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-settings.html">Site Ayarları</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else if (user) {
+                const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/user-settings.html">Ayarlarım</a>
+                            <a href="/my-cards.html">Kartlarım</a>
+                            <a href="/my-addresses.html">Adreslerim</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else {
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
+                    ${themeToggleButtons}
+                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
+            }
+            if (user) setupUserMenu();
+            setupThemeToggle();
+        }
+
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
+        window.onload = async () => {
+            await setupHeader();
+            loadUserCards();
+        };
+    </script>
+</body>
+</html>

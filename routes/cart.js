@@ -75,7 +75,7 @@ router.get('/', authenticateToken, async (req, res) => {
     try {
         const query = `
             SELECT
-                p.id,
+                p.id as product_id,
                 p.name,
                 p.price,
                 p.description,

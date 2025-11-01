@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genel Ayarlar - Çiçek Temizlik</title>
+    <title>Profil Ayarları - Çiçek Temizlik</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <script>
-        // Prevents flash of wrong theme
         (function() {
             const theme = localStorage.getItem('theme') || 'light';
             if (theme === 'dark') {
@@ -28,62 +27,48 @@
         </button>
         <a href="/" class="site-logo"></a>
         <nav class="center-nav"></nav> 
-        <div class="user-controls" id="user-controls-container">
-        </div>
+        <div class="user-controls" id="user-controls-container"></div>
     </header>
 
     <main class="container">
         <div class="form-container">
-            <h1>Genel Site Ayarları</h1>
+            <h1>Profil Ayarları</h1>
             <a href="/">&larr; Ana Panele Dön</a>
             <hr style="margin: 15px 0;">
 
-            <form id="settings-form">
-                <div class="form-group setting-item">
-                    <label for="sales_active">Genel Satış Durumu:</label>
-                    <select id="sales_active" name="sales_active">
-                        <option value="true">Satışlar Aktif</option>
-                        <option value="false">Satışları Durdur</option>
-                    </select>
-                    <small>Satışları durdurduğunuzda, müşteriler ürünleri görebilir ancak sepete ekleyemez.</small>
+            <form id="admin-profile-form">
+                <div class="form-group">
+                    <label for="firstName">Adınız:</label>
+                    <input type="text" id="firstName" name="firstName" required>
                 </div>
-                <div class="form-group setting-item">
-                    <label for="out_of_stock_behavior">Stoğu Biten Ürünler:</label>
-                    <select id="out_of_stock_behavior" name="out_of_stock_behavior">
-                        <option value="hide">Listeden Gizle</option>
-                        <option value="show_as_out_of_stock">"Stokta Yok" olarak göster</option>
-                    </select>
+                <div class="form-group">
+                    <label for="lastName">Soyadınız:</label>
+                    <input type="text" id="lastName" name="lastName" required>
                 </div>
-                <div class="form-group setting-item">
-                    <label for="critical_stock_percentage">Genel Kritik Stok Eşiği (Adet):</label>
-                    <input type="number" id="critical_stock_percentage" name="critical_stock_percentage" min="0">
-                    <small>Stok bu adedin altına düştüğünde uyarı verilir. (Örn: 5). Ürüne özel bir ayar girilmezse bu değer kullanılır.</small>
+                <div class="form-group">
+                    <label for="email">E-posta:</label>
+                    <input type="email" id="email" name="email" required disabled>
+                    <small>E-posta adresiniz değiştirilemez.</small>
                 </div>
-                <div class="form-group setting-item">
-                    <label for="quick_edit_price_step">Hızlı Fiyat Değişim Adımı:</label>
-                    <input type="number" id="quick_edit_price_step" name="quick_edit_price_step" step="0.01" min="0.01">
-                    <small>Admin panelindeki fiyat kutucuklarının artış/azalış miktarını belirler. (Örn: 1, 5, 10)</small>
+                <div class="form-group">
+                    <button type="button" id="toggle-password-fields" class="btn btn-secondary">Şifreyi Değiştir</button>
+                </div>
+                <div id="password-fields-container" style="display: none;">
+                    <div class="form-group">
+                        <label for="currentPassword">Mevcut Şifre:</label>
+                        <input type="password" id="currentPassword" name="currentPassword">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Yeni Şifre:</label>
+                        <input type="password" id="newPassword" name="newPassword">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Yeni Şifre Tekrar:</label>
+                        <input type="password" id="confirmNewPassword" name="confirmNewPassword">
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Ayarları Kaydet</button>
             </form>
-            
-            <div class="danger-zone">
-                <h3>Tehlikeli Alan</h3>
-                <div class="danger-action">
-                    <div>
-                        <strong>Tüm Ürünlerin Stok Davranışını Sıfırla</strong>
-                        <small>Bu işlem, tüm ürünlerin stoğu bittiğinde nasıl davranacağını yukarıdaki "Genel Ayar"a göre sıfırlar. Ürünlere özel yaptığınız istisna ayarları kaybolur.</small>
-                    </div>
-                    <button id="reset-overrides-btn" class="btn btn-danger">Sıfırla</button>
-                </div>
-                <div class="danger-action">
-                    <div>
-                        <strong>Tüm Ürünlerin Kritik Stok Eşiğini Sıfırla</strong>
-                        <small>Bu işlem, tüm ürünlerin "ürüne özel kritik stok eşiğini" sıfırlar. Hepsi yukarıdaki "Genel Eşik" ayarını kullanmaya başlar.</small>
-                    </div>
-                    <button id="reset-critical-stock-btn" class="btn btn-danger">Sıfırla</button>
-                </div>
-            </div>
         </div>
     </main>
 
@@ -101,18 +86,43 @@
     <script src="/common.js"></script>
     <script>
         const token = localStorage.getItem('token');
+        const adminProfileForm = document.getElementById('admin-profile-form');
+        const togglePasswordFieldsBtn = document.getElementById('toggle-password-fields');
+        const passwordFieldsContainer = document.getElementById('password-fields-container');
 
-        async function loadSettings() {
-            if (!token) return;
+        togglePasswordFieldsBtn.addEventListener('click', () => {
+            if (passwordFieldsContainer.style.display === 'none') {
+                passwordFieldsContainer.style.display = 'block';
+                togglePasswordFieldsBtn.textContent = 'Şifre Değiştirmeyi İptal Et';
+            } else {
+                passwordFieldsContainer.style.display = 'none';
+                togglePasswordFieldsBtn.textContent = 'Şifreyi Değiştir';
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
+            }
+        });
+
+        async function loadAdminProfile() {
+            if (!token) {
+                showToast('Giriş yapmanız gerekiyor.', 'error');
+                setTimeout(() => window.location.href = '/login.html', 1500);
+                return;
+            }
             try {
-                const response = await fetch('/api/settings', { headers: { 'Authorization': `Bearer ${token}` } });
-                if (!response.ok) throw new Error('Ayarlar yüklenemedi.');
-                const settings = await response.json();
+                const response = await fetch('/api/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Kullanıcı bilgileri yüklenemedi.');
+                const user = await response.json();
 
-                document.getElementById('sales_active').value = settings.sales_active;
-                document.getElementById('out_of_stock_behavior').value = settings.out_of_stock_behavior;
-                document.getElementById('critical_stock_percentage').value = settings.critical_stock_percentage;
-                document.getElementById('quick_edit_price_step').value = settings.quick_edit_price_step;
+                if (user.role !== 'admin') {
+                    showToast('Bu sayfaya erişim yetkiniz yok.', 'error');
+                    setTimeout(() => window.location.href = '/', 1500);
+                    return;
+                }
+
+                document.getElementById('firstName').value = user.first_name;
+                document.getElementById('lastName').value = user.last_name;
+                document.getElementById('email').value = user.email;
 
             } catch (error) {
                 console.error('Hata:', error);
@@ -120,59 +130,56 @@
             }
         }
 
-        document.getElementById('settings-form').addEventListener('submit', async (event) => {
+        adminProfileForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            if (!token) { showToast('Yetkiniz yok.', 'error'); return; }
+            if (!token) {
+                showToast('Giriş yapmanız gerekiyor.', 'error');
+                return;
+            }
 
-            const settings = {
-                sales_active: document.getElementById('sales_active').value === 'true',
-                out_of_stock_behavior: document.getElementById('out_of_stock_behavior').value,
-                critical_stock_percentage: parseInt(document.getElementById('critical_stock_percentage').value, 10),
-                quick_edit_price_step: parseFloat(document.getElementById('quick_edit_price_step').value)
-            };
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+
+            const updateData = { firstName, lastName };
+
+            if (passwordFieldsContainer.style.display === 'block') {
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+                if (!currentPassword || !newPassword || !confirmNewPassword) {
+                    showToast('Şifre değiştirmek için tüm şifre alanlarını doldurmalısınız.', 'error');
+                    return;
+                }
+                if (newPassword !== confirmNewPassword) {
+                    showToast('Yeni şifreler uyuşmuyor.', 'error');
+                    return;
+                }
+                updateData.currentPassword = currentPassword;
+                updateData.newPassword = newPassword;
+            }
 
             try {
-                const response = await fetch('/api/settings', {
+                const response = await fetch('/api/users/me', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(settings)
-                });
-                if (!response.ok) throw new Error('Ayarlar güncellenemedi.');
-                showToast('Ayarlar başarıyla güncellendi!', 'success');
-            } catch (error) {
-                console.error('Hata:', error);
-                showToast(error.message, 'error');
-            }
-        });
-
-        async function handleDangerousAction(action, confirmMessage) {
-            if (!token) { showToast('Yetkiniz yok.', 'error'); return; }
-            const confirmed = await showConfirm(confirmMessage);
-            if (!confirmed) return;
-
-            try {
-                const response = await fetch(`/api/settings/${action}`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    body: JSON.stringify(updateData)
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || 'İşlem gerçekleştirilemedi.');
+                    throw new Error(errorData.error || 'Ayarlar güncellenemedi.');
                 }
-                const result = await response.json();
-                showToast(result.message, 'success');
+                showToast('Ayarlar başarıyla güncellendi!', 'success');
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
+                
+                // Token'ı yenile (isim değişebilir)
+                setTimeout(() => window.location.reload(), 1500);
             } catch (error) {
                 console.error('Hata:', error);
                 showToast(error.message, 'error');
             }
-        }
-
-        document.getElementById('reset-overrides-btn').addEventListener('click', () => {
-            handleDangerousAction('reset-product-overrides', 'Tüm ürünlerin stok davranışını genel ayara sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz.');
-        });
-
-        document.getElementById('reset-critical-stock-btn').addEventListener('click', () => {
-            handleDangerousAction('reset-critical-stock', 'Tüm ürünlerin kritik stok eşiğini genel ayara sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz.');
         });
 
         function setupUserMenu() {
@@ -187,7 +194,10 @@
             });
             const logoutButton = document.getElementById('logout-button');
             if (logoutButton) {
-                logoutButton.addEventListener('click', () => { localStorage.removeItem('token'); window.location.href = '/login.html'; });
+                logoutButton.addEventListener('click', () => { 
+                    localStorage.removeItem('token'); 
+                    window.location.href = '/login.html'; 
+                });
             }
         }
 
@@ -258,7 +268,7 @@
 
         window.onload = () => {
             if (setupHeader()) {
-                loadSettings();
+                loadAdminProfile();
             }
         };
     </script>

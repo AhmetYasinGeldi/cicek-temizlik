@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Yönetimi - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        .orders-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .orders-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+        .orders-table table {
+            width: 100%;
+            min-width: 1000px;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-pending { background-color: #ffc107; color: #000; }
+        .status-payment_waiting { background-color: #ff9800; color: #fff; }
+        .status-payment_failed { background-color: #f44336; color: #fff; }
+        .status-confirmed { background-color: #2196f3; color: #fff; }
+        .status-preparing { background-color: #9c27b0; color: #fff; }
+        .status-shipped { background-color: #00bcd4; color: #fff; }
+        .status-delivered { background-color: #4caf50; color: #fff; }
+        .status-cancelled { background-color: #757575; color: #fff; }
+        .status-error { background-color: #e91e63; color: #fff; }
+        
+        .order-detail-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .order-detail-content {
+            background-color: var(--color-white);
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 900px;
+            position: relative;
+        }
+        .close-detail {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--color-text);
+        }
+        .order-section {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .order-section:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container" style="max-width: 1400px;">
+        <h1>Sipariş Yönetimi</h1>
+        <a href="/" class="btn btn-link">&larr; Ana Panele Dön</a>
+        <hr style="margin: 15px 0;">
+
+        <div class="form-container" style="max-width: 100%;">
+            <div class="orders-filters">
+                <select id="status-filter" style="padding: 10px; border-radius: 5px; border: 1px solid var(--color-border);">
+                    <option value="">Tüm Durumlar</option>
+                    <option value="pending">Beklemede</option>
+                    <option value="payment_waiting">Ödeme Bekleniyor</option>
+                    <option value="payment_failed">Ödeme Başarısız</option>
+                    <option value="confirmed">Sipariş Alındı</option>
+                    <option value="preparing">Hazırlanıyor</option>
+                    <option value="shipped">Kargoda</option>
+                    <option value="delivered">Teslim Edildi</option>
+                    <option value="cancelled">İptal Edildi</option>
+                    <option value="error">Hata Var</option>
+                </select>
+                <button class="btn btn-secondary" onclick="loadOrders()">Filtrele</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('status-filter').value = ''; loadOrders();">Temizle</button>
+            </div>
+
+            <div class="orders-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sipariş No</th>
+                            <th>Tarih</th>
+                            <th>Müşteri</th>
+                            <th>Tutar</th>
+                            <th>Ödeme</th>
+                            <th>Durum</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody">
+                        <tr><td colspan="7" style="text-align: center;">Yükleniyor...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="pagination" style="margin-top: 20px; text-align: center;"></div>
+        </div>
+    </main>
+
+    <!-- Sipariş Detay Modal -->
+    <div id="order-detail-modal" class="order-detail-modal">
+        <div class="order-detail-content">
+            <span class="close-detail" onclick="closeOrderDetail()">&times;</span>
+            <div id="order-detail-body"></div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        let currentPage = 1;
+        const ordersPerPage = 20;
+
+        const statusLabels = {
+            'pending': 'Beklemede',
+            'payment_waiting': 'Ödeme Bekleniyor',
+            'payment_failed': 'Ödeme Başarısız',
+            'confirmed': 'Sipariş Alındı',
+            'preparing': 'Hazırlanıyor',
+            'shipped': 'Kargoda',
+            'delivered': 'Teslim Edildi',
+            'cancelled': 'İptal Edildi',
+            'error': 'Hata Var'
+        };
+
+        const paymentLabels = {
+            'pending': 'Beklemede',
+            'paid': 'Ödendi',
+            'failed': 'Başarısız',
+            'refunded': 'İade Edildi'
+        };
+
+        async function loadOrders(page = 1) {
+            try {
+                currentPage = page;
+                const statusFilter = document.getElementById('status-filter').value;
+                
+                let url = `/api/orders?page=${page}&limit=${ordersPerPage}`;
+                if (statusFilter) {
+                    url += `&status=${statusFilter}`;
+                }
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Siparişler yüklenemedi');
+
+                const data = await response.json();
+                displayOrders(data.orders);
+                displayPagination(data.pagination);
+            } catch (error) {
+                console.error('Siparişler yüklenirken hata:', error);
+                showToast('Siparişler yüklenemedi', 'error');
+            }
+        }
+
+        function displayOrders(orders) {
+            const tbody = document.getElementById('orders-tbody');
+            
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Sipariş bulunamadı</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = orders.map(order => `
+                <tr>
+                    <td>#${order.id}</td>
+                    <td>${new Date(order.created_at).toLocaleDateString('tr-TR')}</td>
+                    <td>${order.first_name || ''} ${order.last_name || ''}<br><small style="color: var(--color-text-muted);">${order.email || ''}</small></td>
+                    <td>${parseFloat(order.total_amount).toFixed(2)} TL</td>
+                    <td><span class="status-badge status-${order.payment_status}">${paymentLabels[order.payment_status] || order.payment_status}</span></td>
+                    <td><span class="status-badge status-${order.order_status}">${statusLabels[order.order_status] || order.order_status}</span></td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="viewOrderDetail(${order.id})">Detay</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function displayPagination(pagination) {
+            const paginationDiv = document.getElementById('pagination');
+            
+            if (pagination.totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+
+            let html = '<div style="display: flex; gap: 10px; justify-content: center; align-items: center;">';
+            
+            if (pagination.page > 1) {
+                html += `<button class="btn btn-secondary" onclick="loadOrders(${pagination.page - 1})">« Önceki</button>`;
+            }
+            
+            html += `<span>Sayfa ${pagination.page} / ${pagination.totalPages}</span>`;
+            
+            if (pagination.page < pagination.totalPages) {
+                html += `<button class="btn btn-secondary" onclick="loadOrders(${pagination.page + 1})">Sonraki »</button>`;
+            }
+            
+            html += '</div>';
+            paginationDiv.innerHTML = html;
+        }
+
+        async function viewOrderDetail(orderId) {
+            try {
+                const response = await fetch(`/api/orders/${orderId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Sipariş detayları yüklenemedi');
+
+                const data = await response.json();
+                displayOrderDetail(data);
+                document.getElementById('order-detail-modal').style.display = 'block';
+            } catch (error) {
+                console.error('Sipariş detayları yüklenirken hata:', error);
+                showToast('Sipariş detayları yüklenemedi', 'error');
+            }
+        }
+
+        function displayOrderDetail(data) {
+            const { order, items, history } = data;
+            const detailBody = document.getElementById('order-detail-body');
+
+            let html = `
+                <h2>Sipariş #${order.id}</h2>
+                <p style="color: var(--color-text-muted);">${new Date(order.created_at).toLocaleString('tr-TR')}</p>
+
+                <!-- Durum Güncelleme -->
+                <div class="order-section">
+                    <h3>Durum Güncelle</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                        <select id="update-order-status" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 5px; border: 1px solid var(--color-border);">
+                            <option value="">Sipariş Durumu</option>
+                            ${Object.keys(statusLabels).map(key => 
+                                `<option value="${key}" ${order.order_status === key ? 'selected' : ''}>${statusLabels[key]}</option>`
+                            ).join('')}
+                        </select>
+                        <select id="update-payment-status" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 5px; border: 1px solid var(--color-border);">
+                            <option value="">Ödeme Durumu</option>
+                            ${Object.keys(paymentLabels).map(key => 
+                                `<option value="${key}" ${order.payment_status === key ? 'selected' : ''}>${paymentLabels[key]}</option>`
+                            ).join('')}
+                        </select>
+                        <button class="btn btn-primary" onclick="updateOrderStatus(${order.id})">Güncelle</button>
+                    </div>
+                    <textarea id="status-note" placeholder="Durum notu (isteğe bağlı)" style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 5px; border: 1px solid var(--color-border);" rows="2"></textarea>
+                </div>
+
+                <!-- Müşteri Bilgileri -->
+                <div class="order-section">
+                    <h3>Müşteri Bilgileri</h3>
+                    <p><strong>Ad Soyad:</strong> ${order.first_name || ''} ${order.last_name || ''}</p>
+                    <p><strong>E-posta:</strong> ${order.email || ''}</p>
+                    <p><strong>Telefon:</strong> ${order.phone}</p>
+                </div>
+
+                <!-- Teslimat Adresi -->
+                <div class="order-section">
+                    <h3>Teslimat Adresi</h3>
+                    ${order.address_title ? `<p><strong>${order.address_title}</strong></p>` : ''}
+                    <p>${order.full_name}</p>
+                    <p>${order.address_line}</p>
+                    <p>${order.district}, ${order.city} ${order.postal_code || ''}</p>
+                    <p>Tel: ${order.phone}</p>
+                </div>
+
+                <!-- Kargo Bilgileri -->
+                <div class="order-section">
+                    <h3>Kargo Bilgileri</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                        <input type="text" id="cargo-company" placeholder="Kargo Şirketi" value="${order.cargo_company || ''}" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 5px; border: 1px solid var(--color-border);">
+                        <input type="text" id="tracking-number" placeholder="Takip Numarası" value="${order.tracking_number || ''}" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 5px; border: 1px solid var(--color-border);">
+                        <input type="date" id="estimated-delivery" value="${order.estimated_delivery_date || ''}" style="padding: 10px; border-radius: 5px; border: 1px solid var(--color-border);">
+                        <button class="btn btn-secondary" onclick="updateShipping(${order.id})">Kaydet</button>
+                    </div>
+                </div>
+
+                <!-- Ürünler -->
+                <div class="order-section">
+                    <h3>Ürünler</h3>
+                    <table style="width: 100%; margin-top: 10px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--color-border);">
+                                <th style="text-align: left; padding: 10px;">Ürün</th>
+                                <th style="text-align: center; padding: 10px;">Adet</th>
+                                <th style="text-align: right; padding: 10px;">Birim Fiyat</th>
+                                <th style="text-align: right; padding: 10px;">Toplam</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map(item => `
+                                <tr style="border-bottom: 1px solid var(--color-border);">
+                                    <td style="padding: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            ${item.product_image_url ? `<img src="${item.product_image_url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">` : ''}
+                                            <span>${item.product_name}</span>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: center; padding: 10px;">${item.quantity}</td>
+                                    <td style="text-align: right; padding: 10px;">${parseFloat(item.unit_price).toFixed(2)} TL</td>
+                                    <td style="text-align: right; padding: 10px;"><strong>${parseFloat(item.subtotal).toFixed(2)} TL</strong></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr><td colspan="3" style="text-align: right; padding: 10px;">Ara Toplam:</td><td style="text-align: right; padding: 10px;">${parseFloat(order.subtotal).toFixed(2)} TL</td></tr>
+                            ${order.discount > 0 ? `<tr><td colspan="3" style="text-align: right; padding: 10px;">İndirim:</td><td style="text-align: right; padding: 10px; color: var(--color-success);">-${parseFloat(order.discount).toFixed(2)} TL</td></tr>` : ''}
+                            ${order.shipping_cost > 0 ? `<tr><td colspan="3" style="text-align: right; padding: 10px;">Kargo:</td><td style="text-align: right; padding: 10px;">${parseFloat(order.shipping_cost).toFixed(2)} TL</td></tr>` : ''}
+                            ${order.tax > 0 ? `<tr><td colspan="3" style="text-align: right; padding: 10px;">KDV:</td><td style="text-align: right; padding: 10px;">${parseFloat(order.tax).toFixed(2)} TL</td></tr>` : ''}
+                            <tr style="border-top: 2px solid var(--color-border); font-size: 1.1rem;"><td colspan="3" style="text-align: right; padding: 10px;"><strong>TOPLAM:</strong></td><td style="text-align: right; padding: 10px;"><strong>${parseFloat(order.total_amount).toFixed(2)} TL</strong></td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Notlar -->
+                <div class="order-section">
+                    <h3>Notlar</h3>
+                    ${order.customer_note ? `
+                        <div style="margin-bottom: 15px; padding: 10px; background-color: var(--color-gray-light); border-left: 3px solid #ff9800; border-radius: 5px;">
+                            <strong style="color: #ff9800;">📝 Müşteri Notu (Müşteri bu notu göndermiştir):</strong>
+                            <p style="margin: 5px 0 0 0;">${order.customer_note}</p>
+                            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 5px;">Bu not müşteriye tekrar gösterilmez.</p>
+                        </div>
+                    ` : ''}
+                    <div style="margin-top: 10px;">
+                        <label style="display: block; margin-bottom: 5px;"><strong style="color: var(--color-primary);">💬 Müşteriye Mesaj (Müşteri görecek):</strong></label>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 5px;">Bu mesaj müşteriye gösterilecektir. Sipariş durumu, kargo bilgileri vb. yazabilirsiniz.</p>
+                        <textarea id="admin-note" style="width: 100%; margin-top: 5px; padding: 10px; border-radius: 5px; border: 1px solid var(--color-border);" rows="3" placeholder="Müşterinize mesaj yazın...">${order.admin_note || ''}</textarea>
+                        <button class="btn btn-secondary" style="margin-top: 10px;" onclick="updateAdminNote(${order.id})">Mesajı Kaydet</button>
+                    </div>
+                </div>
+
+                <!-- Sipariş Geçmişi -->
+                ${history.length > 0 ? `
+                <div class="order-section">
+                    <h3>Sipariş Geçmişi</h3>
+                    <div style="margin-top: 10px;">
+                        ${history.map(h => `
+                            <div style="padding: 10px; border-left: 3px solid var(--color-primary); margin-bottom: 10px; background-color: var(--color-gray-light);">
+                                <p><strong>${statusLabels[h.status] || h.status}</strong></p>
+                                ${h.note ? `<p style="margin: 5px 0;">${h.note}</p>` : ''}
+                                <p style="font-size: 0.85rem; color: var(--color-text-muted);">
+                                    ${new Date(h.created_at).toLocaleString('tr-TR')} 
+                                    ${h.first_name ? `- ${h.first_name} ${h.last_name}` : ''}
+                                </p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            detailBody.innerHTML = html;
+        }
+
+        function closeOrderDetail() {
+            document.getElementById('order-detail-modal').style.display = 'none';
+        }
+
+        async function updateOrderStatus(orderId) {
+            const orderStatus = document.getElementById('update-order-status').value;
+            const paymentStatus = document.getElementById('update-payment-status').value;
+            const note = document.getElementById('status-note').value;
+
+            if (!orderStatus && !paymentStatus) {
+                showToast('Lütfen bir durum seçin', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ orderStatus, paymentStatus, note })
+                });
+
+                if (!response.ok) throw new Error('Durum güncellenemedi');
+
+                showToast('Sipariş durumu güncellendi!', 'success');
+                await viewOrderDetail(orderId);
+                await loadOrders(currentPage);
+            } catch (error) {
+                console.error('Durum güncellenirken hata:', error);
+                showToast('Durum güncellenemedi', 'error');
+            }
+        }
+
+        async function updateShipping(orderId) {
+            const cargoCompany = document.getElementById('cargo-company').value;
+            const trackingNumber = document.getElementById('tracking-number').value;
+            const estimatedDeliveryDate = document.getElementById('estimated-delivery').value;
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}/shipping`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ cargoCompany, trackingNumber, estimatedDeliveryDate })
+                });
+
+                if (!response.ok) throw new Error('Kargo bilgileri güncellenemedi');
+
+                showToast('Kargo bilgileri güncellendi!', 'success');
+            } catch (error) {
+                console.error('Kargo bilgileri güncellenirken hata:', error);
+                showToast('Kargo bilgileri güncellenemedi', 'error');
+            }
+        }
+
+        async function updateAdminNote(orderId) {
+            const adminNote = document.getElementById('admin-note').value;
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}/note`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ adminNote })
+                });
+
+                if (!response.ok) throw new Error('Not güncellenemedi');
+
+                showToast('Not kaydedildi!', 'success');
+                await viewOrderDetail(orderId); // Modal'ı yenile
+            } catch (error) {
+                console.error('Not güncellenirken hata:', error);
+                showToast('Not güncellenemedi', 'error');
+            }
+        }
+
+        // Modal dışına tıklayınca kapat
+        window.onclick = function(event) {
+            const modal = document.getElementById('order-detail-modal');
+            if (event.target == modal) {
+                closeOrderDetail();
+            }
+        }
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+            }
+        }
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+        function setupHeader() {
+            userControlsContainer.innerHTML = '';
+            let user = null;
+            if (token) user = parseJwt(token);
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    <div class="theme-toggle-group">
+                        <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        </button>
+                        <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        </button>
+                    </div>
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-profile.html">Profil Ayarları</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+                setupUserMenu();
+                setupThemeToggle();
+                return true;
+            } else {
+                showToast('Bu sayfaya erişim yetkiniz yok.', 'error');
+                setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+                return false;
+            }
+        }
+
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
+        window.onload = () => {
+            if (setupHeader()) {
+                loadOrders();
+            }
+        };
+    </script>
+</body>
+</html>

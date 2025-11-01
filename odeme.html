@@ -21,6 +21,11 @@
 <body>
 
     <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <a href="/" class="site-logo"></a>
         <nav class="center-nav"></nav> 
         <div class="user-controls" id="user-controls-container"></div>
@@ -69,16 +74,8 @@
 
     <script src="/common.js"></script>
     <script>
-        // Mock Data
-        const mockAddresses = [
-            { id: 1, name: 'Ev Adresi', address: 'Karanfil Sokak, No: 12, Daire: 3, Beşiktaş, İstanbul' },
-            { id: 2, name: 'İş Adresi', address: 'Levent Caddesi, No: 45, Ofis: 10, Şişli, İstanbul' }
-        ];
-
-        const mockCards = [
-            { id: 1, name: 'Garanti Kartım', last4: '1234' },
-            { id: 2, name: 'İş Bankası Kartım', last4: '5678' }
-        ];
+        let userAddresses = [];
+        let userCards = [];
 
         async function displayOrderSummary() {
             const summaryItemsContainer = document.getElementById('summary-cart-items');
@@ -124,79 +121,286 @@
             }
         }
 
-        function displayAddresses() {
+        async function displayAddresses() {
             const savedAddressesContainer = document.getElementById('saved-addresses');
             const newAddressFormContainer = document.getElementById('new-address-form');
+            const token = localStorage.getItem('token');
 
-            savedAddressesContainer.innerHTML = mockAddresses.map((address, index) => `
-                <div class="address-option">
-                    <input type="radio" id="address-${address.id}" name="address" value="${address.id}" ${index === 0 ? 'checked' : ''}>
-                    <label for="address-${address.id}">
-                        <strong>${address.name}</strong><br>
-                        ${address.address}
-                    </label>
-                </div>
-            `).join('') + `
-                <div class="address-option">
-                    <input type="radio" id="new-address" name="address" value="new">
-                    <label for="new-address"><strong>Yeni bir adres kullan</strong></label>
-                </div>
-            `;
+            if (!token) {
+                savedAddressesContainer.innerHTML = '<p>Adreslerinizi görmek için lütfen <a href="/login.html">giriş yapın</a>.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/addresses', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Adresler yüklenemedi');
+                userAddresses = await response.json();
+            } catch (error) {
+                console.error('Adresler yüklenirken hata:', error);
+                savedAddressesContainer.innerHTML = '<p style="color: red;">Adresler yüklenemedi.</p>';
+                return;
+            }
+
+            if (userAddresses.length === 0) {
+                savedAddressesContainer.innerHTML = `
+                    <div class="address-option">
+                        <input type="radio" id="new-address" name="address" value="new" checked>
+                        <label for="new-address"><strong>Yeni bir adres kullan</strong></label>
+                    </div>
+                    <p class="empty-message">
+                        Kayıtlı adresiniz yok. <a href="/my-addresses.html">Adreslerim</a> sayfasından adres ekleyebilirsiniz.
+                    </p>
+                `;
+            } else {
+                savedAddressesContainer.innerHTML = userAddresses.map((address, index) => {
+                    const addressText = `${address.address_line}, ${[address.neighborhood, address.district, address.city].filter(Boolean).join(', ')}${address.postal_code ? ' - ' + address.postal_code : ''}`;
+                    return `
+                        <div class="address-option ${index === 0 || address.is_default ? 'selected' : ''}">
+                            <input type="radio" id="address-${address.id}" name="address" value="${address.id}" ${index === 0 || address.is_default ? 'checked' : ''}>
+                            <label for="address-${address.id}">
+                                <strong>${address.address_title}</strong> ${address.is_default ? '<span class="default-label">(Varsayılan)</span>' : ''}<br>
+                                <span class="address-detail">${address.full_name} - ${address.phone}</span><br>
+                                <span class="address-detail address-text">${addressText}</span>
+                            </label>
+                        </div>
+                    `;
+                }).join('') + `
+                    <div class="address-option">
+                        <input type="radio" id="new-address" name="address" value="new">
+                        <label for="new-address"><strong>Yeni bir adres kullan</strong></label>
+                    </div>
+                `;
+            }
 
             newAddressFormContainer.innerHTML = `
                 <div id="new-address-fields" style="display: none;">
-                    <div class="form-group"><label for="street">Sokak:</label><input type="text" id="street" name="street"></div>
-                    <div class="form-group"><label for="city">Şehir:</label><input type="text" id="city" name="city"></div>
-                    <div class="form-group"><label for="zip">Posta Kodu:</label><input type="text" id="zip" name="zip"></div>
+                    <div class="form-group">
+                        <label for="address-title">Adres Başlığı:</label>
+                        <input type="text" id="address-title" name="address-title" placeholder="Örn: Ev, İş, Ofis">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="address-name-surname">İsim Soyisim:</label>
+                            <input type="text" id="address-name-surname" name="address-name-surname" placeholder="Adınız Soyadınız">
+                        </div>
+                        <div class="form-group">
+                            <label for="address-phone">Telefon:</label>
+                            <input type="tel" id="address-phone" name="address-phone" placeholder="5xx xxx xx xx">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="address-city">İl:</label>
+                            <input type="text" id="address-city" name="address-city" placeholder="İl">
+                        </div>
+                        <div class="form-group">
+                            <label for="address-district">İlçe:</label>
+                            <input type="text" id="address-district" name="address-district" placeholder="İlçe">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="address-neighborhood">Mahalle:</label>
+                            <input type="text" id="address-neighborhood" name="address-neighborhood" placeholder="Mahalle (opsiyonel)">
+                        </div>
+                        <div class="form-group">
+                            <label for="address-postal">Posta Kodu:</label>
+                            <input type="text" id="address-postal" name="address-postal" placeholder="Posta Kodu (opsiyonel)">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="address-line">Açık Adres:</label>
+                        <textarea id="address-line" name="address-line" rows="2" placeholder="Sokak, cadde, bina no, daire no..."></textarea>
+                    </div>
+                    <div class="checkbox-inline-group">
+                        <input type="checkbox" id="use-account-name">
+                        <label for="use-account-name" class="checkbox-label">Hesap sahibi adını kullan</label>
+                    </div>
+                    <div class="checkbox-inline-group">
+                        <input type="checkbox" id="save-address" name="save-address">
+                        <label for="save-address" class="checkbox-label">Bu adresi kaydet</label>
+                    </div>
                 </div>
             `;
 
             document.querySelectorAll('input[name="address"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
+                    // Tüm adres seçeneklerinden 'selected' sınıfını kaldır
+                    document.querySelectorAll('.address-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+
+                    // Seçili olan adres seçeneğine 'selected' sınıfını ekle
+                    if (e.target.closest('.address-option')) {
+                        e.target.closest('.address-option').classList.add('selected');
+                    }
+
                     document.getElementById('new-address-fields').style.display = e.target.value === 'new' ? 'block' : 'none';
+                    if (e.target.value === 'new') {
+                        const useAccountNameCheckbox = document.getElementById('use-account-name');
+                        const addressNameSurnameInput = document.getElementById('address-name-surname');
+
+                        if (useAccountNameCheckbox && addressNameSurnameInput) {
+                            useAccountNameCheckbox.addEventListener('change', () => {
+                                if (useAccountNameCheckbox.checked) {
+                                    const token = localStorage.getItem('token');
+                                    if (token) {
+                                        const user = parseJwt(token);
+                                        if (user && user.firstName) { // Sadece firstName'ı kontrol et
+                                            let fullName = user.firstName;
+                                            if (user.lastName) { // lastName varsa ekle
+                                                fullName += ` ${user.lastName}`;
+                                            }
+                                            addressNameSurnameInput.value = fullName;
+                                        }
+                                    }
+                                } else {
+                                    addressNameSurnameInput.value = '';
+                                }
+                            });
+                        }
+                    }
                 });
             });
+            // Sayfa yüklendiğinde varsayılan olarak seçili olanı vurgula
+            const initialSelectedAddress = document.querySelector('input[name="address"]:checked');
+            if (initialSelectedAddress && initialSelectedAddress.closest('.address-option')) {
+                initialSelectedAddress.closest('.address-option').classList.add('selected');
+            }
         }
 
-        function displayPaymentMethods() {
+        async function displayPaymentMethods() {
             const savedCardsContainer = document.getElementById('saved-cards');
             const newCardFormContainer = document.getElementById('new-card-form');
+            const token = localStorage.getItem('token');
 
-            savedCardsContainer.innerHTML = mockCards.map((card, index) => `
-                <div class="card-option">
-                    <input type="radio" id="card-${card.id}" name="card" value="${card.id}" ${index === 0 ? 'checked' : ''}>
-                    <label for="card-${card.id}">
-                        <strong>${card.name}</strong> (**** **** **** ${card.last4})
-                    </label>
-                </div>
-            `).join('') + `
-                <div class="card-option">
-                    <input type="radio" id="new-card" name="card" value="new">
-                    <label for="new-card"><strong>Yeni bir kart kullan</strong></label>
-                </div>
-            `;
+            if (!token) {
+                savedCardsContainer.innerHTML = '<p>Kartlarınızı görmek için lütfen <a href="/login.html">giriş yapın</a>.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cards', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Kartlar yüklenemedi');
+                userCards = await response.json();
+            } catch (error) {
+                console.error('Kartlar yüklenirken hata:', error);
+                savedCardsContainer.innerHTML = '<p style="color: red;">Kartlar yüklenemedi.</p>';
+                return;
+            }
+
+            if (userCards.length === 0) {
+                savedCardsContainer.innerHTML = `
+                    <div class="card-option">
+                        <input type="radio" id="new-card" name="card" value="new" checked>
+                        <label for="new-card"><strong>Yeni bir kart kullan</strong></label>
+                    </div>
+                    <p class="empty-message">
+                        Kayıtlı kartınız yok. <a href="/my-cards.html">Kartlarım</a> sayfasından kart ekleyebilirsiniz.
+                    </p>
+                `;
+            } else {
+                savedCardsContainer.innerHTML = userCards.map((card, index) => `
+                    <div class="card-option ${index === 0 ? 'selected' : ''}">
+                        <input type="radio" id="card-${card.id}" name="card" value="${card.id}" ${index === 0 ? 'checked' : ''}>
+                        <label for="card-${card.id}">
+                            <strong>${card.card_holder_name}</strong> - ${card.card_type || 'Kart'} (**** ${card.last_four_digits})
+                            <br><span class="card-expiry">S.K.T: ${String(card.expiry_month).padStart(2, '0')}/${String(card.expiry_year).padStart(2, '0')}</span>
+                        </label>
+                    </div>
+                `).join('') + `
+                    <div class="card-option">
+                        <input type="radio" id="new-card" name="card" value="new">
+                        <label for="new-card"><strong>Yeni bir kart kullan</strong></label>
+                    </div>
+                `;
+            }
 
             newCardFormContainer.innerHTML = `
                 <div id="new-card-fields" style="display: none;">
-                    <div class="form-group"><label for="card-name">Kart Üzerindeki İsim:</label><input type="text" id="card-name" name="card-name"></div>
-                    <div class="form-group"><label for="card-number">Kart Numarası:</label><input type="text" id="card-number" name="card-number"></div>
-                    <div class="form-group"><label for="card-expiry">Son Kullanma Tarihi (AA/YY):</label><input type="text" id="card-expiry" name="card-expiry"></div>
-                    <div class="form-group"><label for="card-cvc">CVC:</label><input type="text" id="card-cvc" name="card-cvc"></div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="card-name">Kart Üzerindeki İsim:</label>
+                            <input type="text" id="card-name" name="card-name" placeholder="Ad Soyad">
+                        </div>
+                        <div class="form-group">
+                            <label for="card-number">Kart Numarası:</label>
+                            <input type="text" id="card-number" name="card-number" placeholder="XXXX XXXX XXXX XXXX" maxlength="19">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="card-expiry">Son Kullanma (AA/YY):</label>
+                            <input type="text" id="card-expiry" name="card-expiry" placeholder="AA/YY" maxlength="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="card-cvc">CVC:</label>
+                            <input type="text" id="card-cvc" name="card-cvc" placeholder="XXX" maxlength="3">
+                        </div>
+                    </div>
+                    <div class="checkbox-inline-group">
+                        <input type="checkbox" id="use-account-name-card">
+                        <label for="use-account-name-card" class="checkbox-label">Hesap sahibi adını kullan</label>
+                    </div>
                 </div>
             `;
 
             document.querySelectorAll('input[name="card"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
+                    // Tüm kart seçeneklerinden 'selected' sınıfını kaldır
+                    document.querySelectorAll('.card-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+
+                    // Seçili olan kart seçeneğine 'selected' sınıfını ekle
+                    if (e.target.closest('.card-option')) {
+                        e.target.closest('.card-option').classList.add('selected');
+                    }
+
                     document.getElementById('new-card-fields').style.display = e.target.value === 'new' ? 'block' : 'none';
+
+                    if (e.target.value === 'new') {
+                        const useAccountNameCardCheckbox = document.getElementById('use-account-name-card');
+                        const cardNameInput = document.getElementById('card-name');
+
+                        if (useAccountNameCardCheckbox && cardNameInput) {
+                            useAccountNameCardCheckbox.addEventListener('change', () => {
+                                if (useAccountNameCardCheckbox.checked) {
+                                    const token = localStorage.getItem('token');
+                                    if (token) {
+                                        const user = parseJwt(token);
+                                        if (user && user.firstName) {
+                                            let fullName = user.firstName;
+                                            if (user.lastName) {
+                                                fullName += ` ${user.lastName}`;
+                                            }
+                                            cardNameInput.value = fullName;
+                                        }
+                                    }
+                                } else {
+                                    cardNameInput.value = '';
+                                }
+                            });
+                        }
+                    }
                 });
             });
+            // Sayfa yüklendiğinde varsayılan olarak seçili olanı vurgula
+            const initialSelectedCard = document.querySelector('input[name="card"]:checked');
+            if (initialSelectedCard && initialSelectedCard.closest('.card-option')) {
+                initialSelectedCard.closest('.card-option').classList.add('selected');
+            }
         }
 
         window.onload = async () => {
             await setupHeader();
             await displayOrderSummary();
-            displayAddresses();
-            displayPaymentMethods();
+            await displayAddresses();
+            await displayPaymentMethods();
         };
 
         const userControlsContainer = document.getElementById('user-controls-container');
@@ -267,19 +471,22 @@
             } else if (user) {
                 const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
                 userControlsContainer.innerHTML = `
-                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">${cartText}</a></div>
+                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
                     ${themeToggleButtons}
                     <div class="user-dropdown">
                         <button id="user-menu-button" class="user-menu-button">
                             ${user.firstName} <span class="arrow">&#9662;</span>
                         </button>
                         <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/user-settings.html">Ayarlarım</a>
+                            <a href="/my-cards.html">Kartlarım</a>
+                            <a href="/my-addresses.html">Adreslerim</a>
                             <button id="logout-button" class="logout-button">Çıkış Yap</button>
                         </div>
                     </div>`;
             } else {
                 userControlsContainer.innerHTML = `
-                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">Sepetim</a></div>
+                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
                     ${themeToggleButtons}
                     <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
             }
@@ -318,6 +525,169 @@
 
             updateButtons();
         }
+
+        // Sipariş oluşturma
+        document.getElementById('place-order-btn').addEventListener('click', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('Lütfen giriş yapın', 'error');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Seçili adres kontrolü
+            const selectedAddressRadio = document.querySelector('input[name="address"]:checked');
+            if (!selectedAddressRadio) {
+                showToast('Lütfen bir teslimat adresi seçin', 'error');
+                return;
+            }
+
+            const selectedAddressId = selectedAddressRadio.value;
+            let selectedAddress;
+
+            if (selectedAddressId === 'new') {
+                // Yeni adres kontrolü
+                const fullName = document.getElementById('address-name-surname')?.value;
+                const phone = document.getElementById('address-phone')?.value;
+                const addressLine = document.getElementById('address-line')?.value;
+                const city = document.getElementById('address-city')?.value;
+                const district = document.getElementById('address-district')?.value;
+
+                if (!fullName || !phone || !addressLine || !city || !district) {
+                    showToast('Lütfen tüm adres bilgilerini doldurun', 'error');
+                    return;
+                }
+
+                selectedAddress = {
+                    fullName,
+                    phone,
+                    addressLine,
+                    city,
+                    district,
+                    postalCode: document.getElementById('address-postal')?.value || ''
+                };
+            } else {
+                // Kayıtlı adres
+                selectedAddress = userAddresses.find(addr => addr.id == selectedAddressId);
+                if (!selectedAddress) {
+                    showToast('Adres bulunamadı', 'error');
+                    return;
+                }
+                selectedAddress = {
+                    title: selectedAddress.address_title,
+                    fullName: selectedAddress.full_name,
+                    phone: selectedAddress.phone,
+                    addressLine: selectedAddress.address_line,
+                    city: selectedAddress.city,
+                    district: selectedAddress.district,
+                    postalCode: selectedAddress.postal_code
+                };
+            }
+
+            // Kart bilgisi kontrolü (şimdilik opsiyonel)
+            const selectedCardRadio = document.querySelector('input[name="card"]:checked');
+            let cardInfo = null;
+
+            if (selectedCardRadio && selectedCardRadio.value !== 'new') {
+                const selectedCard = userCards.find(card => card.id == selectedCardRadio.value);
+                if (selectedCard) {
+                    cardInfo = {
+                        cardHolderName: selectedCard.card_holder_name,
+                        last4: selectedCard.last_four_digits
+                    };
+                }
+            } else if (selectedCardRadio && selectedCardRadio.value === 'new') {
+                const cardHolderName = document.getElementById('card-holder')?.value;
+                const cardNumber = document.getElementById('card-number')?.value;
+                
+                if (cardHolderName && cardNumber) {
+                    cardInfo = {
+                        cardHolderName,
+                        last4: cardNumber.slice(-4)
+                    };
+                }
+            }
+
+            // Sepetteki ürünleri al
+            try {
+                const cartResponse = await fetch('/api/cart', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!cartResponse.ok) throw new Error('Sepet yüklenemedi');
+
+                const cartData = await cartResponse.json();
+
+                if (cartData.items.length === 0) {
+                    showToast('Sepetiniz boş', 'error');
+                    return;
+                }
+
+                console.log('Sepet verileri:', cartData); // Debug için
+
+                const orderItems = cartData.items.map(item => ({
+                    productId: item.product_id || item.id,
+                    quantity: item.quantity
+                }));
+
+                console.log('Sipariş ürünleri:', orderItems); // Debug için
+
+                // Sipariş oluştur
+                const orderData = {
+                    address: selectedAddress,
+                    paymentMethod: 'credit_card',
+                    cardInfo: cardInfo,
+                    items: orderItems,
+                    customerNote: ''
+                };
+
+                const placeOrderBtn = document.getElementById('place-order-btn');
+                placeOrderBtn.disabled = true;
+                placeOrderBtn.textContent = 'İşleniyor...';
+
+                const orderResponse = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (!orderResponse.ok) {
+                    const errorData = await orderResponse.json();
+                    throw new Error(errorData.error || 'Sipariş oluşturulamadı');
+                }
+
+                const result = await orderResponse.json();
+
+                // Ödemeyi otomatik olarak "ödendi" olarak işaretle (geçici)
+                await fetch(`/api/orders/${result.order.id}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        orderStatus: 'confirmed',
+                        paymentStatus: 'paid',
+                        note: 'Ödeme onaylandı (Test modu)'
+                    })
+                });
+
+                showToast('Siparişiniz başarıyla oluşturuldu!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Sipariş oluşturma hatası:', error);
+                showToast(error.message || 'Sipariş oluşturulamadı', 'error');
+                const placeOrderBtn = document.getElementById('place-order-btn');
+                placeOrderBtn.disabled = false;
+                placeOrderBtn.textContent = 'Siparişi Tamamla';
+            }
+        });
     </script>
 </body>
 </html>

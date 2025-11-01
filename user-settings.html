@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kullanıcı Ayarları - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        // Prevents flash of wrong theme
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav> 
+        <div class="user-controls" id="user-controls-container">
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="form-container">
+            <h1>Kullanıcı Ayarları</h1>
+            <a href="/">&larr; Ana Sayfaya Dön</a>
+            <hr style="margin: 15px 0;">
+
+            <form id="user-settings-form">
+                <div class="form-group">
+                    <label for="firstName">Adınız:</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Soyadınız:</label>
+                    <input type="text" id="lastName" name="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">E-posta:</label>
+                    <input type="email" id="email" name="email" required disabled>
+                    <small>E-posta adresiniz değiştirilemez.</small>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="toggle-password-fields" class="btn btn-secondary">Şifreyi Değiştir</button>
+                </div>
+                <div id="password-fields-container" style="display: none;">
+                    <div class="form-group">
+                        <label for="currentPassword">Mevcut Şifre:</label>
+                        <input type="password" id="currentPassword" name="currentPassword">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Yeni Şifre:</label>
+                        <input type="password" id="newPassword" name="newPassword">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Yeni Şifre Tekrar:</label>
+                        <input type="password" id="confirmNewPassword" name="confirmNewPassword">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Ayarları Kaydet</button>
+            </form>
+            
+            <div class="danger-zone">
+                <h3>Hesap İşlemleri</h3>
+                <div class="danger-action">
+                    <div>
+                        <strong>Hesabımı Sil</strong>
+                        <small>Bu işlem hesabınızı kalıcı olarak siler. Geri alınamaz.</small>
+                    </div>
+                    <button id="delete-account-btn" class="btn btn-danger">Hesabı Sil</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+    <script src="/common.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const userSettingsForm = document.getElementById('user-settings-form');
+        const deleteAccountBtn = document.getElementById('delete-account-btn');
+        const togglePasswordFieldsBtn = document.getElementById('toggle-password-fields');
+        const passwordFieldsContainer = document.getElementById('password-fields-container');
+
+        togglePasswordFieldsBtn.addEventListener('click', () => {
+            if (passwordFieldsContainer.style.display === 'none') {
+                passwordFieldsContainer.style.display = 'block';
+                togglePasswordFieldsBtn.textContent = 'Şifre Değiştirmeyi İptal Et';
+            } else {
+                passwordFieldsContainer.style.display = 'none';
+                togglePasswordFieldsBtn.textContent = 'Şifreyi Değiştir';
+                // Clear password fields when hiding
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
+            }
+        });
+
+        async function loadUserSettings() {
+            if (!token) {
+                showToast('Giriş yapmanız gerekiyor.', 'error');
+                setTimeout(() => window.location.href = '/login.html', 1500);
+                return;
+            }
+            try {
+                const response = await fetch('/api/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Kullanıcı bilgileri yüklenemedi.');
+                const user = await response.json();
+
+                document.getElementById('firstName').value = user.first_name;
+                document.getElementById('lastName').value = user.last_name;
+                document.getElementById('email').value = user.email;
+
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast(error.message, 'error');
+            }
+        }
+
+        userSettingsForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!token) {
+                showToast('Giriş yapmanız gerekiyor.', 'error');
+                return;
+            }
+
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+
+            const updateData = { firstName, lastName };
+
+            if (passwordFieldsContainer.style.display === 'block') {
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+                if (!currentPassword || !newPassword || !confirmNewPassword) {
+                    showToast('Şifre değiştirmek için tüm şifre alanlarını doldurmalısınız.', 'error');
+                    return;
+                }
+                if (newPassword !== confirmNewPassword) {
+                    showToast('Yeni şifreler uyuşmuyor.', 'error');
+                    return;
+                }
+                updateData.currentPassword = currentPassword;
+                updateData.newPassword = newPassword;
+            }
+
+            try {
+                const response = await fetch('/api/users/me', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(updateData)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Ayarlar güncellenemedi.');
+                }
+                showToast('Ayarlar başarıyla güncellendi!', 'success');
+                // Clear password fields after successful update
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast(error.message, 'error');
+            }
+        });
+
+        deleteAccountBtn.addEventListener('click', async () => {
+            if (!token) {
+                showToast('Giriş yapmanız gerekiyor.', 'error');
+                return;
+            }
+            const confirmed = await showConfirm('Hesabınızı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.');
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/users/me', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Hesap silinemedi.');
+                }
+                showToast('Hesabınız başarıyla silindi!', 'success');
+                localStorage.removeItem('token');
+                setTimeout(() => window.location.href = '/register.html', 1500);
+            } catch (error) {
+                console.error('Hata:', error);
+                showToast(error.message, 'error');
+            }
+        });
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => { localStorage.removeItem('token'); window.location.href = '/login.html'; });
+            }
+        }
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+        async function setupHeader() {
+            const token = localStorage.getItem('token');
+            userControlsContainer.innerHTML = '';
+            let cartItemCount = 0;
+            let isCustomer = false;
+            let user = null;
+            if (token) {
+                user = parseJwt(token);
+                if (user && user.role !== 'admin') isCustomer = true;
+            }
+            if (isCustomer) {
+                try {
+                    const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.ok) {
+                        const cartData = await response.json();
+                        cartItemCount = cartData.totalQuantity;
+                    } else {
+                        console.error('Sepet sayısı alınamadı.');
+                    }
+                } catch (error) { console.error('Sepet sayısı alınırken hata:', error); }
+            }
+
+            let themeToggleButtons = `
+                <div class="theme-toggle-group">
+                    <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                    <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>`;
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-settings.html">Site Ayarları</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else if (user) {
+                const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/user-settings.html">Ayarlarım</a>
+                            <a href="/my-cards.html">Kartlarım</a>
+                            <a href="/my-addresses.html">Adreslerim</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else {
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
+                    ${themeToggleButtons}
+                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
+            }
+            if (user) setupUserMenu();
+            setupThemeToggle();
+        }
+
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
+        window.onload = async () => {
+            await setupHeader();
+            loadUserSettings();
+        };
+    </script>
+</body>
+</html>

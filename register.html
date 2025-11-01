@@ -21,6 +21,11 @@
 <body>
 
     <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <a href="/" class="site-logo"></a>
         <nav class="center-nav"></nav> 
         <div class="user-controls" id="user-controls-container">
@@ -50,7 +55,7 @@
                     <label for="password">Şifre:</label>
                     <input type="password" id="password" name="password" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Kayıt Ol</button>
+                <button type="submit" class="btn btn-primary btn-block">Kayıt Ol</button>
             </form>
 
             <div class="login-link" style="margin-top: 20px; text-align: center;">
@@ -114,9 +119,7 @@
                         <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                     </button>
                 </div>
-                <div class="cart-link" id="cart-link-container">
-                    <a href="/cart.html">Sepetim</a>
-                </div>
+                <a href="/cart.html" class="btn btn-primary">Sepetim</a>
                 <div class="user-login-link">
                     <a href="/login.html">Giriş Yap</a>
                 </div>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siparişlerim - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        .orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .order-card {
+            background-color: var(--color-white);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .order-number {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .order-date {
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-pending { background-color: #ffc107; color: #000; }
+        .status-payment_waiting { background-color: #ff9800; color: #fff; }
+        .status-payment_failed { background-color: #f44336; color: #fff; }
+        .status-confirmed { background-color: #2196f3; color: #fff; }
+        .status-preparing { background-color: #9c27b0; color: #fff; }
+        .status-shipped { background-color: #00bcd4; color: #fff; }
+        .status-delivered { background-color: #4caf50; color: #fff; }
+        .status-cancelled { background-color: #757575; color: #fff; }
+        .status-error { background-color: #e91e63; color: #fff; }
+        
+        .order-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .info-label {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-weight: 500;
+        }
+        .order-items {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--color-border);
+        }
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 0;
+        }
+        .order-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .order-item-info {
+            flex: 1;
+        }
+        .order-actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-muted);
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container">
+        <h1>Siparişlerim</h1>
+        <hr style="margin: 20px 0;">
+
+        <div id="orders-container" class="orders-list">
+            <p style="text-align: center;">Yükleniyor...</p>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        const statusLabels = {
+            'pending': 'Beklemede',
+            'payment_waiting': 'Ödeme Bekleniyor',
+            'payment_failed': 'Ödeme Başarısız',
+            'confirmed': 'Sipariş Alındı',
+            'preparing': 'Hazırlanıyor',
+            'shipped': 'Kargoda',
+            'delivered': 'Teslim Edildi',
+            'cancelled': 'İptal Edildi',
+            'error': 'Hata Var'
+        };
+
+        const paymentLabels = {
+            'pending': 'Beklemede',
+            'paid': 'Ödendi',
+            'failed': 'Başarısız',
+            'refunded': 'İade Edildi'
+        };
+
+        async function loadOrders() {
+            try {
+                const response = await fetch('/api/orders/user/my-orders', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Siparişler yüklenemedi');
+
+                const orders = await response.json();
+                displayOrders(orders);
+            } catch (error) {
+                console.error('Siparişler yüklenirken hata:', error);
+                document.getElementById('orders-container').innerHTML = '<p style="color: red; text-align: center;">Siparişler yüklenemedi.</p>';
+            }
+        }
+
+        async function displayOrders(orders) {
+            const container = document.getElementById('orders-container');
+
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <h3>Henüz sipariş vermediniz</h3>
+                        <p>İlk siparişinizi vermek için <a href="/">alışverişe başlayın</a>!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Her sipariş için detayları getir
+            const ordersWithDetails = await Promise.all(
+                orders.map(async (order) => {
+                    try {
+                        const detailResponse = await fetch(`/api/orders/${order.id}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (detailResponse.ok) {
+                            return await detailResponse.json();
+                        }
+                        return { order, items: [], history: [] };
+                    } catch (error) {
+                        console.error(`Sipariş ${order.id} detayları yüklenemedi:`, error);
+                        return { order, items: [], history: [] };
+                    }
+                })
+            );
+
+            container.innerHTML = ordersWithDetails.map(data => {
+                const { order, items } = data;
+                const canCancel = !['shipped', 'delivered', 'cancelled'].includes(order.order_status);
+
+                return `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div>
+                                <div class="order-number">Sipariş #${order.id}</div>
+                                <div class="order-date">${new Date(order.created_at).toLocaleDateString('tr-TR', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}</div>
+                            </div>
+                            <div>
+                                <span class="status-badge status-${order.order_status}">${statusLabels[order.order_status] || order.order_status}</span>
+                            </div>
+                        </div>
+
+                        <div class="order-info">
+                            <div class="info-item">
+                                <span class="info-label">Toplam Tutar</span>
+                                <span class="info-value">${parseFloat(order.total_amount).toFixed(2)} TL</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Ödeme Durumu</span>
+                                <span class="info-value">${paymentLabels[order.payment_status] || order.payment_status}</span>
+                            </div>
+                            ${order.cargo_company ? `
+                                <div class="info-item">
+                                    <span class="info-label">Kargo Şirketi</span>
+                                    <span class="info-value">${order.cargo_company}</span>
+                                </div>
+                            ` : ''}
+                            ${order.tracking_number ? `
+                                <div class="info-item">
+                                    <span class="info-label">Takip Numarası</span>
+                                    <span class="info-value">${order.tracking_number}</span>
+                                </div>
+                            ` : ''}
+                            ${order.estimated_delivery_date ? `
+                                <div class="info-item">
+                                    <span class="info-label">Tahmini Teslim</span>
+                                    <span class="info-value">${new Date(order.estimated_delivery_date).toLocaleDateString('tr-TR')}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        ${order.admin_note ? `
+                            <div class="info-item" style="margin-top: 10px; padding: 10px; background-color: var(--color-gray-light); border-left: 3px solid var(--color-primary); border-radius: 5px;">
+                                <span class="info-label" style="color: var(--color-primary);">💬 Satıcı Mesajı</span>
+                                <span class="info-value">${order.admin_note}</span>
+                            </div>
+                        ` : ''}
+
+                        <div class="order-items">
+                            <strong style="margin-bottom: 10px; display: block;">Ürünler:</strong>
+                            ${items.map(item => `
+                                <div class="order-item">
+                                    ${item.product_image_url ? `<img src="${item.product_image_url}" alt="${item.product_name}">` : ''}
+                                    <div class="order-item-info">
+                                        <div style="font-weight: 500;">${item.product_name}</div>
+                                        <div style="color: var(--color-text-muted); font-size: 0.9rem;">
+                                            ${item.quantity} adet x ${parseFloat(item.unit_price).toFixed(2)} TL
+                                        </div>
+                                    </div>
+                                    <div style="font-weight: 600;">
+                                        ${parseFloat(item.subtotal).toFixed(2)} TL
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="order-actions">
+                            <button class="btn btn-secondary" onclick="viewOrderDetail(${order.id})">Detayları Gör</button>
+                            ${canCancel ? `<button class="btn" style="background-color: var(--color-danger); color: white;" onclick="cancelOrder(${order.id})">Siparişi İptal Et</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function viewOrderDetail(orderId) {
+            window.location.href = `/order-detail.html?id=${orderId}`;
+        }
+
+        async function cancelOrder(orderId) {
+            if (!confirm('Bu siparişi iptal etmek istediğinizden emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Sipariş iptal edilemedi');
+                }
+
+                showToast('Sipariş başarıyla iptal edildi', 'success');
+                loadOrders();
+            } catch (error) {
+                console.error('Sipariş iptal edilirken hata:', error);
+                showToast(error.message || 'Sipariş iptal edilemedi', 'error');
+            }
+        }
+
+        window.onload = loadOrders;
+    </script>
+</body>
+</html>

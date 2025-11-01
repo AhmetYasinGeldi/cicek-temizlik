@@ -1,6 +1,8 @@
 :root {
     --color-primary: #007bff;
     --color-primary-hover: #0056b3;
+    --primary-color-rgb: 0, 123, 255; /* RGB değeri */
+    --color-primary-light-alpha: rgba(0, 123, 255, 0.1); /* Hafif transparan versiyon */
     --color-dark: #2c3e50;
     --color-text: #333;
     --color-text-light: #ecf0f1;
@@ -14,6 +16,7 @@
     --color-warning: #ffc107;
     --color-gray: #6c757d;
     --color-gray-light: #f9f9f9;
+    --text-color-placeholder: rgba(var(--primary-color-rgb), 0.3); /* Açık mod için silik placeholder */
 }
 
 * {
@@ -62,6 +65,127 @@ img {
     border-bottom: 1px solid var(--color-border);
     flex-wrap: wrap; 
     height: 110px;
+}
+
+.hamburger-menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 25px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1100;
+    margin-right: 20px;
+}
+
+.hamburger-menu span {
+    width: 30px;
+    height: 3px;
+    background-color: var(--color-text);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.side-panel {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 300px;
+    height: 100vh;
+    background-color: var(--color-white);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    transition: left 0.3s ease;
+    z-index: 1050;
+    overflow-y: auto;
+}
+
+.side-panel.open {
+    left: 0;
+}
+
+.side-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1040;
+}
+
+.side-panel-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.side-panel-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.side-panel-header h3 {
+    display: none;
+}
+
+.side-panel-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--color-text);
+    line-height: 1;
+}
+
+.side-panel-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.side-panel-menu li {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.side-panel-menu li a {
+    display: block;
+    padding: 15px 20px;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+    font-size: 1rem;
+}
+
+.side-panel-menu li a:hover {
+    background-color: var(--color-gray-light);
+}
+
+.side-panel-menu li a svg {
+    margin-right: 12px;
+    vertical-align: middle;
+    width: 20px;
+    height: 20px;
+}
+
+.side-panel-menu li a.logout-link {
+    color: var(--color-danger);
+}
+
+.side-panel-menu li a.logout-link:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.dark-mode .side-panel {
+    background-color: var(--color-white);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
 }
 
 .site-logo {
@@ -184,6 +308,14 @@ img {
     height: 100%; 
 }
 
+.product > img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+}
+
 .product[data-href]:hover,
 a:hover .product {
     transform: translateY(-5px);
@@ -197,7 +329,7 @@ a:hover .product {
 
 .product-image-placeholder {
     width: 100%;
-    padding-top: 100%; 
+    aspect-ratio: 1 / 1;
     background-color: #eee;
     display: flex;
     align-items: center;
@@ -496,22 +628,64 @@ td .remove-item {
     border-bottom: 1px solid var(--color-border);
 }
 
+.dark-mode .summary-item {
+    border-bottom-color: #334155;
+}
+
 .summary-item-name {
-    flex: 1; /* Take up available space */
+    flex: 1;
     text-align: left;
+    color: #1e293b;
+}
+
+.dark-mode .summary-item-name {
+    color: #f1f5f9;
 }
 
 .summary-item-calc {
-    flex: 0 0 150px; /* Don't grow, don't shrink, fixed width */
+    flex: 0 0 150px;
     text-align: center;
-    color: var(--color-gray);
+    color: #64748b;
     font-size: 0.9em;
 }
 
+.dark-mode .summary-item-calc {
+    color: #94a3b8;
+}
+
 .summary-item-subtotal {
-    flex: 0 0 100px; /* Don't grow, don't shrink, fixed width */
+    flex: 0 0 100px;
     text-align: right;
     font-weight: 500;
+    color: #1e293b;
+}
+
+.dark-mode .summary-item-subtotal {
+    color: #f1f5f9;
+}
+
+.summary-total-line {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 15px;
+    margin-top: 15px;
+    border-top: 2px solid var(--color-border);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.dark-mode .summary-total-line {
+    border-top-color: #334155;
+}
+
+.summary-total-label,
+.summary-total-amount {
+    color: #1e293b;
+}
+
+.dark-mode .summary-total-label,
+.dark-mode .summary-total-amount {
+    color: #f1f5f9;
 }
 
 .product-detail-layout {
@@ -884,6 +1058,8 @@ td .remove-item {
 .dark-mode {
     --color-primary: #0088ff;
     --color-primary-hover: #0066cc;
+    --primary-color-rgb: 0, 136, 255; /* Dark mode için RGB değeri */
+    --color-primary-light-alpha: rgba(0, 136, 255, 0.2); /* Dark mode için hafif transparan versiyon */
     --color-dark: #ecf0f1;
     --color-text: #ecf0f1;
     --color-text-light: #2c3e50;
@@ -898,6 +1074,7 @@ td .remove-item {
     --color-warning: #dd6b20;
     --color-gray: #a0aec0;
     --color-gray-light: #2d3748;
+    --text-color-placeholder: rgba(var(--primary-color-rgb), 0.4); /* Dark mod için silik placeholder */
 }
 
 .dark-mode .site-footer {
@@ -971,26 +1148,35 @@ td .remove-item {
 .dark-mode .form-container input[type="number"],
 .dark-mode .form-container input[type="email"],
 .dark-mode .form-container input[type="password"],
+.dark-mode .form-container input[type="tel"],
 .dark-mode .form-container textarea,
 .dark-mode .form-container select {
-    background-color: #2d3748;
-    border-color: #4a5568;
-    color: var(--color-text);
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #60a5fa !important;
 }
 
-.dark-mode .form-container input[type="text"],
-.dark-mode .form-container input[type="number"],
-.dark-mode .form-container input[type="email"],
-.dark-mode .form-container input[type="password"],
-.dark-mode .form-container textarea,
-.dark-mode .form-container select {
-    background-color: #2d3748;
-    border-color: #4a5568;
-    color: var(--color-text);
+.dark-mode .form-container input[type="text"]:focus,
+.dark-mode .form-container input[type="number"]:focus,
+.dark-mode .form-container input[type="email"]:focus,
+.dark-mode .form-container input[type="password"]:focus,
+.dark-mode .form-container input[type="tel"]:focus,
+.dark-mode .form-container textarea:focus,
+.dark-mode .form-container select:focus {
+    border-color: var(--color-primary) !important;
+    background-color: #1e293b !important;
+    color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2) !important;
+}
+
+.dark-mode .form-container input::placeholder,
+.dark-mode .form-container textarea::placeholder {
+    color: #475569 !important;
+    opacity: 0.7;
 }
 
 .dark-mode .form-container h1 {
-    border-bottom-color: #4a5568;
+    border-bottom-color: #334155;
 }
 
 .theme-toggle-group {
@@ -1031,4 +1217,1043 @@ td .remove-item {
 .sun-icon,
 .moon-icon {
     pointer-events: none; /* Prevent icons from capturing clicks */
+}
+
+/* Checkout Form Enhancements */
+.checkout-section h2 {
+    margin-bottom: 15px;
+    color: var(--text-color-primary);
+}
+
+.checkout-section .form-group {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.checkout-section .form-group label {
+    margin-bottom: 5px;
+    font-weight: 500; /* Biraz daha az kalın */
+    color: var(--color-gray); /* Daha silik bir gri tonu */
+    font-size: 0.95rem; /* Hafif küçült */
+}
+
+.checkout-section .form-group input[type="text"],
+.checkout-section .form-group input[type="tel"],
+.checkout-section .form-group input[type="number"],
+.checkout-section .form-group input[type="email"],
+.checkout-section .form-group select {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--input-bg-color);
+    color: var(--text-color-primary);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.checkout-section .form-group input[type="text"]::placeholder,
+.checkout-section .form-group input[type="tel"]::placeholder,
+.checkout-section .form-group input[type="number"]::placeholder { /* number input'ları da ekleyelim */
+    color: var(--text-color-placeholder);
+    opacity: 1; /* Bazı tarayıcılar opacity'yi düşürebilir, emin olalım */
+}
+
+.checkout-section .form-group input[type="text"]:focus,
+.checkout-section .form-group input[type="tel"]:focus,
+.checkout-section .form-group input[type="number"]:focus,
+.checkout-section .form-group select:focus {
+    border-color: var(--primary-color-light);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+/* Checkbox specific styles - Modern */
+.checkout-section .form-group.checkbox-group,
+.modal-content .form-group.checkbox-group,
+.checkbox-inline-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkout-section .form-group input[type="checkbox"],
+.modal-content input[type="checkbox"],
+.checkbox-inline-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    border: 2px solid #cbd5e0;
+    border-radius: 6px;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    position: relative;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.dark-mode .checkout-section .form-group input[type="checkbox"],
+.dark-mode .modal-content input[type="checkbox"],
+.dark-mode .checkbox-inline-group input[type="checkbox"] {
+    border-color: #475569;
+    background-color: #1e293b;
+}
+
+.checkout-section .form-group input[type="checkbox"]:hover,
+.modal-content input[type="checkbox"]:hover,
+.checkbox-inline-group input[type="checkbox"]:hover {
+    border-color: var(--color-primary);
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.dark-mode .checkout-section .form-group input[type="checkbox"]:hover,
+.dark-mode .modal-content input[type="checkbox"]:hover,
+.dark-mode .checkbox-inline-group input[type="checkbox"]:hover {
+    border-color: var(--color-primary);
+    background-color: rgba(0, 123, 255, 0.15);
+}
+
+.checkout-section .form-group input[type="checkbox"]:checked,
+.modal-content input[type="checkbox"]:checked,
+.checkbox-inline-group input[type="checkbox"]:checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.checkout-section .form-group input[type="checkbox"]:checked::before,
+.modal-content input[type="checkbox"]:checked::before,
+.checkbox-inline-group input[type="checkbox"]:checked::before {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.checkout-section .checkbox-label,
+.modal-content .checkbox-label,
+.checkbox-inline-group .checkbox-label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+    color: #475569;
+    font-size: 0.95rem;
+    user-select: none;
+}
+
+.dark-mode .checkout-section .checkbox-label,
+.dark-mode .modal-content .checkbox-label,
+.dark-mode .checkbox-inline-group label {
+    color: #cbd5e0;
+}
+
+/* Radio button styles for address/card options - Modern */
+.address-option, .card-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.address-option:hover, .card-option:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.dark-mode .address-option,
+.dark-mode .card-option {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark-mode .address-option:hover,
+.dark-mode .card-option:hover {
+    border-color: var(--color-primary);
+    background-color: #0f172a;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+.address-option.selected,
+.card-option.selected {
+    border-color: var(--color-primary);
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.dark-mode .address-option.selected,
+.dark-mode .card-option.selected {
+    background-color: rgba(0, 123, 255, 0.15);
+    border-color: var(--color-primary);
+}
+
+.address-option input[type="radio"], 
+.card-option input[type="radio"] {
+    margin-right: 12px;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #cbd5e0;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    background-color: #ffffff;
+}
+
+.dark-mode .address-option input[type="radio"],
+.dark-mode .card-option input[type="radio"] {
+    border-color: #475569;
+    background-color: #1e293b;
+}
+
+.address-option input[type="radio"]:hover,
+.card-option input[type="radio"]:hover {
+    border-color: var(--color-primary);
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.dark-mode .address-option input[type="radio"]:hover,
+.dark-mode .card-option input[type="radio"]:hover {
+    border-color: var(--color-primary);
+    background-color: rgba(0, 123, 255, 0.15);
+}
+
+.address-option input[type="radio"]:checked,
+.card-option input[type="radio"]:checked {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+}
+
+.address-option input[type="radio"]:checked::before,
+.card-option input[type="radio"]:checked::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ffffff;
+}
+
+.address-option label,
+.card-option label {
+    cursor: pointer;
+    flex: 1;
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #1e293b;
+}
+
+.dark-mode .address-option label,
+.dark-mode .card-option label {
+    color: #f1f5f9;
+}
+
+.address-option label strong,
+.card-option label strong {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1e293b;
+}
+
+.dark-mode .address-option label strong,
+.dark-mode .card-option label strong {
+    color: #f1f5f9;
+}
+
+/* Style for inactive new-address-fields when not selected */
+#new-address-fields {
+    border-top: 1px dashed #e2e8f0;
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+.dark-mode #new-address-fields {
+    border-top-color: #334155;
+}
+    margin-left: 5px; /* Checkbox ile label arasına boşluk */
+}
+
+.checkout-section .form-group input[type="checkbox"] {
+    border-color: var(--color-gray); /* Kenarlık rengini belirginleştir */
+    transform: scale(1.1); /* Checkbox'ı biraz büyüt */
+}
+
+.checkout-section .form-group input[type="checkbox"]:checked {
+    background-color: var(--color-primary); /* Seçili olduğunda ana renk */
+    border-color: var(--color-primary);
+}
+
+/* Seçili Adres/Kart Göstergesi */
+.address-option.selected,
+.card-option.selected {
+    border-color: var(--color-primary); /* Seçili olduğunda ana renk kenarlık */
+    background-color: var(--color-primary-light-alpha); /* Hafif bir arka plan rengi */
+    box-shadow: 0 4px 15px rgba(var(--primary-color-rgb), 0.1); /* Daha belirgin gölge */
+}
+
+/* Dark Mode için seçili durum stilleri */
+.dark-mode .address-option.selected,
+.dark-mode .card-option.selected {
+    background-color: rgba(var(--primary-color-rgb), 0.2); /* Dark mode için farklı alpha */
+}
+
+.checkbox-inline-group {
+    display: flex;
+    align-items: center;
+    margin-top: 5px; /* İsim Soyisim input'u ile arasında boşluk bırak */
+}
+
+/* Genel Buton Stilleri */
+button, .btn {
+    display: inline-flex; /* İçeriği ortalamak için */
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px; /* Hafif yuvarlak köşeler */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none; /* Link olarak kullanılan butonlar için */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Hafif gölge */
+}
+
+button:hover, .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:active, .btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Primary Buton Stilleri (Mavi) */
+.btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-hover);
+}
+
+.dark-mode .btn-primary {
+    color: #ffffff !important;
+}
+
+/* Secondary Buton Stilleri (Gri) */
+.btn-secondary {
+    background-color: var(--color-gray);
+    color: var(--color-white);
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Danger Buton Stilleri (Kırmızı) */
+.btn-danger {
+    background-color: var(--color-danger);
+    color: var(--color-white);
+}
+
+.btn-danger:hover {
+    background-color: var(--color-danger-hover);
+}
+
+/* Block Buton Stili */
+.btn-block {
+    width: 100%;
+    display: flex; /* Tam genişlikte ve içeriği ortalamak için */
+}
+
+#place-order-btn {
+    width: 100%;
+    padding: 18px 25px; /* Daha büyük padding */
+    font-size: 1.25rem; /* Daha büyük font */
+    font-weight: 600; /* Daha kalın font */
+    background-color: var(--color-primary); /* Ana renk */
+    color: var(--color-white); /* Beyaz yazı */
+    border: none;
+    border-radius: 10px; /* Daha yuvarlak köşeler */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 15px rgba(var(--primary-color-rgb), 0.3); /* Belirgin gölge */
+    margin-top: 30px; /* Diğer elementlerden ayır */
+}
+
+#place-order-btn:hover {
+    background-color: var(--color-primary-hover); /* Hover rengi */
+    box-shadow: 0 8px 20px rgba(var(--primary-color-rgb), 0.4); /* Hover gölge */
+    transform: translateY(-2px); /* Hafif yukarı kalkma efekti */
+}
+
+#place-order-btn:active {
+    transform: translateY(0); /* Tıklayınca eski haline dönme */
+    box-shadow: 0 4px 10px rgba(var(--primary-color-rgb), 0.2);
+}
+
+.dark-mode #place-order-btn {
+    color: #ffffff !important;
+}
+
+.file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.file-input-label {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-block;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.file-input-label:hover {
+    background-color: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.file-input-wrapper input[type=file] {
+    display: none;
+}
+
+.file-name {
+    margin-left: 15px;
+}
+
+/* Modal Overlay Stilleri */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.modal-overlay.visible {
+    display: flex;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.dark-mode .modal-content {
+    background-color: #1e293b;
+    color: #f1f5f9;
+}
+
+.modal-content h2 {
+    margin-bottom: 24px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.dark-mode .modal-content h2 {
+    color: #f1f5f9;
+}
+
+/* Modal içindeki form elementleri */
+.modal-content .form-group {
+    margin-bottom: 16px;
+}
+
+.modal-content .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.dark-mode .modal-content .form-group label {
+    color: #cbd5e0;
+}
+
+.modal-content input,
+.modal-content textarea,
+.modal-content select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #1e293b;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.dark-mode .modal-content input,
+.dark-mode .modal-content textarea,
+.dark-mode .modal-content select {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #60a5fa !important;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus,
+.modal-content select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.dark-mode .modal-content input:focus,
+.dark-mode .modal-content textarea:focus,
+.dark-mode .modal-content select:focus {
+    border-color: var(--color-primary) !important;
+    background-color: #1e293b !important;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2) !important;
+    color: #3b82f6 !important;
+}
+
+.modal-content input::placeholder,
+.modal-content textarea::placeholder {
+    color: #94a3b8;
+}
+
+.dark-mode .modal-content input::placeholder,
+.dark-mode .modal-content textarea::placeholder {
+    color: #475569 !important;
+    opacity: 0.7;
+}
+
+/* Form Row (Yan yana inputlar) */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Address Card Stilleri */
+.address-card {
+    background-color: var(--color-white);
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.address-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.dark-mode .address-card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark-mode .address-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+.address-card.default-address {
+    border-color: var(--color-primary);
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.dark-mode .address-card.default-address {
+    background-color: rgba(0, 123, 255, 0.15);
+    border-color: var(--color-primary);
+}
+
+.address-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.dark-mode .address-card-header {
+    border-bottom-color: #334155;
+}
+
+.address-card-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.dark-mode .address-card-header h3 {
+    color: #f1f5f9;
+}
+
+.default-badge {
+    display: inline-block;
+    background-color: var(--color-primary);
+    color: white;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 12px;
+    margin-left: 10px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.address-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.btn-icon {
+    background: transparent;
+    border: 1px solid #cbd5e0;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background-color: #f1f5f9;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    transform: translateY(-2px);
+}
+
+.dark-mode .btn-icon {
+    border-color: #475569;
+    color: #94a3b8;
+}
+
+.dark-mode .btn-icon:hover {
+    background-color: #334155;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-icon-danger:hover {
+    background-color: #fee;
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.dark-mode .btn-icon-danger:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-color: var(--color-danger);
+    color: #f87171;
+}
+
+.address-card-body p {
+    margin: 8px 0;
+    color: #475569;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.dark-mode .address-card-body p {
+    color: #cbd5e0;
+}
+
+.address-card-body p strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.dark-mode .address-card-body p strong {
+    color: #f1f5f9;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
+
+.dark-mode .empty-state {
+    color: #64748b;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin: 8px 0;
+}
+
+/* Modal içindeki form elementleri için dark mode */
+.dark-mode .modal-content input,
+.dark-mode .modal-content textarea,
+.dark-mode .modal-content select {
+    background-color: #2d3748;
+    color: var(--color-text-light);
+    border-color: #4a5568;
+}
+
+.dark-mode .modal-content input:focus,
+.dark-mode .modal-content textarea:focus,
+.dark-mode .modal-content select:focus {
+    border-color: var(--color-primary);
+    background-color: #374151;
+}
+
+.dark-mode .modal-content input::placeholder,
+.dark-mode .modal-content textarea::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+.dark-mode .modal-content label {
+    color: var(--color-text-light);
+}
+
+/* Checkout section dark mode - Tamamen Yenilendi */
+.dark-mode .checkout-section {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark-mode .checkout-section h2 {
+    color: #f1f5f9;
+    border-bottom-color: #334155;
+}
+
+.dark-mode .checkout-section .form-group label {
+    color: #cbd5e0;
+}
+
+.dark-mode .checkout-section .form-group input,
+.dark-mode .checkout-section .form-group textarea,
+.dark-mode .checkout-section .form-group select {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #60a5fa !important;
+}
+
+.dark-mode .checkout-section .form-group input::placeholder,
+.dark-mode .checkout-section .form-group textarea::placeholder {
+    color: #475569 !important;
+    opacity: 0.7;
+}
+
+.dark-mode .checkout-section .form-group input:focus,
+.dark-mode .checkout-section .form-group textarea:focus,
+.dark-mode .checkout-section .form-group select:focus {
+    border-color: var(--color-primary) !important;
+    background-color: #1e293b !important;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2) !important;
+    color: #3b82f6 !important;
+}
+
+.dark-mode .checkout-section .checkbox-label {
+    color: #cbd5e0;
+}
+
+/* Address and Card options dark mode - Yenilendi */
+.dark-mode .address-option,
+.dark-mode .card-option {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark-mode .address-option:hover,
+.dark-mode .card-option:hover {
+    border-color: var(--color-primary);
+    background-color: #0f172a;
+}
+
+.dark-mode .address-option.selected,
+.dark-mode .card-option.selected {
+    background-color: rgba(0, 123, 255, 0.15);
+    border-color: var(--color-primary);
+}
+
+.dark-mode .address-option label,
+.dark-mode .card-option label {
+    color: #f1f5f9;
+}
+
+.dark-mode .address-option label strong,
+.dark-mode .card-option label strong {
+    color: #f1f5f9;
+}
+
+/* New address/card fields dark mode - Yenilendi */
+.dark-mode #new-address-fields,
+.dark-mode #new-card-fields {
+    background-color: #0f172a;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 15px;
+}
+
+.dark-mode #new-address-fields input,
+.dark-mode #new-address-fields textarea,
+.dark-mode #new-card-fields input {
+    background-color: #1e293b !important;
+    color: #60a5fa !important;
+    border-color: #334155 !important;
+}
+
+.dark-mode #new-address-fields input:focus,
+.dark-mode #new-address-fields textarea:focus,
+.dark-mode #new-card-fields input:focus {
+    border-color: var(--color-primary) !important;
+    background-color: #0f172a !important;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2) !important;
+    color: #3b82f6 !important;
+}
+
+.dark-mode #new-address-fields label,
+.dark-mode #new-card-fields label {
+    color: #cbd5e0;
+}
+
+.dark-mode #new-address-fields input::placeholder,
+.dark-mode #new-address-fields textarea::placeholder,
+.dark-mode #new-card-fields input::placeholder {
+    color: #475569 !important;
+    opacity: 0.7;
+}
+
+/* Container dark mode - Yenilendi */
+.dark-mode .container {
+    color: #f1f5f9;
+}
+
+.dark-mode .container h1 {
+    color: #f1f5f9;
+}
+
+.dark-mode .container p {
+    color: #cbd5e0;
+}
+
+.dark-mode .container hr {
+    border-color: #334155;
+}
+
+.dark-mode .container a {
+    color: var(--color-primary);
+}
+
+.dark-mode .container a:hover {
+    color: #60a5fa;
+}
+
+/* Button link dark mode */
+.dark-mode .btn-link {
+    color: var(--color-primary);
+}
+
+.dark-mode .btn-link:hover {
+    color: #60a5fa;
+    text-decoration: underline;
+}
+
+/* Address and Card detail styles - Yenilendi */
+.default-label {
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.address-detail {
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.dark-mode .address-detail {
+    color: #cbd5e0;
+}
+
+.address-text {
+    color: #64748b;
+}
+
+.dark-mode .address-text {
+    color: #94a3b8;
+}
+
+.card-expiry {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.dark-mode .card-expiry {
+    color: #94a3b8;
+}
+
+.empty-message {
+    color: #64748b;
+    margin-top: 12px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.dark-mode .empty-message {
+    color: #94a3b8;
+}
+
+.dark-mode .empty-message a {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.dark-mode .empty-message a:hover {
+    color: #60a5fa;
+    text-decoration: underline;
+}
+
+/* Confirm Modal Stilleri */
+.confirm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(3px);
+}
+
+.confirm-modal-overlay.visible {
+    display: flex;
+}
+
+.confirm-modal {
+    background-color: var(--color-white);
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+.dark-mode .confirm-modal {
+    background-color: var(--color-dark);
+    color: var(--color-text-light);
+}
+
+.confirm-modal p {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    color: var(--color-text);
+}
+
+.dark-mode .confirm-modal p {
+    color: var(--color-text-light);
+}
+
+.confirm-modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.confirm-modal-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.confirm-modal-buttons button#confirm-yes {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.confirm-modal-buttons button#confirm-yes:hover {
+    background-color: var(--color-primary-hover);
+}
+
+.confirm-modal-buttons button#confirm-no {
+    background-color: var(--color-gray);
+    color: white;
+}
+
+.confirm-modal-buttons button#confirm-no:hover {
+    background-color: #5a6268;
+}
+    font-style: italic;
+    color: var(--color-gray);
+    font-weight: 500;
+}
+
+
+/* Dark Mode için */
+.dark-mode #place-order-btn {
+    box-shadow: 0 6px 15px rgba(var(--primary-color-rgb), 0.4);
+}
+
+.dark-mode #place-order-btn:hover {
+    box-shadow: 0 8px 20px rgba(var(--primary-color-rgb), 0.5);
 }

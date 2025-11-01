@@ -21,6 +21,11 @@
 <body>
 
     <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <a href="/" class="site-logo"></a>
         <nav class="center-nav"></nav> 
         <div class="user-controls" id="user-controls-container"></div>
@@ -196,7 +201,7 @@
                             <div><label>Fiyat:</label><input type="number" id="price-${product.id}" value="${product.price}" step="${priceStep}"></div>
                             <div><label>Stok:</label><input type="number" id="stock-${product.id}" value="${product.stock_quantity}" min="0"></div>
                             <div><label>Satışta mı?</label><input type="checkbox" id="active-${product.id}" ${product.is_active ? 'checked' : ''}></div>
-                            <button class="admin-save-btn" data-product-id="${product.id}">Hızlı Kaydet</button>
+                            <button class="admin-save-btn btn btn-primary" data-product-id="${product.id}">Hızlı Kaydet</button>
                         `;
                         productCard.appendChild(adminControlsDiv);
                         productsContainer.appendChild(productCard);
@@ -208,10 +213,10 @@
                         infoDiv.className = 'product-info';
                         let buttonHTML = ''; let priceClass = '';
                         if (product.stock_quantity > 0) {
-                            buttonHTML = `<button class="add-to-cart-btn" data-product-id="${product.id}">Sepete Ekle</button>`;
+                            buttonHTML = `<button class="add-to-cart-btn btn btn-primary" data-product-id="${product.id}">Sepete Ekle</button>`;
                             priceClass = "price";
                         } else {
-                            buttonHTML = `<button class="out-of-stock-btn" disabled>Stokta Yok</button>`;
+                            buttonHTML = `<button class="out-of-stock-btn btn" disabled>Stokta Yok</button>`;
                             priceClass = "price price-out-of-stock";
                         }
                         infoDiv.innerHTML = `<h2>${product.name}</h2><p class="${priceClass}">${product.price} TL</p>${buttonHTML}`;
@@ -294,26 +299,27 @@
                             ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
                         </button>
                         <div id="user-dropdown-content" class="dropdown-content">
-                            <a href="/admin-settings.html">Site Ayarları</a>
-                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            <a href="/admin-profile.html">Profil Ayarları</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
                         </div>
                     </div>`;
             } else if (user) {
                 const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
                 userControlsContainer.innerHTML = `
-                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">${cartText}</a></div>
+                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
                     ${themeToggleButtons}
                     <div class="user-dropdown">
                         <button id="user-menu-button" class="user-menu-button">
                             ${user.firstName} <span class="arrow">&#9662;</span>
                         </button>
                         <div id="user-dropdown-content" class="dropdown-content">
-                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                            <a href="/user-settings.html">Ayarlarım</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
                         </div>
                     </div>`;
             } else {
                 userControlsContainer.innerHTML = `
-                    <div class="cart-link" id="cart-link-container"><a href="/cart.html">Sepetim</a></div>
+                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
                     ${themeToggleButtons}
                     <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
             }

@@ -26,19 +26,24 @@
         .delete-btn { background-color: var(--color-danger); color: var(--color-white); }
         .delete-btn:hover { background-color: var(--color-danger-hover); }
         #current-image-container img { max-width: 200px; max-height: 200px; border-radius: 5px; border: 1px solid #ccc; display: block; }
-        .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); padding-top: 60px; }
-        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 80%; max-width: 700px; border-radius: 8px; position: relative; }
-        .close-modal-btn { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); padding-top: 30px; }
+        .modal-content { background-color: #fefefe; margin: 2% auto; padding: 25px; border: 1px solid #888; width: 90%; max-width: 900px; border-radius: 8px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .close-modal-btn { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; z-index: 10; }
         .close-modal-btn:hover, .close-modal-btn:focus { color: black; text-decoration: none; }
-        .crop-image-container { width: 100%; max-height: 50vh; margin-bottom: 20px; overflow: hidden; }
-        #image-to-crop { display: block; max-width: 100%; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .crop-image-container { width: 100%; height: 500px; margin-bottom: 20px; overflow: hidden; border: 2px solid #ddd; border-radius: 8px; background-color: #f5f5f5; }
+        #image-to-crop { display: block; max-width: 100%; max-height: 100%; }
+        .modal-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .modal-actions button { padding: 10px 20px; }
     </style>
 </head>
 <body>
 
     <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <a href="/" class="site-logo"></a>
         <nav class="center-nav"></nav>
         <div class="user-controls" id="user-controls-container"></div>
@@ -66,11 +71,14 @@
                     <label>Mevcut Fotoğraf:</label>
                     <div id="current-image-container" style="margin-bottom: 15px;"><p><i>Yükleniyor...</i></p></div>
                     <label for="productImage">Fotoğrafı Değiştir/Ekle:</label>
-                    <div class="file-input-wrapper">
-                        <label for="productImage" class="file-input-label">Dosya Seç</label>
-                        <input type="file" id="productImage" name="productImage" accept="image/*">
+                    <div style="display: flex; align-items: center;">
+                        <div class="file-input-wrapper">
+                            <label for="productImage" class="file-input-label">Dosya Seç</label>
+                            <input type="file" id="productImage" name="productImage" accept="image/*">
+                            <span class="file-name"></span>
+                        </div>
+                        <small style="margin-left: 10px;">Yeni bir fotoğraf seçerseniz mevcut olan silinir.</small>
                     </div>
-                    <small>Yeni bir fotoğraf seçerseniz mevcut olan silinir.</small>
                     <div class="checkbox-group" id="remove-image-checkbox-container" style="margin-top: 10px; display: none;">
                        <input type="checkbox" id="removeCurrentImage" name="removeCurrentImage" value="true">
                        <label for="removeCurrentImage" style="font-weight: normal; margin-bottom: 0;">Mevcut fotoğrafı kaldır</label>
@@ -98,6 +106,21 @@
                     <input type="number" id="critical_stock_threshold" name="critical_stock_threshold" min="0" placeholder="Örn: 5">
                     <small>Stok bu adedin altına düştüğünde uyarılır. Boş bırakırsanız, genel ayar kullanılır.</small>
                 </div>
+                
+                <!-- Kategori Yönetimi -->
+                <div class="form-group">
+                    <label>Kategoriler:</label>
+                    <div id="product-categories" style="margin-bottom: 10px;">
+                        <p style="color: var(--color-text-muted);"><i>Yükleniyor...</i></p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="category-select" style="flex: 1;">
+                            <option value="">-- Kategori Seçin --</option>
+                        </select>
+                        <button type="button" id="add-category-btn" class="btn btn-secondary">Kategori Ekle</button>
+                    </div>
+                </div>
+                
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
                     <button type="button" id="delete-button" class="btn btn-danger">Bu Ürünü Sil</button>
@@ -110,12 +133,13 @@
          <div class="modal-content">
              <span class="close-modal-btn">&times;</span>
              <h2>Fotoğrafı Kırp</h2>
+             <p style="color: var(--color-text-muted); margin-bottom: 15px;">Fotoğrafı sürükleyerek konumlandırın, köşelerden boyutlandırın</p>
              <div class="crop-image-container">
                  <img id="image-to-crop" src="#" alt="Kırpılacak Resim">
              </div>
              <div class="modal-actions">
-                 <button id="crop-button" class="save-btn">Kırp ve Kullan</button>
-                 <button type="button" class="cancel-modal-btn delete-btn">İptal</button>
+                 <button type="button" class="cancel-modal-btn btn btn-secondary">İptal</button>
+                 <button id="crop-button" class="btn btn-primary">Kırp ve Kullan</button>
              </div>
          </div>
      </div>
@@ -132,6 +156,7 @@
     <script src="/common.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script>
+        const token = localStorage.getItem('token');
         const form = document.getElementById('edit-product-form');
         const nameInput = document.getElementById('name'); const priceInput = document.getElementById('price');
         const descriptionInput = document.getElementById('description'); const stockInput = document.getElementById('stock_quantity');
@@ -140,6 +165,7 @@
         const imageInput = document.getElementById('productImage');
         const removeImageCheckbox = document.getElementById('removeCurrentImage');
         const urlParams = new URLSearchParams(window.location.search); const productId = urlParams.get('id');
+        const fileNameSpan = document.querySelector('.file-name');
 
         const modal = document.getElementById('crop-modal');
         const imageToCrop = document.getElementById('image-to-crop');
@@ -197,16 +223,105 @@
                     imageContainer.innerHTML = `<p><i>Bu ürün için fotoğraf yüklenmemiş.</i></p>`;
                     removeCheckboxContainer.style.display = 'none';
                 }
+                
+                // Kategorileri yükle
+                await loadCategories();
+                await loadProductCategories();
             } catch (error) {
                 console.error('Hata:', error);
                 showToast(error.message, 'error');
                 document.getElementById('product-form-container').innerHTML = `<h1>Hata</h1><p>${error.message}</p><a href="/">&larr; Ana Sayfaya Dön</a>`;
             }
         }
+        
+        // Tüm kategorileri yükle
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                if (!response.ok) throw new Error('Kategoriler yüklenemedi');
+                const categories = await response.json();
+                
+                const select = document.getElementById('category-select');
+                select.innerHTML = '<option value="">-- Kategori Seçin --</option>' +
+                    categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+            } catch (error) {
+                console.error('Kategoriler yüklenirken hata:', error);
+            }
+        }
+        
+        // Ürünün kategorilerini yükle
+        async function loadProductCategories() {
+            try {
+                const response = await fetch(`/api/categories/product/${productId}`);
+                if (!response.ok) throw new Error('Ürün kategorileri yüklenemedi');
+                const categories = await response.json();
+                
+                const container = document.getElementById('product-categories');
+                if (categories.length === 0) {
+                    container.innerHTML = '<p style="color: var(--color-text-muted);"><i>Bu ürüne henüz kategori eklenmemiş.</i></p>';
+                } else {
+                    container.innerHTML = categories.map(cat => `
+                        <div style="display: inline-block; background-color: var(--color-primary); color: white; padding: 6px 12px; border-radius: 15px; margin-right: 8px; margin-bottom: 8px;">
+                            ${cat.name}
+                            <button type="button" onclick="removeCategory(${cat.id})" style="background: none; border: none; color: white; cursor: pointer; margin-left: 5px; font-weight: bold;">×</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Ürün kategorileri yüklenirken hata:', error);
+            }
+        }
+        
+        // Kategori ekle
+        document.getElementById('add-category-btn').addEventListener('click', async () => {
+            const categoryId = document.getElementById('category-select').value;
+            if (!categoryId) {
+                showToast('Lütfen bir kategori seçin', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/categories/product/${productId}/category/${categoryId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Kategori eklenemedi');
+                }
+                
+                showToast('Kategori eklendi!', 'success');
+                document.getElementById('category-select').value = '';
+                loadProductCategories();
+            } catch (error) {
+                console.error('Kategori eklenirken hata:', error);
+                showToast(error.message, 'error');
+            }
+        });
+        
+        // Kategori kaldır
+        window.removeCategory = async function(categoryId) {
+            try {
+                const response = await fetch(`/api/categories/product/${productId}/category/${categoryId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Kategori kaldırılamadı');
+                
+                showToast('Kategori kaldırıldı!', 'success');
+                loadProductCategories();
+            } catch (error) {
+                console.error('Kategori kaldırılırken hata:', error);
+                showToast('Bir hata oluştu', 'error');
+            }
+        };
 
         imageInput.addEventListener('change', (event) => {
             const files = event.target.files;
             if (files && files.length > 0) {
+                fileNameSpan.textContent = files[0].name;
                 removeImageCheckbox.checked = false;
                 croppedImageBlob = null;
 
@@ -220,13 +335,22 @@
                         aspectRatio: 1 / 1,
                         viewMode: 1,
                         background: false,
-                        autoCropArea: 0.8
+                        autoCropArea: 0.9,
+                        responsive: true,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false
                     });
                 };
                 reader.readAsDataURL(file);
             } else {
                  croppedImageBlob = null;
                  originalFileName = '';
+                 fileNameSpan.textContent = '';
             }
         });
 
@@ -344,7 +468,9 @@
                             ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
                         </button>
                         <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-profile.html">Profil Ayarları</a>
                             <a href="/admin-settings.html">Site Ayarları</a>
+                            <a href="/categories.html">Kategorizasyon</a>
                             <button id="logout-button" class="logout-button">Çıkış Yap</button>
                         </div>
                     </div>`;

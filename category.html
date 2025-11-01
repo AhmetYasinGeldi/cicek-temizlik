@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kategori - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container">
+        <a href="/" class="btn btn-link">&larr; Ana Sayfaya Dön</a>
+        <hr style="margin: 15px 0;">
+        
+        <div id="category-header" style="margin-bottom: 30px;">
+            <h1 id="category-name">Yükleniyor...</h1>
+            <p id="product-count" style="color: var(--color-text-muted);"></p>
+        </div>
+
+        <div id="products-container" class="products-grid"></div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryId = urlParams.get('id');
+        const token = localStorage.getItem('token');
+        let user = null;
+        if (token) user = parseJwt(token);
+
+        async function loadCategoryProducts() {
+            const container = document.getElementById('products-container');
+            const categoryNameEl = document.getElementById('category-name');
+            const productCountEl = document.getElementById('product-count');
+
+            if (!categoryId) {
+                container.innerHTML = '<p>Kategori ID\'si bulunamadı.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/categories/${categoryId}`);
+                if (!response.ok) throw new Error('Kategori bulunamadı');
+                
+                const data = await response.json();
+                const category = data.category;
+                const products = data.products;
+
+                document.title = `${category.name} - Çiçek Temizlik`;
+                categoryNameEl.textContent = category.name;
+                productCountEl.textContent = `${products.length} ürün`;
+
+                if (products.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--color-text-muted); padding: 40px;">Bu kategoride henüz ürün bulunmuyor.</p>';
+                    return;
+                }
+
+                // Site ayarlarını al
+                let settings = null;
+                try {
+                    const settingsResponse = await fetch('/api/settings');
+                    if (settingsResponse.ok) {
+                        settings = await settingsResponse.json();
+                    }
+                } catch (error) {
+                    console.error('Ayarlar yüklenemedi:', error);
+                }
+
+                // Ürünleri filtrele (stok durumuna göre)
+                const visibleProducts = products.filter(product => {
+                    if (product.stock_quantity > 0) return true;
+                    
+                    if (user && user.role === 'admin') return true;
+
+                    if (!settings) return true;
+
+                    let displayRule = product.out_of_stock_display_rule;
+                    if (displayRule === 'default') {
+                        displayRule = settings.out_of_stock_behavior;
+                    }
+
+                    return displayRule !== 'hide';
+                });
+
+                if (visibleProducts.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--color-text-muted); padding: 40px;">Bu kategoride görüntülenebilir ürün bulunmuyor.</p>';
+                    return;
+                }
+
+                container.innerHTML = visibleProducts.map(product => {
+                    const isOutOfStock = product.stock_quantity <= 0;
+                    const isLowStock = settings && product.stock_quantity > 0 && 
+                        product.stock_quantity <= (product.critical_stock_threshold ?? settings.critical_stock_percentage);
+
+                    let priceHTML = '';
+                    let buttonHTML = '';
+                    
+                    if (isOutOfStock) {
+                        priceHTML = `<div class="price-out-of-stock">${parseFloat(product.price).toFixed(2)} TL</div>`;
+                        buttonHTML = `<button class="out-of-stock-btn" disabled>Stokta Yok</button>`;
+                    } else {
+                        priceHTML = `<div class="price">${parseFloat(product.price).toFixed(2)} TL</div>`;
+                        buttonHTML = user && user.role !== 'admin' 
+                            ? `<button class="add-to-cart-btn" data-product-id="${product.id}">Sepete Ekle</button>`
+                            : '';
+                    }
+
+                    let adminControls = '';
+                    if (user && user.role === 'admin') {
+                        const isCritical = isLowStock && !isOutOfStock;
+                        adminControls = `
+                            <div class="admin-product-controls">
+                                <div><strong>Stok:</strong> ${product.stock_quantity} ${isCritical ? '<span class="critical-stock-warning" title="Kritik stok seviyesi!"></span>' : ''}</div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <label><input type="checkbox" ${product.is_active ? 'checked' : ''} disabled> Satışta</label>
+                                </div>
+                            </div>`;
+                    }
+
+                    return `
+                        <div class="product" data-href="/product.html?id=${product.id}">
+                            ${product.image_url 
+                                ? `<img src="${product.image_url}" alt="${product.name}">` 
+                                : `<div class="product-image-placeholder">Fotoğraf Yok</div>`}
+                            <div class="product-info">
+                                <h2>${product.name}</h2>
+                                ${priceHTML}
+                                ${buttonHTML}
+                            </div>
+                            ${adminControls}
+                        </div>
+                    `;
+                }).join('');
+
+                // Sepete ekle butonları
+                document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const productId = btn.getAttribute('data-product-id');
+                        
+                        if (!token) {
+                            showToast('Lütfen önce giriş yapın.', 'error');
+                            setTimeout(() => window.location.href = '/login.html', 1500);
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch('/api/cart/items', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ productId: parseInt(productId), quantity: 1 })
+                            });
+
+                            if (response.ok) {
+                                showToast('Ürün sepete eklendi!');
+                                setupHeader();
+                            } else {
+                                const errorData = await response.json();
+                                showToast(errorData.error || 'Ürün eklenemedi.', 'error');
+                            }
+                        } catch (error) {
+                            console.error('Sepete ekleme hatası:', error);
+                            showToast('Bir hata oluştu.', 'error');
+                        }
+                    });
+                });
+
+                // Ürün kartlarına tıklama
+                document.querySelectorAll('.product[data-href]').forEach(productCard => {
+                    productCard.addEventListener('click', (e) => {
+                        if (!e.target.closest('button') && !e.target.closest('input')) {
+                            window.location.href = productCard.getAttribute('data-href');
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error('Kategori yüklenirken hata:', error);
+                container.innerHTML = '<p style="color: red;">Kategori yüklenemedi.</p>';
+                categoryNameEl.textContent = 'Hata';
+            }
+        }
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!event.target.matches('#user-menu-button')) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.reload();
+                });
+            }
+        }
+
+        const userControlsContainer = document.getElementById('user-controls-container');
+        async function setupHeader() {
+            const token = localStorage.getItem('token');
+            userControlsContainer.innerHTML = '';
+            let cartItemCount = 0;
+            let isCustomer = false;
+            let user = null;
+            if (token) {
+                user = parseJwt(token);
+                if (user && user.role !== 'admin') isCustomer = true;
+            }
+            if (isCustomer) {
+                try {
+                    const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (response.ok) {
+                        const cartData = await response.json();
+                        cartItemCount = cartData.totalQuantity;
+                    } else {
+                        console.error('Sepet sayısı alınamadı.');
+                    }
+                } catch (error) { console.error('Sepet sayısı alınırken hata:', error); }
+            }
+
+            let themeToggleButtons = `
+                <div class="theme-toggle-group">
+                    <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                    <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>`;
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-profile.html">Profil Ayarları</a>
+                            <a href="/admin-settings.html">Site Ayarları</a>
+                            <a href="/categories.html">Kategorizasyon</a>
+                            <button id="logout-button" class="logout-button">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else if (user) {
+                const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/user-settings.html">Ayarlarım</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else {
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
+                    ${themeToggleButtons}
+                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
+            }
+            if (user) setupUserMenu();
+            setupThemeToggle();
+        }
+
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
+        window.onload = async () => {
+            await setupHeader();
+            await loadCategoryProducts();
+        };
+    </script>
+</body>
+</html>
