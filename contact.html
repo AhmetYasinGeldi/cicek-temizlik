@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İletişim - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        .contact-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background: var(--color-white);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .contact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 20px;
+        }
+        
+        .contact-header h1 {
+            font-size: 2em;
+            color: var(--color-text);
+        }
+        
+        .contact-content {
+            line-height: 1.8;
+            color: var(--color-text);
+        }
+        
+        .contact-content h2 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--color-primary);
+        }
+        
+        .contact-content h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: var(--color-text);
+        }
+        
+        .contact-content p {
+            margin-bottom: 15px;
+        }
+        
+        .contact-content ul, .contact-content ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .contact-content li {
+            margin-bottom: 8px;
+        }
+        
+        .btn-edit {
+            background: var(--color-warning);
+            color: var(--color-white);
+        }
+        
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+        
+        .edit-mode-section {
+            margin-top: 30px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-cancel {
+            background: var(--color-gray);
+            color: var(--color-white);
+        }
+        
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+        
+        .editor-container {
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            min-height: 300px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container">
+        <div class="contact-container">
+            <div class="contact-header">
+                <h1>İletişim</h1>
+                <button id="edit-mode-btn" class="btn btn-edit" style="display: none;">
+                    ✏️ Düzenle
+                </button>
+            </div>
+            
+            <div id="view-mode">
+                <div id="contact-content" class="contact-content">
+                    <p>Yükleniyor...</p>
+                </div>
+            </div>
+            
+            <div id="edit-mode" class="edit-mode-section" style="display: none;">
+                <div class="editor-container">
+                    <textarea id="content-editor"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button id="save-btn" class="btn btn-primary">💾 Kaydet</button>
+                    <button id="cancel-edit-btn" class="btn btn-cancel">❌ İptal</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="/help.html">Yardım</a>
+            <a href="/faq.html">Sıkça Sorulan Sorular</a>
+            <a href="/about.html">Hakkımızda</a>
+            <a href="/contact.html">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        const userControlsContainer = document.getElementById('user-controls-container');
+        const editModeBtn = document.getElementById('edit-mode-btn');
+        const viewMode = document.getElementById('view-mode');
+        const editMode = document.getElementById('edit-mode');
+        const contactContent = document.getElementById('contact-content');
+        const contentEditor = document.getElementById('content-editor');
+        const saveBtn = document.getElementById('save-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        
+        let isAdmin = false;
+        let originalContent = '';
+        
+        async function loadContent() {
+            try {
+                const response = await fetch('/api/content/page/contact');
+                if (response.ok) {
+                    const data = await response.json();
+                    originalContent = data.content;
+                    contactContent.innerHTML = data.content;
+                } else {
+                    showToast('İçerik yüklenemedi.', 'error');
+                }
+            } catch (error) {
+                console.error('İçerik yüklenirken hata:', error);
+                showToast('Bir hata oluştu.', 'error');
+            }
+        }
+        
+        function initEditor() {
+            contentEditor.style.width = '100%';
+            contentEditor.style.minHeight = '400px';
+            contentEditor.style.padding = '10px';
+            contentEditor.style.fontFamily = 'inherit';
+            contentEditor.style.fontSize = '1em';
+            contentEditor.style.border = '1px solid var(--color-border)';
+            contentEditor.style.borderRadius = '4px';
+            contentEditor.style.background = 'var(--color-white)';
+            contentEditor.style.color = 'var(--color-text)';
+        }
+        
+        editModeBtn.addEventListener('click', () => {
+            contentEditor.value = originalContent;
+            viewMode.style.display = 'none';
+            editMode.style.display = 'block';
+            editModeBtn.style.display = 'none';
+        });
+        
+        cancelEditBtn.addEventListener('click', () => {
+            viewMode.style.display = 'block';
+            editMode.style.display = 'none';
+            editModeBtn.style.display = 'block';
+        });
+        
+        saveBtn.addEventListener('click', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('Lütfen giriş yapın.', 'error');
+                return;
+            }
+            
+            const updatedContent = contentEditor.value;
+            
+            try {
+                const response = await fetch('/api/content/page/contact', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ content: updatedContent })
+                });
+                
+                if (response.ok) {
+                    showToast('İçerik güncellendi! ✅');
+                    originalContent = updatedContent;
+                    contactContent.innerHTML = updatedContent;
+                    viewMode.style.display = 'block';
+                    editMode.style.display = 'none';
+                    editModeBtn.style.display = 'block';
+                } else {
+                    const error = await response.json();
+                    showToast(error.error || 'Güncelleme başarısız.', 'error');
+                }
+            } catch (error) {
+                console.error('Güncelleme hatası:', error);
+                showToast('Bir hata oluştu.', 'error');
+            }
+        });
+        
+        async function setupHeader() {
+            const token = localStorage.getItem('token');
+            userControlsContainer.innerHTML = '';
+            let cartItemCount = 0;
+            let user = null;
+
+            if (token) {
+                user = parseJwt(token);
+                if (user && user.role === 'admin') {
+                    isAdmin = true;
+                    editModeBtn.style.display = 'block';
+                } else if (user && user.role !== 'admin') {
+                    try {
+                        const response = await fetch('/api/cart', { 
+                            headers: { 'Authorization': `Bearer ${token}` } 
+                        });
+                        if (response.ok) {
+                            const cartData = await response.json();
+                            cartItemCount = cartData.totalQuantity;
+                        }
+                    } catch (error) {
+                        console.error('Sepet sayısı alınırken hata:', error);
+                    }
+                }
+            }
+
+            let themeToggleButtons = `
+                <div class="theme-toggle-group">
+                    <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                    <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>`;
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-profile.html">Profil Ayarları</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else if (user) {
+                const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/user-settings.html">Ayarlarım</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else {
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
+                    ${themeToggleButtons}
+                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
+            }
+            
+            if (user) setupUserMenu();
+            setupThemeToggle();
+        }
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!event.target.matches('#user-menu-button')) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.reload();
+                });
+            }
+        }
+
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
+        window.onload = async () => {
+            await setupHeader();
+            await loadContent();
+            initEditor();
+        };
+    </script>
+</body>
+</html>

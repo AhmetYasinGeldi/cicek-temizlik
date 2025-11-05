@@ -54,17 +54,16 @@
                     </div>
                     <div class="form-group">
                         <label for="cardNumber">Kart Numarası:</label>
-                        <!-- In a real app, this would be handled by a secure payment gateway field -->
-                        <input type="text" id="cardNumber" name="cardNumber" placeholder="XXXX XXXX XXXX XXXX" maxlength="19" required>
+                        <input type="text" id="cardNumber" name="cardNumber" placeholder="XXXX XXXX XXXX XXXX" maxlength="19" inputmode="numeric" required>
                         <small>Sadece son 4 hanesini saklayacağız.</small>
                     </div>
                     <div class="form-group">
                         <label for="expiryMonth">Son Kullanma Tarihi (Ay):</label>
-                        <input type="number" id="expiryMonth" name="expiryMonth" placeholder="AA" min="1" max="12" required>
+                        <input type="number" id="expiryMonth" name="expiryMonth" placeholder="AA" min="1" max="12" inputmode="numeric" required>
                     </div>
                     <div class="form-group">
                         <label for="expiryYear">Son Kullanma Tarihi (Yıl):</label>
-                        <input type="number" id="expiryYear" name="expiryYear" placeholder="YY" min="23" required>
+                        <input type="text" id="expiryYear" name="expiryYear" placeholder="YY (örn: 25)" minlength="2" maxlength="2" inputmode="numeric" required>
                     </div>
                     <div class="form-group">
                         <label for="cardType">Kart Tipi:</label>
@@ -169,9 +168,84 @@
 
         cancelAddCardBtn.addEventListener('click', () => {
             newCardFormContainer.style.display = 'none';
-            addNewCardBtn.style.display = 'block'; // Show add button
-            newCardForm.reset(); // Clear form fields
+            addNewCardBtn.style.display = 'block';
+            newCardForm.reset();
         });
+
+        // Input validasyonları
+        const cardNumberInput = document.getElementById('cardNumber');
+        const expiryMonthInput = document.getElementById('expiryMonth');
+        const expiryYearInput = document.getElementById('expiryYear');
+        const cardHolderNameInput = document.getElementById('cardHolderName');
+
+        // Kart sahibi adı - sadece harf ve boşluk
+        if (cardHolderNameInput) {
+            cardHolderNameInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+            });
+        }
+
+        if (cardNumberInput) {
+            cardNumberInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
+                let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                e.target.value = formattedValue.substr(0, 19);
+            });
+        }
+
+        if (expiryMonthInput) {
+            expiryMonthInput.addEventListener('input', (e) => {
+                let value = parseInt(e.target.value);
+                // Sadece rakam girişine izin ver
+                e.target.value = e.target.value.replace(/\D/g, '');
+                
+                // Otomatik düzeltme
+                if (value > 12) e.target.value = 12;
+                if (value < 1 && e.target.value.length > 0) e.target.value = 1;
+            });
+        }
+
+        if (expiryYearInput) {
+            expiryYearInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                const currentYear = new Date().getFullYear() % 100; // Son 2 hane
+                
+                // 2 haneden fazla girilmesin
+                value = value.substring(0, 2);
+                
+                // Sayı olarak parse et
+                let numValue = parseInt(value);
+                
+                // Minimum değer mevcut yıl
+                if (value.length === 2) {
+                    if (numValue < currentYear) {
+                        value = String(currentYear);
+                    }
+                    if (numValue > 99) {
+                        value = '99';
+                    }
+                }
+                
+                e.target.value = value;
+            });
+            
+            expiryYearInput.addEventListener('blur', (e) => {
+                const currentYear = new Date().getFullYear() % 100;
+                let value = e.target.value;
+                
+                if (value.length === 1) {
+                    // Tek hane girilmişse başına 0 ekle
+                    value = '0' + value;
+                }
+                
+                let numValue = parseInt(value);
+                if (numValue < currentYear) {
+                    value = String(currentYear);
+                }
+                
+                e.target.value = value;
+            });
+        }
 
         newCardForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -181,15 +255,30 @@
             }
 
             const cardHolderName = document.getElementById('cardHolderName').value;
-            const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, ''); // Remove spaces
+            const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
             const expiryMonth = parseInt(document.getElementById('expiryMonth').value);
             const expiryYear = parseInt(document.getElementById('expiryYear').value);
             const cardType = document.getElementById('cardType').value;
 
-            if (cardNumber.length < 16) { // Basic validation
-                showToast('Kart numarası en az 16 hane olmalı.', 'error');
+            // Validasyonlar
+            if (cardNumber.length < 13 || cardNumber.length > 19) {
+                showToast('Kart numarası 13-19 hane arasında olmalı.', 'error');
                 return;
             }
+
+            if (expiryMonth < 1 || expiryMonth > 12) {
+                showToast('Ay 1-12 arasında olmalı.', 'error');
+                return;
+            }
+
+            const currentYear = new Date().getFullYear() % 100;
+            if (expiryYear < currentYear) {
+                showToast('Kartınızın son kullanma tarihi geçmiş.', 'error');
+                return;
+            }
+            
+            // Yılı 2 haneye tamamla
+            const paddedYear = String(expiryYear).padStart(2, '0');
 
             try {
                 const response = await fetch('/api/cards', {
@@ -197,10 +286,10 @@
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
                         card_holder_name: cardHolderName,
-                        last_four_digits: cardNumber.slice(-4), // Only store last 4 digits
+                        last_four_digits: cardNumber.slice(-4),
                         card_type: cardType,
                         expiry_month: expiryMonth,
-                        expiry_year: expiryYear
+                        expiry_year: parseInt(paddedYear)
                     })
                 });
                 if (!response.ok) {
@@ -211,7 +300,7 @@
                 newCardForm.reset();
                 newCardFormContainer.style.display = 'none';
                 addNewCardBtn.style.display = 'block';
-                loadUserCards(); // Reload cards after saving new one
+                loadUserCards();
             } catch (error) {
                 console.error('Hata:', error);
                 showToast(error.message, 'error');

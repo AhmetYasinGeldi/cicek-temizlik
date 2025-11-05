@@ -89,6 +89,21 @@
         const adminProfileForm = document.getElementById('admin-profile-form');
         const togglePasswordFieldsBtn = document.getElementById('toggle-password-fields');
         const passwordFieldsContainer = document.getElementById('password-fields-container');
+        const firstNameInput = document.getElementById('firstName');
+        const lastNameInput = document.getElementById('lastName');
+
+        // İsim ve Soyisim - sadece harf ve boşluk
+        if (firstNameInput) {
+            firstNameInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+            });
+        }
+
+        if (lastNameInput) {
+            lastNameInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+            });
+        }
 
         togglePasswordFieldsBtn.addEventListener('click', () => {
             if (passwordFieldsContainer.style.display === 'none') {

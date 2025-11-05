@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const authenticateToken = require('../middleware/authenticateToken');
+const { notifyNewOrder, notifyOrderStatusChange } = require('../notificationHelper');
 
 // Sadece admin kontrolü
 const requireAdmin = (req, res, next) => {
@@ -247,6 +248,19 @@ router.post('/', authenticateToken, async (req, res) => {
         
         await client.query('COMMIT');
         
+        // Kullanıcı bilgisini al
+        const userResult = await pool.query('SELECT first_name, last_name FROM users WHERE id = $1', [userId]);
+        const user = userResult.rows[0];
+        const customerName = `${user.first_name} ${user.last_name}`;
+        
+        // Adminlere yeni sipariş bildirimi gönder
+        try {
+            await notifyNewOrder(order.id, customerName, totalAmount);
+        } catch (notifError) {
+            console.error('Bildirim gönderme hatası:', notifError);
+            // Bildirim hatası sipariş oluşturmayı etkilemez
+        }
+        
         res.status(201).json({ order, message: 'Sipariş başarıyla oluşturuldu!' });
     } catch (error) {
         await client.query('ROLLBACK');
@@ -315,7 +329,18 @@ router.patch('/:id/status', authenticateToken, requireAdmin, async (req, res) =>
         
         await client.query('COMMIT');
         
-        res.json({ order: result.rows[0], message: 'Sipariş durumu güncellendi.' });
+        const updatedOrder = result.rows[0];
+        
+        // Kullanıcıya sipariş durumu bildir imi gönder
+        if (orderStatus) {
+            try {
+                await notifyOrderStatusChange(id, orderStatus, updatedOrder.user_id);
+            } catch (notifError) {
+                console.error('Bildirim gönderme hatası:', notifError);
+            }
+        }
+        
+        res.json({ order: updatedOrder, message: 'Sipariş durumu güncellendi.' });
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Sipariş durumu güncellenirken hata:', error);

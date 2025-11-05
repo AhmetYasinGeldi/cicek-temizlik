@@ -17,6 +17,8 @@ const cardRoutes = require('./routes/cards');
 const addressRoutes = require('./routes/addresses');
 const categoryRoutes = require('./routes/categories');
 const orderRoutes = require('./routes/orders');
+const contentRoutes = require('./routes/content');
+const notificationRoutes = require('./routes/notifications');
 
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
@@ -26,6 +28,8 @@ app.use('/api/cards', cardRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/content', contentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/user-settings.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'user-settings.html'));

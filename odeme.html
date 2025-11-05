@@ -93,9 +93,11 @@
                 const cartData = await response.json();
 
                 if (cartData.items.length === 0) {
-                    summaryItemsContainer.innerHTML = '<p>Sepetiniz boş.</p>';
-                    summaryTotalContainer.innerHTML = ''; // Clear total if cart is empty
-                    document.getElementById('place-order-btn').disabled = true; // Disable checkout button
+                    summaryItemsContainer.innerHTML = '<p style="color: var(--color-danger); font-weight: 600;">Sepetiniz boş. Ödeme yapamazsınız.</p>';
+                    summaryTotalContainer.innerHTML = '';
+                    document.getElementById('place-order-btn').disabled = true;
+                    document.getElementById('address-section').style.display = 'none';
+                    document.getElementById('payment-section').style.display = 'none';
                     return;
                 }
 
@@ -149,10 +151,11 @@
                         <input type="radio" id="new-address" name="address" value="new" checked>
                         <label for="new-address"><strong>Yeni bir adres kullan</strong></label>
                     </div>
-                    <p class="empty-message">
-                        Kayıtlı adresiniz yok. <a href="/my-addresses.html">Adreslerim</a> sayfasından adres ekleyebilirsiniz.
-                    </p>
                 `;
+                // Yeni adres formunu otomatik aç
+                setTimeout(() => {
+                    document.getElementById('new-address-fields').style.display = 'block';
+                }, 100);
             } else {
                 savedAddressesContainer.innerHTML = userAddresses.map((address, index) => {
                     const addressText = `${address.address_line}, ${[address.neighborhood, address.district, address.city].filter(Boolean).join(', ')}${address.postal_code ? ' - ' + address.postal_code : ''}`;
@@ -187,7 +190,7 @@
                         </div>
                         <div class="form-group">
                             <label for="address-phone">Telefon:</label>
-                            <input type="tel" id="address-phone" name="address-phone" placeholder="5xx xxx xx xx">
+                            <input type="tel" id="address-phone" name="address-phone" placeholder="0... ... .. .." pattern="0[0-9]{10}" maxlength="14" inputmode="numeric">
                         </div>
                     </div>
                     <div class="form-row">
@@ -207,7 +210,7 @@
                         </div>
                         <div class="form-group">
                             <label for="address-postal">Posta Kodu:</label>
-                            <input type="text" id="address-postal" name="address-postal" placeholder="Posta Kodu (opsiyonel)">
+                            <input type="text" id="address-postal" name="address-postal" placeholder="Posta Kodu (opsiyonel)" pattern="[0-9]{5}" maxlength="5" inputmode="numeric">
                         </div>
                     </div>
                     <div class="form-group">
@@ -239,32 +242,140 @@
 
                     document.getElementById('new-address-fields').style.display = e.target.value === 'new' ? 'block' : 'none';
                     if (e.target.value === 'new') {
-                        const useAccountNameCheckbox = document.getElementById('use-account-name');
-                        const addressNameSurnameInput = document.getElementById('address-name-surname');
-
-                        if (useAccountNameCheckbox && addressNameSurnameInput) {
-                            useAccountNameCheckbox.addEventListener('change', () => {
-                                if (useAccountNameCheckbox.checked) {
-                                    const token = localStorage.getItem('token');
-                                    if (token) {
-                                        const user = parseJwt(token);
-                                        if (user && user.firstName) { // Sadece firstName'ı kontrol et
-                                            let fullName = user.firstName;
-                                            if (user.lastName) { // lastName varsa ekle
-                                                fullName += ` ${user.lastName}`;
-                                            }
-                                            addressNameSurnameInput.value = fullName;
-                                        }
-                                    }
-                                } else {
-                                    addressNameSurnameInput.value = '';
-                                }
-                            });
-                        }
+                        setupAddressInputValidations();
                     }
                 });
             });
-            // Sayfa yüklendiğinde varsayılan olarak seçili olanı vurgula
+            
+            // Sayfa yüklendiğinde varsayılan seçimi ayarla
+            setupAddressDefaultSelection();
+        }
+
+        // Adres input validasyonlarını ayarla (sadece bir kez çalışması için fonksiyon)
+        function setupAddressInputValidations() {
+            const useAccountNameCheckbox = document.getElementById('use-account-name');
+            const addressNameSurnameInput = document.getElementById('address-name-surname');
+            const addressPhoneInput = document.getElementById('address-phone');
+            const addressPostalInput = document.getElementById('address-postal');
+            const addressCityInput = document.getElementById('address-city');
+            const addressDistrictInput = document.getElementById('address-district');
+
+            // Event listener'ları zaten eklenmişse tekrar ekleme
+            if (addressNameSurnameInput && !addressNameSurnameInput.dataset.validationAdded) {
+                addressNameSurnameInput.dataset.validationAdded = 'true';
+                
+                // İsim Soyisim - sadece harf, boşluk
+                addressNameSurnameInput.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+                });
+            }
+
+            // İl - sadece harf, boşluk
+            if (addressCityInput && !addressCityInput.dataset.validationAdded) {
+                addressCityInput.dataset.validationAdded = 'true';
+                addressCityInput.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+                });
+            }
+
+            // İlçe - sadece harf, boşluk
+            if (addressDistrictInput && !addressDistrictInput.dataset.validationAdded) {
+                addressDistrictInput.dataset.validationAdded = 'true';
+                addressDistrictInput.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+                });
+            }
+
+            // Telefon input validasyonu ve formatlama
+            if (addressPhoneInput && !addressPhoneInput.dataset.validationAdded) {
+                addressPhoneInput.dataset.validationAdded = 'true';
+                
+                // İlk yüklemede "0" ekle
+                if (!addressPhoneInput.value || !addressPhoneInput.value.startsWith('0')) {
+                    addressPhoneInput.value = '0';
+                }
+                
+                addressPhoneInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    
+                    // İlk karakter mutlaka 0 olsun
+                    if (!value.startsWith('0')) {
+                        value = '0' + value.replace(/^0+/, '');
+                    }
+                    
+                    // Maksimum 11 hane (0 dahil)
+                    value = value.substring(0, 11);
+                    
+                    // Formatlama: 0... ... .. ..
+                    let formatted = value;
+                    if (value.length > 1) {
+                        formatted = value[0];
+                        if (value.length > 1) formatted += value.substring(1, 4);
+                        if (value.length > 4) formatted += ' ' + value.substring(4, 7);
+                        if (value.length > 7) formatted += ' ' + value.substring(7, 9);
+                        if (value.length > 9) formatted += ' ' + value.substring(9, 11);
+                    }
+                    
+                    e.target.value = formatted;
+                });
+                
+                addressPhoneInput.addEventListener('blur', (e) => {
+                    const value = e.target.value.replace(/\s/g, '');
+                    if (value.length > 0 && value.length !== 11) {
+                        e.target.setCustomValidity('Telefon numarası 11 hane olmalı (0 dahil)');
+                        e.target.reportValidity();
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                });
+                
+                addressPhoneInput.addEventListener('focus', (e) => {
+                    if (e.target.value === '0' || e.target.value === '') {
+                        e.target.value = '0';
+                        setTimeout(() => {
+                            e.target.setSelectionRange(1, 1);
+                        }, 0);
+                    }
+                });
+                
+                addressPhoneInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && e.target.value === '0') {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            // Posta kodu validasyonu
+            if (addressPostalInput && !addressPostalInput.dataset.validationAdded) {
+                addressPostalInput.dataset.validationAdded = 'true';
+                addressPostalInput.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '');
+                });
+            }
+
+            if (useAccountNameCheckbox && addressNameSurnameInput) {
+                useAccountNameCheckbox.addEventListener('change', () => {
+                    if (useAccountNameCheckbox.checked) {
+                        const token = localStorage.getItem('token');
+                        if (token) {
+                            const user = parseJwt(token);
+                            if (user && user.firstName) {
+                                let fullName = user.firstName;
+                                if (user.lastName) {
+                                    fullName += ` ${user.lastName}`;
+                                }
+                                addressNameSurnameInput.value = fullName;
+                            }
+                        }
+                    } else {
+                        addressNameSurnameInput.value = '';
+                    }
+                });
+            }
+        }
+        
+        // Sayfa yüklendiğinde varsayılan olarak seçili olanı vurgula (displayAddresses sonunda çağrılacak)
+        function setupAddressDefaultSelection() {
             const initialSelectedAddress = document.querySelector('input[name="address"]:checked');
             if (initialSelectedAddress && initialSelectedAddress.closest('.address-option')) {
                 initialSelectedAddress.closest('.address-option').classList.add('selected');
@@ -299,10 +410,11 @@
                         <input type="radio" id="new-card" name="card" value="new" checked>
                         <label for="new-card"><strong>Yeni bir kart kullan</strong></label>
                     </div>
-                    <p class="empty-message">
-                        Kayıtlı kartınız yok. <a href="/my-cards.html">Kartlarım</a> sayfasından kart ekleyebilirsiniz.
-                    </p>
                 `;
+                // Yeni kart formunu otomatik aç
+                setTimeout(() => {
+                    document.getElementById('new-card-fields').style.display = 'block';
+                }, 100);
             } else {
                 savedCardsContainer.innerHTML = userCards.map((card, index) => `
                     <div class="card-option ${index === 0 ? 'selected' : ''}">
@@ -329,18 +441,25 @@
                         </div>
                         <div class="form-group">
                             <label for="card-number">Kart Numarası:</label>
-                            <input type="text" id="card-number" name="card-number" placeholder="XXXX XXXX XXXX XXXX" maxlength="19">
+                            <input type="text" id="card-number" name="card-number" placeholder="XXXX XXXX XXXX XXXX" maxlength="19" inputmode="numeric">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="card-expiry">Son Kullanma (AA/YY):</label>
-                            <input type="text" id="card-expiry" name="card-expiry" placeholder="AA/YY" maxlength="5">
+                            <label for="card-expiry-month">Son Kullanma Ay:</label>
+                            <input type="text" id="card-expiry-month" name="card-expiry-month" placeholder="AA" maxlength="2" inputmode="numeric">
                         </div>
                         <div class="form-group">
-                            <label for="card-cvc">CVC:</label>
-                            <input type="text" id="card-cvc" name="card-cvc" placeholder="XXX" maxlength="3">
+                            <label for="card-expiry-year">Son Kullanma Yıl:</label>
+                            <input type="text" id="card-expiry-year" name="card-expiry-year" placeholder="YY" maxlength="2" inputmode="numeric">
                         </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="card-cvc">CVC:</label>
+                            <input type="text" id="card-cvc" name="card-cvc" placeholder="XXX" maxlength="4" inputmode="numeric">
+                        </div>
+                        <div class="form-group"></div>
                     </div>
                     <div class="checkbox-inline-group">
                         <input type="checkbox" id="use-account-name-card">
@@ -364,28 +483,7 @@
                     document.getElementById('new-card-fields').style.display = e.target.value === 'new' ? 'block' : 'none';
 
                     if (e.target.value === 'new') {
-                        const useAccountNameCardCheckbox = document.getElementById('use-account-name-card');
-                        const cardNameInput = document.getElementById('card-name');
-
-                        if (useAccountNameCardCheckbox && cardNameInput) {
-                            useAccountNameCardCheckbox.addEventListener('change', () => {
-                                if (useAccountNameCardCheckbox.checked) {
-                                    const token = localStorage.getItem('token');
-                                    if (token) {
-                                        const user = parseJwt(token);
-                                        if (user && user.firstName) {
-                                            let fullName = user.firstName;
-                                            if (user.lastName) {
-                                                fullName += ` ${user.lastName}`;
-                                            }
-                                            cardNameInput.value = fullName;
-                                        }
-                                    }
-                                } else {
-                                    cardNameInput.value = '';
-                                }
-                            });
-                        }
+                        setupCardInputValidations();
                     }
                 });
             });
@@ -393,6 +491,152 @@
             const initialSelectedCard = document.querySelector('input[name="card"]:checked');
             if (initialSelectedCard && initialSelectedCard.closest('.card-option')) {
                 initialSelectedCard.closest('.card-option').classList.add('selected');
+            }
+        }
+
+        // Kart input validasyonlarını ayarla
+        function setupCardInputValidations() {
+            const useAccountNameCardCheckbox = document.getElementById('use-account-name-card');
+            const cardNameInput = document.getElementById('card-name');
+            const cardNumberInput = document.getElementById('card-number');
+            const cardExpiryMonthInput = document.getElementById('card-expiry-month');
+            const cardExpiryYearInput = document.getElementById('card-expiry-year');
+            const cardCvcInput = document.getElementById('card-cvc');
+
+            // Kart sahibi adı - sadece harf ve boşluk
+            if (cardNameInput && !cardNameInput.dataset.validationAdded) {
+                cardNameInput.dataset.validationAdded = 'true';
+                cardNameInput.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+                });
+            }
+
+            // Kart numarası validasyonu ve formatlama
+            if (cardNumberInput && !cardNumberInput.dataset.validationAdded) {
+                cardNumberInput.dataset.validationAdded = 'true';
+                
+                cardNumberInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
+                    let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                    e.target.value = formattedValue.substr(0, 19);
+                });
+                
+                cardNumberInput.addEventListener('blur', (e) => {
+                    const value = e.target.value.replace(/\s/g, '');
+                    if (value.length > 0 && (value.length < 13 || value.length > 19)) {
+                        e.target.setCustomValidity('Kart numarası 13-19 hane arasında olmalı');
+                        e.target.reportValidity();
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                });
+            }
+
+            // Ay validasyonu
+            if (cardExpiryMonthInput && !cardExpiryMonthInput.dataset.validationAdded) {
+                cardExpiryMonthInput.dataset.validationAdded = 'true';
+                
+                cardExpiryMonthInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    
+                    if (value.length >= 1) {
+                        let month = parseInt(value);
+                        if (month > 12) {
+                            month = 12;
+                        } else if (month === 0 && value.length === 2) {
+                            month = 1;
+                        }
+                        value = String(month).padStart(value.length === 2 ? 2 : 1, '0');
+                    }
+                    
+                    e.target.value = value.substring(0, 2);
+                });
+                
+                cardExpiryMonthInput.addEventListener('blur', (e) => {
+                    let value = e.target.value;
+                    if (value.length === 1 && value !== '0') {
+                        value = '0' + value;
+                    }
+                    const month = parseInt(value);
+                    if (month < 1 || month > 12) {
+                        e.target.setCustomValidity('Ay 1-12 arasında olmalı');
+                        e.target.reportValidity();
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                    e.target.value = value;
+                });
+            }
+
+            // Yıl validasyonu
+            if (cardExpiryYearInput && !cardExpiryYearInput.dataset.validationAdded) {
+                cardExpiryYearInput.dataset.validationAdded = 'true';
+                
+                cardExpiryYearInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '').substring(0, 2);
+                    e.target.value = value;
+                });
+                
+                cardExpiryYearInput.addEventListener('blur', (e) => {
+                    let value = e.target.value;
+                    const currentYear = new Date().getFullYear() % 100;
+                    
+                    if (value.length === 1) {
+                        value = '0' + value;
+                    }
+                    
+                    const year = parseInt(value);
+                    const month = parseInt(cardExpiryMonthInput.value) || 1;
+                    const currentMonth = new Date().getMonth() + 1;
+                    
+                    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                        e.target.setCustomValidity('Kartınızın son kullanma tarihi geçmiş');
+                        e.target.reportValidity();
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                    
+                    e.target.value = value;
+                });
+            }
+
+            // CVC validasyonu
+            if (cardCvcInput && !cardCvcInput.dataset.validationAdded) {
+                cardCvcInput.dataset.validationAdded = 'true';
+                
+                cardCvcInput.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '').substr(0, 4);
+                });
+                
+                cardCvcInput.addEventListener('blur', (e) => {
+                    const value = e.target.value;
+                    if (value.length > 0 && value.length < 3) {
+                        e.target.setCustomValidity('CVC en az 3 hane olmalı');
+                        e.target.reportValidity();
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                });
+            }
+
+            if (useAccountNameCardCheckbox && cardNameInput) {
+                useAccountNameCardCheckbox.addEventListener('change', () => {
+                    if (useAccountNameCardCheckbox.checked) {
+                        const token = localStorage.getItem('token');
+                        if (token) {
+                            const user = parseJwt(token);
+                            if (user && user.firstName) {
+                                let fullName = user.firstName;
+                                if (user.lastName) {
+                                    fullName += ` ${user.lastName}`;
+                                }
+                                cardNameInput.value = fullName;
+                            }
+                        }
+                    } else {
+                        cardNameInput.value = '';
+                    }
+                });
             }
         }
 
@@ -535,6 +779,23 @@
                 return;
             }
 
+            // Önce sepeti kontrol et
+            try {
+                const cartCheckResponse = await fetch('/api/cart', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (cartCheckResponse.ok) {
+                    const cartCheckData = await cartCheckResponse.json();
+                    if (cartCheckData.items.length === 0) {
+                        showToast('Sepetiniz boş! Ödeme yapamazsınız.', 'error');
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Sepet kontrolü hatası:', error);
+            }
+
             // Seçili adres kontrolü
             const selectedAddressRadio = document.querySelector('input[name="address"]:checked');
             if (!selectedAddressRadio) {
@@ -547,14 +808,19 @@
 
             if (selectedAddressId === 'new') {
                 // Yeni adres kontrolü
-                const fullName = document.getElementById('address-name-surname')?.value;
-                const phone = document.getElementById('address-phone')?.value;
-                const addressLine = document.getElementById('address-line')?.value;
-                const city = document.getElementById('address-city')?.value;
-                const district = document.getElementById('address-district')?.value;
+                const fullName = document.getElementById('address-name-surname')?.value?.trim();
+                const phone = document.getElementById('address-phone')?.value?.replace(/\s/g, '').trim();
+                const addressLine = document.getElementById('address-line')?.value?.trim();
+                const city = document.getElementById('address-city')?.value?.trim();
+                const district = document.getElementById('address-district')?.value?.trim();
 
                 if (!fullName || !phone || !addressLine || !city || !district) {
-                    showToast('Lütfen tüm adres bilgilerini doldurun', 'error');
+                    showToast('Lütfen tüm zorunlu adres bilgilerini doldurun', 'error');
+                    return;
+                }
+
+                if (phone.length !== 11 || !phone.startsWith('0')) {
+                    showToast('Geçerli bir telefon numarası girin (0 ile başlayan 11 hane)', 'error');
                     return;
                 }
 
@@ -584,9 +850,14 @@
                 };
             }
 
-            // Kart bilgisi kontrolü (şimdilik opsiyonel)
+            // Kart bilgisi kontrolü
             const selectedCardRadio = document.querySelector('input[name="card"]:checked');
             let cardInfo = null;
+
+            if (!selectedCardRadio) {
+                showToast('Lütfen bir ödeme yöntemi seçin', 'error');
+                return;
+            }
 
             if (selectedCardRadio && selectedCardRadio.value !== 'new') {
                 const selectedCard = userCards.find(card => card.id == selectedCardRadio.value);
@@ -597,15 +868,47 @@
                     };
                 }
             } else if (selectedCardRadio && selectedCardRadio.value === 'new') {
-                const cardHolderName = document.getElementById('card-holder')?.value;
-                const cardNumber = document.getElementById('card-number')?.value;
+                const cardName = document.getElementById('card-name')?.value?.trim();
+                const cardNumber = document.getElementById('card-number')?.value?.replace(/\s/g, '');
+                const cardExpiryMonth = document.getElementById('card-expiry-month')?.value?.trim();
+                const cardExpiryYear = document.getElementById('card-expiry-year')?.value?.trim();
+                const cardCvc = document.getElementById('card-cvc')?.value?.trim();
                 
-                if (cardHolderName && cardNumber) {
-                    cardInfo = {
-                        cardHolderName,
-                        last4: cardNumber.slice(-4)
-                    };
+                if (!cardName || !cardNumber || !cardExpiryMonth || !cardExpiryYear || !cardCvc) {
+                    showToast('Lütfen tüm kart bilgilerini doldurun', 'error');
+                    return;
                 }
+
+                if (cardNumber.length < 13 || cardNumber.length > 19) {
+                    showToast('Geçerli bir kart numarası girin', 'error');
+                    return;
+                }
+
+                if (cardCvc.length < 3) {
+                    showToast('CVC/CVV en az 3 hane olmalı', 'error');
+                    return;
+                }
+
+                const month = parseInt(cardExpiryMonth);
+                const year = parseInt(cardExpiryYear);
+                
+                if (month < 1 || month > 12) {
+                    showToast('Geçerli bir ay girin (1-12)', 'error');
+                    return;
+                }
+
+                const currentYear = new Date().getFullYear() % 100;
+                const currentMonth = new Date().getMonth() + 1;
+                
+                if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                    showToast('Kartınızın son kullanma tarihi geçmiş', 'error');
+                    return;
+                }
+                
+                cardInfo = {
+                    cardHolderName: cardName,
+                    last4: cardNumber.slice(-4)
+                };
             }
 
             // Sepetteki ürünleri al

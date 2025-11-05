@@ -288,16 +288,25 @@
                 const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
                 userControlsContainer.innerHTML = `
                     <a href="/cart.html" class="btn btn-primary">${cartText}</a>
+                    <a href="/notifications.html" class="notification-bell" id="notification-bell">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                    </a>
                     ${themeToggleButtons}
                     <div class="user-dropdown">
                         <button id="user-menu-button" class="user-menu-button">
                             ${user.firstName} <span class="arrow">&#9662;</span>
                         </button>
                         <div id="user-dropdown-content" class="dropdown-content">
-                            <a href="/user-settings.html">Ayarlarım</a>
+                            <a href="/user-settings.html">Ayarlar</a>
                             <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
                         </div>
                     </div>`;
+                    
+                loadNotificationCount();
             } else {
                 userControlsContainer.innerHTML = `
                     <a href="/cart.html" class="btn btn-primary">Sepetim</a>
@@ -306,6 +315,32 @@
             }
             if (user) setupUserMenu();
             setupThemeToggle();
+        }
+
+        async function loadNotificationCount() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            
+            try {
+                const response = await fetch('/api/notifications/unread-count', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('notification-badge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Bildirim sayısı yüklenemedi:', error);
+            }
         }
 
         function setupThemeToggle() {

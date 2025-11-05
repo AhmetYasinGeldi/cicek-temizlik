@@ -61,7 +61,7 @@
                         </div>
                         <div class="form-group">
                             <label for="phone">Telefon *</label>
-                            <input type="tel" id="phone" placeholder="0555 555 55 55" required>
+                            <input type="tel" id="phone" placeholder="0... ... .. .." pattern="0[0-9]{10}" maxlength="14" inputmode="numeric" required>
                         </div>
                     </div>
 
@@ -90,7 +90,7 @@
                         </div>
                         <div class="form-group">
                             <label for="postal-code">Posta Kodu</label>
-                            <input type="text" id="postal-code" placeholder="34000">
+                            <input type="text" id="postal-code" placeholder="34000" pattern="[0-9]{5}" maxlength="5" inputmode="numeric">
                         </div>
                     </div>
 
@@ -257,6 +257,93 @@
                 fullNameInput.value = '';
             }
         });
+
+        // Input validasyonları
+        const phoneInput = document.getElementById('phone');
+        const postalCodeInput = document.getElementById('postal-code');
+        const fullNameInput = document.getElementById('full-name');
+        const cityInput = document.getElementById('city');
+        const districtInput = document.getElementById('district');
+
+        // İsim Soyisim - sadece harf ve boşluk
+        if (fullNameInput) {
+            fullNameInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+            });
+        }
+
+        // İl ve İlçe - sadece harf ve boşluk
+        if (cityInput) {
+            cityInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+            });
+        }
+
+        if (districtInput) {
+            districtInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+            });
+        }
+
+        if (phoneInput) {
+            // İlk yüklemede "0" ekle
+            phoneInput.addEventListener('focus', (e) => {
+                if (!e.target.value || e.target.value === '') {
+                    e.target.value = '0';
+                    setTimeout(() => {
+                        e.target.setSelectionRange(1, 1);
+                    }, 0);
+                }
+            });
+            
+            phoneInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                
+                // İlk karakter mutlaka 0 olsun
+                if (!value.startsWith('0')) {
+                    value = '0' + value.replace(/^0+/, '');
+                }
+                
+                // Maksimum 11 hane
+                value = value.substring(0, 11);
+                
+                // Formatlama: 0... ... .. ..
+                let formatted = value;
+                if (value.length > 1) {
+                    formatted = value[0];
+                    if (value.length > 1) formatted += value.substring(1, 4);
+                    if (value.length > 4) formatted += ' ' + value.substring(4, 7);
+                    if (value.length > 7) formatted += ' ' + value.substring(7, 9);
+                    if (value.length > 9) formatted += ' ' + value.substring(9, 11);
+                }
+                
+                e.target.value = formatted;
+            });
+            
+            // Blur olayında uzunluk kontrolü
+            phoneInput.addEventListener('blur', (e) => {
+                const value = e.target.value.replace(/\s/g, '');
+                if (value.length > 0 && value.length !== 11) {
+                    e.target.setCustomValidity('Telefon numarası 11 hane olmalı (0 dahil)');
+                    e.target.reportValidity();
+                } else {
+                    e.target.setCustomValidity('');
+                }
+            });
+            
+            // Backspace ile 0'ı silmesin
+            phoneInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && e.target.value === '0') {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        if (postalCodeInput) {
+            postalCodeInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+        }
 
         // Yeni adres ekle / Düzenle
         addressForm.addEventListener('submit', async (e) => {

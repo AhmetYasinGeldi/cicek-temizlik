@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bildirimler - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .notifications-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .notifications-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .notifications-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .notification-card {
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .notification-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .notification-card.unread {
+            background: linear-gradient(to right, rgba(var(--primary-rgb), 0.05), transparent);
+            border-left: 3px solid var(--color-primary);
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: var(--color-text);
+            margin: 0 0 4px 0;
+            font-size: 1rem;
+        }
+
+        .notification-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-order { background: #e3f2fd; color: #1976d2; }
+        .badge-campaign { background: #fff3e0; color: #f57c00; }
+        .badge-question { background: #f3e5f5; color: #7b1fa2; }
+        .badge-announcement { background: #e8f5e9; color: #388e3c; }
+        .badge-stock { background: #ffebee; color: #c62828; }
+        .badge-welcome { background: #fce4ec; color: #c2185b; }
+
+        .notification-message {
+            color: var(--color-text-muted);
+            margin: 0 0 8px 0;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .notification-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        .notification-time {
+            font-size: 0.8rem;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .notification-actions button {
+            padding: 4px 12px;
+            font-size: 0.875rem;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid var(--color-border);
+            background: var(--color-background);
+            color: var(--color-text);
+            transition: all 0.2s;
+        }
+
+        .notification-actions button:hover {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .notification-actions button.delete-btn:hover {
+            background: var(--color-danger);
+            border-color: var(--color-danger);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-muted);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--color-border);
+            overflow-x: auto;
+        }
+
+        .filter-tab {
+            padding: 10px 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--color-text-muted);
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .filter-tab:hover {
+            color: var(--color-primary);
+        }
+
+        .filter-tab.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .preferences-section {
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .preferences-section h3 {
+            margin: 0 0 16px 0;
+        }
+
+        .preference-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .preference-item:last-child {
+            border-bottom: none;
+        }
+
+        .preference-label {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preference-label strong {
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .preference-label span {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--color-primary);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        @media (max-width: 768px) {
+            .notifications-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .notifications-actions {
+                width: 100%;
+            }
+
+            .notifications-actions button {
+                flex: 1;
+            }
+        }
+    </style>
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container notifications-container">
+        <h1>Bildirimler</h1>
+        
+        <div class="notifications-header">
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">Tümü</button>
+                <button class="filter-tab" data-filter="unread">Okunmamış</button>
+                <button class="filter-tab" data-filter="order_status">Siparişler</button>
+                <button class="filter-tab" data-filter="campaign">Kampanyalar</button>
+                <button class="filter-tab" data-filter="general_announcement">Duyurular</button>
+            </div>
+            <div class="notifications-actions">
+                <button class="btn btn-secondary" id="mark-all-read-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 4px;">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Tümünü Okundu İşaretle
+                </button>
+                <button class="btn btn-link" id="preferences-toggle-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 4px;">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m5.196-14.196l-4.242 4.242m0 5.908l4.242 4.242m5.958-9.192h-6m-6 0h-6m14.196 5.196l-4.242-4.242m0-5.908l4.242-4.242"></path>
+                    </svg>
+                    Ayarlar
+                </button>
+            </div>
+        </div>
+
+        <div id="notifications-list"></div>
+
+        <div class="preferences-section" id="preferences-section" style="display: none;">
+            <h3>Bildirim Tercihleri</h3>
+            <p style="color: var(--color-text-muted); margin-bottom: 20px;">
+                Hangi bildirimleri almak istediğinizi seçin
+            </p>
+            <div id="preferences-list"></div>
+            <button class="btn btn-primary" id="save-preferences-btn" style="margin-top: 20px;">Tercihleri Kaydet</button>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="#">Yardım</a>
+            <a href="#">Sıkça Sorulan Sorular</a>
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        let currentFilter = 'all';
+        let notifications = [];
+        let preferences = {};
+
+        const typeLabels = {
+            'order_status': 'Sipariş',
+            'new_order': 'Yeni Sipariş',
+            'campaign': 'Kampanya',
+            'question_answer': 'Soru-Cevap',
+            'new_question': 'Yeni Soru',
+            'general_announcement': 'Duyuru',
+            'low_stock': 'Stok Uyarısı',
+            'welcome': 'Hoşgeldin'
+        };
+
+        const typeBadgeClass = {
+            'order_status': 'badge-order',
+            'new_order': 'badge-order',
+            'campaign': 'badge-campaign',
+            'question_answer': 'badge-question',
+            'new_question': 'badge-question',
+            'general_announcement': 'badge-announcement',
+            'low_stock': 'badge-stock',
+            'welcome': 'badge-welcome'
+        };
+
+        async function loadNotifications() {
+            try {
+                const unreadParam = currentFilter === 'unread' ? '?unreadOnly=true' : '';
+                const response = await fetch(`/api/notifications${unreadParam}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Bildirimler yüklenemedi');
+
+                const data = await response.json();
+                notifications = data.notifications;
+
+                displayNotifications();
+                updateUnreadCount(data.unreadCount);
+            } catch (error) {
+                console.error('Bildirimler yüklenirken hata:', error);
+                showToast('Bildirimler yüklenemedi', 'error');
+            }
+        }
+
+        function displayNotifications() {
+            const container = document.getElementById('notifications-list');
+
+            let filteredNotifications = notifications;
+            if (currentFilter !== 'all' && currentFilter !== 'unread') {
+                filteredNotifications = notifications.filter(n => n.type === currentFilter);
+            }
+
+            if (filteredNotifications.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <h3>Henüz bildirim yok</h3>
+                        <p>Yeni bildirimleri burada göreceksiniz</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredNotifications.map(notification => {
+                const unreadClass = notification.is_read ? '' : 'unread';
+                const badge = typeLabels[notification.type] || 'Bildirim';
+                const badgeClass = typeBadgeClass[notification.type] || 'badge-announcement';
+                const time = formatTime(notification.created_at);
+
+                return `
+                    <div class="notification-card ${unreadClass}" data-id="${notification.id}">
+                        <div class="notification-header">
+                            <div>
+                                <h3 class="notification-title">
+                                    ${notification.title}
+                                    <span class="notification-badge ${badgeClass}">${badge}</span>
+                                </h3>
+                            </div>
+                        </div>
+                        <p class="notification-message">${notification.message}</p>
+                        <div class="notification-meta">
+                            <span class="notification-time">${time}</span>
+                            <div class="notification-actions">
+                                ${notification.link ? `<button onclick="openLink('${notification.link}', ${notification.id})">Görüntüle</button>` : ''}
+                                ${!notification.is_read ? `<button onclick="markAsRead(${notification.id})">Okundu İşaretle</button>` : ''}
+                                <button class="delete-btn" onclick="deleteNotification(${notification.id})">Sil</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            if (minutes < 1) return 'Şimdi';
+            if (minutes < 60) return `${minutes} dakika önce`;
+            if (hours < 24) return `${hours} saat önce`;
+            if (days < 7) return `${days} gün önce`;
+            return date.toLocaleDateString('tr-TR');
+        }
+
+        async function markAsRead(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('İşlem başarısız');
+
+                showToast('Bildirim okundu olarak işaretlendi', 'success');
+                await loadNotifications();
+            } catch (error) {
+                console.error('İşaretleme hatası:', error);
+                showToast('İşlem başarısız', 'error');
+            }
+        }
+
+        async function markAllAsRead() {
+            try {
+                const response = await fetch('/api/notifications/mark-all-read', {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('İşlem başarısız');
+
+                showToast('Tüm bildirimler okundu olarak işaretlendi', 'success');
+                await loadNotifications();
+            } catch (error) {
+                console.error('İşaretleme hatası:', error);
+                showToast('İşlem başarısız', 'error');
+            }
+        }
+
+        async function deleteNotification(notificationId) {
+            if (!confirm('Bu bildirimi silmek istediğinizden emin misiniz?')) return;
+
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Silme başarısız');
+
+                showToast('Bildirim silindi', 'success');
+                await loadNotifications();
+            } catch (error) {
+                console.error('Silme hatası:', error);
+                showToast('Silme başarısız', 'error');
+            }
+        }
+
+        function openLink(link, notificationId) {
+            markAsRead(notificationId);
+            window.location.href = link;
+        }
+
+        async function loadPreferences() {
+            try {
+                const response = await fetch('/api/notifications/preferences', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Tercihler yüklenemedi');
+
+                preferences = await response.json();
+                displayPreferences();
+            } catch (error) {
+                console.error('Tercihler yüklenirken hata:', error);
+                showToast('Tercihler yüklenemedi', 'error');
+            }
+        }
+
+        function displayPreferences() {
+            const container = document.getElementById('preferences-list');
+            const user = parseJwt(token);
+            const isAdmin = user && user.role === 'admin';
+
+            const userPrefs = [
+                { key: 'order_status_updates', label: 'Sipariş Durumu Güncellemeleri', desc: 'Siparişinizin durumu değiştiğinde bildirim al' },
+                { key: 'campaign_notifications', label: 'Kampanya Bildirimleri', desc: 'Yeni kampanya ve indirimlerden haberdar ol' },
+                { key: 'question_answers', label: 'Soru Cevapları', desc: 'Sorularınıza cevap verildiğinde bildirim al' },
+                { key: 'general_announcements', label: 'Genel Duyurular', desc: 'Önemli duyuru ve güncellemelerden haberdar ol' }
+            ];
+
+            const adminPrefs = [
+                { key: 'new_orders', label: 'Yeni Siparişler', desc: 'Yeni sipariş verildiğinde bildirim al' },
+                { key: 'new_questions', label: 'Yeni Sorular', desc: 'Kullanıcılar soru sorduğunda bildirim al' },
+                { key: 'low_stock_alerts', label: 'Stok Uyarıları', desc: 'Ürün stoğu azaldığında bildirim al' }
+            ];
+
+            const prefsToShow = isAdmin ? [...userPrefs, ...adminPrefs] : userPrefs;
+
+            container.innerHTML = prefsToShow.map(pref => `
+                <div class="preference-item">
+                    <div class="preference-label">
+                        <strong>${pref.label}</strong>
+                        <span>${pref.desc}</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" data-pref="${pref.key}" ${preferences[pref.key] ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        async function savePreferences() {
+            try {
+                const checkboxes = document.querySelectorAll('[data-pref]');
+                const updates = {};
+
+                checkboxes.forEach(cb => {
+                    updates[cb.dataset.pref] = cb.checked;
+                });
+
+                const response = await fetch('/api/notifications/preferences', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updates)
+                });
+
+                if (!response.ok) throw new Error('Kaydetme başarısız');
+
+                showToast('Tercihler kaydedildi', 'success');
+                preferences = await response.json();
+            } catch (error) {
+                console.error('Kaydetme hatası:', error);
+                showToast('Kaydetme başarısız', 'error');
+            }
+        }
+
+        function updateUnreadCount(count) {
+            // Header'daki badge'i güncelle
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        // Event Listeners
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentFilter = tab.dataset.filter;
+                displayNotifications();
+            });
+        });
+
+        document.getElementById('mark-all-read-btn').addEventListener('click', markAllAsRead);
+        
+        document.getElementById('preferences-toggle-btn').addEventListener('click', () => {
+            const section = document.getElementById('preferences-section');
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                loadPreferences();
+            } else {
+                section.style.display = 'none';
+            }
+        });
+
+        document.getElementById('save-preferences-btn').addEventListener('click', savePreferences);
+
+        // Header setup
+        async function setupHeader() {
+            const userControlsContainer = document.getElementById('user-controls-container');
+            const user = parseJwt(token);
+            
+            let themeToggleButtons = `
+                <div class="theme-toggle-group">
+                    <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                    <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>`;
+
+            userControlsContainer.innerHTML = `
+                ${themeToggleButtons}
+                <div class="user-dropdown">
+                    <button id="user-menu-button" class="user-menu-button">
+                        ${user.firstName} <span class="arrow">&#9662;</span>
+                    </button>
+                    <div id="user-dropdown-content" class="dropdown-content">
+                        <a href="/user-settings.html">Ayarlar</a>
+                        <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
+                    </div>
+                </div>`;
+
+            setupUserMenu();
+            setupThemeToggle();
+        }
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!menuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                });
+            }
+        }
+
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
+        // İlk yükleme
+        window.addEventListener('load', () => {
+            setupHeader();
+            loadNotifications();
+        });
+
+        // Her 30 saniyede bir yenile
+        setInterval(loadNotifications, 30000);
+    </script>
+</body>
+</html>

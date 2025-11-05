@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sıkça Sorulan Sorular - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        .faq-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background: var(--color-white);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .faq-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 20px;
+        }
+        
+        .faq-header h1 {
+            font-size: 2em;
+            color: var(--color-text);
+        }
+        
+        .faq-list {
+            margin-top: 20px;
+        }
+        
+        .faq-item {
+            margin-bottom: 15px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            overflow: hidden;
+            transition: box-shadow 0.3s;
+        }
+        
+        .faq-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .faq-question {
+            padding: 20px;
+            background: var(--color-bg-light);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--color-text);
+        }
+        
+        .faq-question:hover {
+            background: var(--color-primary-light-alpha);
+        }
+        
+        .faq-question-text {
+            flex: 1;
+        }
+        
+        .faq-arrow {
+            transition: transform 0.3s;
+            font-size: 1.2em;
+        }
+        
+        .faq-item.active .faq-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .faq-answer {
+            padding: 20px;
+            background: var(--color-white);
+            display: none;
+            line-height: 1.8;
+            color: var(--color-text);
+        }
+        
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+        
+        .user-question-form {
+            margin-top: 40px;
+            padding: 25px;
+            background: var(--color-bg-light);
+            border-radius: 8px;
+            border-left: 4px solid var(--color-primary);
+        }
+        
+        .user-question-form h3 {
+            margin-bottom: 15px;
+            color: var(--color-primary);
+        }
+        
+        .user-question-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 100px;
+            background: var(--color-white);
+            color: var(--color-text);
+        }
+        
+        .user-question-form button {
+            margin-top: 10px;
+        }
+        
+        .admin-panel {
+            margin-top: 40px;
+            padding: 25px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border: 2px solid var(--color-warning);
+        }
+        
+        .dark-mode .admin-panel {
+            background: rgba(255, 193, 7, 0.15);
+        }
+        
+        .admin-panel h3 {
+            margin-bottom: 20px;
+            color: var(--color-warning);
+        }
+        
+        .admin-faq-item {
+            padding: 15px;
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .admin-faq-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .admin-faq-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .status-published {
+            background: var(--color-success);
+            color: white;
+        }
+        
+        .status-pending {
+            background: var(--color-warning);
+            color: white;
+        }
+        
+        .admin-faq-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .admin-faq-actions button {
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
+        
+        .faq-form-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .faq-form-modal.show {
+            display: flex;
+        }
+        
+        .faq-form-content {
+            background: var(--color-white);
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .faq-form-content h3 {
+            margin-bottom: 20px;
+            color: var(--color-primary);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1em;
+            background: var(--color-white);
+            color: var(--color-text);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-group-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group-checkbox input {
+            width: auto;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-add {
+            background: var(--color-success);
+            color: white;
+        }
+        
+        .btn-add:hover {
+            background: #218838;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--color-text-muted);
+        }
+        
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <nav class="center-nav"></nav>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container">
+        <div class="faq-container">
+            <div class="faq-header">
+                <h1>Sıkça Sorulan Sorular</h1>
+            </div>
+            
+            <div id="faq-list" class="faq-list">
+                <div class="empty-state">
+                    <div class="empty-state-icon">⏳</div>
+                    <p>Yükleniyor...</p>
+                </div>
+            </div>
+            
+            <div id="user-question-section" class="user-question-form" style="display: none;">
+                <h3>💬 Sorunuz mu var?</h3>
+                <p>Aradığınız soruyu bulamadınız mı? Bize sorun, size yardımcı olalım!</p>
+                <form id="user-question-form">
+                    <textarea id="question-input" placeholder="Sorunuzu buraya yazın..." required></textarea>
+                    <button type="submit" class="btn btn-primary">📤 Soru Gönder</button>
+                </form>
+            </div>
+            
+            <div id="admin-panel" class="admin-panel" style="display: none;">
+                <h3>🔧 Admin Paneli</h3>
+                <button id="add-faq-btn" class="btn btn-add">➕ Yeni SSS Ekle</button>
+                <div id="admin-faq-list" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Form -->
+    <div id="faq-form-modal" class="faq-form-modal">
+        <div class="faq-form-content">
+            <h3 id="modal-title">Yeni SSS Ekle</h3>
+            <form id="faq-form">
+                <input type="hidden" id="faq-id">
+                
+                <div class="form-group">
+                    <label for="faq-question">Soru</label>
+                    <input type="text" id="faq-question" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="faq-answer">Cevap</label>
+                    <textarea id="faq-answer" required></textarea>
+                </div>
+                
+                <div class="form-group form-group-checkbox">
+                    <input type="checkbox" id="faq-published" checked>
+                    <label for="faq-published">Hemen yayınla</label>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+                    <button type="button" id="close-modal-btn" class="btn btn-cancel">❌ İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="/help.html">Yardım</a>
+            <a href="/faq.html">Sıkça Sorulan Sorular</a>
+            <a href="/about.html">Hakkımızda</a>
+            <a href="/contact.html">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        const userControlsContainer = document.getElementById('user-controls-container');
+        const faqList = document.getElementById('faq-list');
+        const userQuestionSection = document.getElementById('user-question-section');
+        const userQuestionForm = document.getElementById('user-question-form');
+        const questionInput = document.getElementById('question-input');
+        const adminPanel = document.getElementById('admin-panel');
+        const adminFaqList = document.getElementById('admin-faq-list');
+        const addFaqBtn = document.getElementById('add-faq-btn');
+        const faqFormModal = document.getElementById('faq-form-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const faqForm = document.getElementById('faq-form');
+        const modalTitle = document.getElementById('modal-title');
+        
+        let isAdmin = false;
+        let isLoggedIn = false;
+        let currentEditId = null;
+        
+        async function loadFAQs() {
+            try {
+                const response = await fetch('/api/content/faq');
+                if (response.ok) {
+                    const faqs = await response.json();
+                    displayFAQs(faqs);
+                } else {
+                    showToast('SSS yüklenemedi.', 'error');
+                }
+            } catch (error) {
+                console.error('SSS yüklenirken hata:', error);
+                showToast('Bir hata oluştu.', 'error');
+            }
+        }
+        
+        function displayFAQs(faqs) {
+            if (faqs.length === 0) {
+                faqList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>Henüz soru-cevap eklenmemiş.</p>
+                    </div>`;
+                return;
+            }
+            
+            faqList.innerHTML = '';
+            faqs.forEach(faq => {
+                const faqItem = document.createElement('div');
+                faqItem.className = 'faq-item';
+                faqItem.innerHTML = `
+                    <div class="faq-question">
+                        <span class="faq-question-text">${escapeHtml(faq.question)}</span>
+                        <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-answer">${escapeHtml(faq.answer || 'Cevap bekleniyor...')}</div>
+                `;
+                
+                faqItem.querySelector('.faq-question').addEventListener('click', () => {
+                    faqItem.classList.toggle('active');
+                });
+                
+                faqList.appendChild(faqItem);
+            });
+        }
+        
+        async function loadAdminFAQs() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            
+            try {
+                const response = await fetch('/api/content/faq/all', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const faqs = await response.json();
+                    displayAdminFAQs(faqs);
+                } else {
+                    showToast('Admin SSS yüklenemedi.', 'error');
+                }
+            } catch (error) {
+                console.error('Admin SSS yüklenirken hata:', error);
+            }
+        }
+        
+        function displayAdminFAQs(faqs) {
+            if (faqs.length === 0) {
+                adminFaqList.innerHTML = '<p>Henüz soru yok.</p>';
+                return;
+            }
+            
+            adminFaqList.innerHTML = '';
+            faqs.forEach(faq => {
+                const statusClass = faq.is_published ? 'status-published' : 'status-pending';
+                const statusText = faq.is_published ? 'Yayında' : 'Beklemede';
+                const userInfo = faq.is_user_question && faq.first_name 
+                    ? `<small style="color: var(--color-text-muted);">👤 ${faq.first_name} ${faq.last_name}</small>` 
+                    : '';
+                
+                const item = document.createElement('div');
+                item.className = 'admin-faq-item';
+                item.innerHTML = `
+                    <div class="admin-faq-header">
+                        <div style="flex: 1;">
+                            <strong>${escapeHtml(faq.question)}</strong>
+                            ${userInfo}
+                        </div>
+                        <span class="admin-faq-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <p style="margin: 10px 0; color: var(--color-text-muted);">${escapeHtml(faq.answer || 'Cevap yok')}</p>
+                    <div class="admin-faq-actions">
+                        <button class="btn btn-primary btn-small edit-faq-btn" data-id="${faq.id}">✏️ Düzenle</button>
+                        <button class="btn btn-danger btn-small delete-faq-btn" data-id="${faq.id}">🗑️ Sil</button>
+                    </div>
+                `;
+                
+                adminFaqList.appendChild(item);
+            });
+            
+            document.querySelectorAll('.edit-faq-btn').forEach(btn => {
+                btn.addEventListener('click', () => editFAQ(parseInt(btn.dataset.id), faqs));
+            });
+            
+            document.querySelectorAll('.delete-faq-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteFAQ(parseInt(btn.dataset.id)));
+            });
+        }
+        
+        function editFAQ(id, faqs) {
+            const faq = faqs.find(f => f.id === id);
+            if (!faq) return;
+            
+            currentEditId = id;
+            modalTitle.textContent = 'SSS Düzenle';
+            document.getElementById('faq-id').value = id;
+            document.getElementById('faq-question').value = faq.question;
+            document.getElementById('faq-answer').value = faq.answer || '';
+            document.getElementById('faq-published').checked = faq.is_published;
+            faqFormModal.classList.add('show');
+        }
+        
+        async function deleteFAQ(id) {
+            if (!confirm('Bu SSS\'yi silmek istediğinizden emin misiniz?')) return;
+            
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`/api/content/faq/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    showToast('SSS silindi! 🗑️');
+                    await loadAdminFAQs();
+                    await loadFAQs();
+                } else {
+                    showToast('Silme başarısız.', 'error');
+                }
+            } catch (error) {
+                console.error('Silme hatası:', error);
+                showToast('Bir hata oluştu.', 'error');
+            }
+        }
+        
+        addFaqBtn.addEventListener('click', () => {
+            currentEditId = null;
+            modalTitle.textContent = 'Yeni SSS Ekle';
+            faqForm.reset();
+            document.getElementById('faq-published').checked = true;
+            faqFormModal.classList.add('show');
+        });
+        
+        closeModalBtn.addEventListener('click', () => {
+            faqFormModal.classList.remove('show');
+        });
+        
+        faqFormModal.addEventListener('click', (e) => {
+            if (e.target === faqFormModal) {
+                faqFormModal.classList.remove('show');
+            }
+        });
+        
+        faqForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('token');
+            const data = {
+                question: document.getElementById('faq-question').value.trim(),
+                answer: document.getElementById('faq-answer').value.trim(),
+                is_published: document.getElementById('faq-published').checked
+            };
+            
+            try {
+                let response;
+                if (currentEditId) {
+                    response = await fetch(`/api/content/faq/${currentEditId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch('/api/content/faq', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(data)
+                    });
+                }
+                
+                if (response.ok) {
+                    showToast(currentEditId ? 'SSS güncellendi! ✅' : 'SSS eklendi! ✅');
+                    faqFormModal.classList.remove('show');
+                    await loadAdminFAQs();
+                    await loadFAQs();
+                } else {
+                    const error = await response.json();
+                    showToast(error.error || 'İşlem başarısız.', 'error');
+                }
+            } catch (error) {
+                console.error('Form gönderim hatası:', error);
+                showToast('Bir hata oluştu.', 'error');
+            }
+        });
+        
+        userQuestionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('token');
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                showToast('Lütfen bir soru yazın.', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/content/faq/question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ question })
+                });
+                
+                if (response.ok) {
+                    showToast('Sorunuz iletildi! Yakında cevaplanacak. 💬');
+                    questionInput.value = '';
+                } else {
+                    const error = await response.json();
+                    showToast(error.error || 'Soru gönderilemedi.', 'error');
+                }
+            } catch (error) {
+                console.error('Soru gönderim hatası:', error);
+                showToast('Bir hata oluştu.', 'error');
+            }
+        });
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function setupHeader() {
+            const token = localStorage.getItem('token');
+            userControlsContainer.innerHTML = '';
+            let cartItemCount = 0;
+            let user = null;
+
+            if (token) {
+                user = parseJwt(token);
+                isLoggedIn = true;
+                
+                if (user && user.role === 'admin') {
+                    isAdmin = true;
+                    adminPanel.style.display = 'block';
+                } else if (user && user.role !== 'admin') {
+                    userQuestionSection.style.display = 'block';
+                    try {
+                        const response = await fetch('/api/cart', { 
+                            headers: { 'Authorization': `Bearer ${token}` } 
+                        });
+                        if (response.ok) {
+                            const cartData = await response.json();
+                            cartItemCount = cartData.totalQuantity;
+                        }
+                    } catch (error) {
+                        console.error('Sepet sayısı alınırken hata:', error);
+                    }
+                }
+            }
+
+            let themeToggleButtons = `
+                <div class="theme-toggle-group">
+                    <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </button>
+                    <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>`;
+
+            if (user && user.role === 'admin') {
+                userControlsContainer.innerHTML = `
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/admin-profile.html">Profil Ayarları</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else if (user) {
+                const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
+                    ${themeToggleButtons}
+                    <div class="user-dropdown">
+                        <button id="user-menu-button" class="user-menu-button">
+                            ${user.firstName} <span class="arrow">&#9662;</span>
+                        </button>
+                        <div id="user-dropdown-content" class="dropdown-content">
+                            <a href="/user-settings.html">Ayarlarım</a>
+                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
+                        </div>
+                    </div>`;
+            } else {
+                userControlsContainer.innerHTML = `
+                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
+                    ${themeToggleButtons}
+                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
+            }
+            
+            if (user) setupUserMenu();
+            setupThemeToggle();
+        }
+
+        function setupUserMenu() {
+            const menuButton = document.getElementById('user-menu-button');
+            const dropdown = document.getElementById('user-dropdown-content');
+            if (!menuButton || !dropdown) return;
+            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+            window.addEventListener('click', (event) => {
+                if (!event.target.matches('#user-menu-button')) {
+                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+                }
+            });
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.reload();
+                });
+            }
+        }
+
+        function setupThemeToggle() {
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (!lightBtn || !darkBtn) return;
+
+            const docElement = document.documentElement;
+
+            function updateButtons() {
+                if (docElement.classList.contains('dark-mode')) {
+                    darkBtn.classList.add('active');
+                    lightBtn.classList.remove('active');
+                } else {
+                    lightBtn.classList.add('active');
+                    darkBtn.classList.remove('active');
+                }
+            }
+
+            lightBtn.addEventListener('click', () => {
+                docElement.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                updateButtons();
+            });
+
+            darkBtn.addEventListener('click', () => {
+                docElement.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                updateButtons();
+            });
+
+            updateButtons();
+        }
+
+        window.onload = async () => {
+            await setupHeader();
+            await loadFAQs();
+            if (isAdmin) {
+                await loadAdminFAQs();
+            }
+        };
+    </script>
+</body>
+</html>
