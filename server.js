@@ -22,6 +22,7 @@ const addressRoutes = require('./routes/addresses');
 const categoryRoutes = require('./routes/categories');
 const orderRoutes = require('./routes/orders');
 const contentRoutes = require('./routes/content');
+const notificationRoutes = require('./routes/notifications');
 
 // API Rotaları
 app.use('/api/products', productRoutes);
@@ -33,6 +34,7 @@ app.use('/api/addresses', addressRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/content', contentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Diğer tüm GET isteklerini (frontend rotaları için) index.html'e yönlendir
 // Bu, eğer ilerde React/Vue gibi SPA kullanırsan gerekli olabilir, şimdilik opsiyonel ama dursun zararı yok.
