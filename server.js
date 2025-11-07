@@ -9,10 +9,6 @@ const port = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-app.use((req, res, next) => {
-    console.log(`👉 [İSTEK] ${req.method} ${req.url}`);
-    next();
-});
 
 // Uploads klasörü için (NOT: Vercel'de yeni yüklemeler kalıcı olmaz, aşağıda açıkladım)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
