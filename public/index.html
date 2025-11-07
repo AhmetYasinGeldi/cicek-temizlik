@@ -99,38 +99,60 @@
         function addCartButtonListeners() {
             const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
             addToCartButtons.forEach(button => {
-                button.addEventListener('click', async (event) => {
-                    event.preventDefault(); 
-                    event.stopPropagation();
-                    button.disabled = true;
-                    button.textContent = 'Ekleniyor...';
+                button.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     
-                    const token = localStorage.getItem('token');
-                    if (!token) {
-                        showToast('Lütfen önce giriş yapın.', 'error');
-                        setTimeout(() => window.location.href = '/login.html', 1500);
-                        button.disabled = false; button.textContent = 'Sepete Ekle'; return;
+                    const productId = parseInt(button.dataset.productId);
+                    const product = allProductsData.find(p => p.id === productId);
+                    
+                    if (!product || !product.is_active || product.stock_quantity <= 0) {
+                        showToast('Bu ürün şu anda mevcut değil.', 'error');
+                        return;
                     }
                     
-                    const productId = button.dataset.productId;
-                    try {
-                        const response = await fetch('/api/cart/items', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                            body: JSON.stringify({ productId: parseInt(productId), quantity: 1 })
-                        });
-                        if (response.ok) {
-                            showToast('Ürün sepete eklendi!');
-                            setupHeader(); 
-                        } else {
-                            const errorData = await response.json();
-                            showToast(errorData.error || 'Ürün eklenemedi.', 'error');
+                    const token = localStorage.getItem('token');
+                    
+                    if (token) {
+                        // Giriş yapmış kullanıcı - Backend'e kaydet
+                        try {
+                            const response = await fetch('/api/cart/items', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ productId: productId, quantity: 1 })
+                            });
+                            
+                            if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.error || 'Sepete eklenemedi.');
+                            }
+                            showToast(`${product.name} sepete eklendi!`);
+                            updateCartBadge();
+                        } catch (error) {
+                            console.error('Sepete ekleme hatası:', error);
+                            showToast(error.message || 'Sepete eklenirken bir hata oluştu.', 'error');
                         }
-                    } catch (error) {
-                        console.error('Sepete ekleme hatası:', error);
-                        showToast('Bir hata oluştu.', 'error');
-                    } finally {
-                        button.disabled = false; button.textContent = 'Sepete Ekle';
+                    } else {
+                        // Giriş yapmamış kullanıcı - localStorage'a kaydet
+                        let cart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                        const existingItem = cart.find(item => item.product_id === productId);
+                        
+                        if (existingItem) {
+                            existingItem.quantity += 1;
+                        } else {
+                            cart.push({
+                                product_id: productId,
+                                quantity: 1,
+                                product: product
+                            });
+                        }
+                        
+                        localStorage.setItem('guestCart', JSON.stringify(cart));
+                        showToast(`${product.name} sepete eklendi!`);
+                        updateCartBadge();
                     }
                 });
             });

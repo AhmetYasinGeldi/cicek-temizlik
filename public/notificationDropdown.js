@@ -3,13 +3,6 @@
 async function loadNotificationCount() {
     const token = localStorage.getItem('token');
 
-    console.log('🔔 Dropdown yükleniyor...');
-    console.log('🔑 Kullanılan Token:', token ? token.substring(0, 10) + '...' : 'YOK');
-
-    if (!token) {
-        console.error('❌ Token bulunamadı!');
-        return;
-    }
     
     if (!token) return;
     

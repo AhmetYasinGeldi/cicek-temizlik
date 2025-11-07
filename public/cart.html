@@ -28,7 +28,6 @@
             <span></span>
         </button>
         <a href="/" class="site-logo"></a>
-        <nav class="center-nav"></nav>
         <div class="user-controls" id="user-controls-container"></div>
     </header>
 
@@ -45,10 +44,10 @@
 
     <footer class="site-footer">
         <div class="footer-links">
-            <a href="#">Yardım</a>
-            <a href="#">Sıkça Sorulan Sorular</a>
-            <a href="#">Hakkımızda</a>
-            <a href="#">İletişim</a>
+            <a href="/help.html">Yardım</a>
+            <a href="/faq.html">Sıkça Sorulan Sorular</a>
+            <a href="/about.html">Hakkımızda</a>
+            <a href="/contact.html">İletişim</a>
         </div>
         <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
     </footer>
@@ -62,23 +61,38 @@
         const token = localStorage.getItem('token');
 
         async function displayCart() {
-            if (!token) {
-                cartContainer.innerHTML = '<p>Sepetinizi görmek için lütfen <a href="/login.html">giriş yapın</a>.</p>';
-                cartTotalDiv.innerHTML = '';
-                return 0;
-            }
-            try {
-                const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
-                if (!response.ok) throw new Error('Sepet yüklenemedi.');
-                const cartData = await response.json();
-                const items = cartData.items;
-                const totalQuantity = cartData.totalQuantity;
-
-                if (items.length === 0) {
-                    cartContainer.innerHTML = '<p>Sepetiniz şu anda boş.</p>';
-                    cartTotalDiv.innerHTML = '';
-                    return 0;
+            let items = [];
+            let total = 0;
+            
+            if (token) {
+                // Giriş yapmış kullanıcı - Backend'den al
+                try {
+                    const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Sepet yüklenemedi.');
+                    }
+                    const cartData = await response.json();
+                    items = cartData.items || [];
+                } catch (error) {
+                    console.error('Sepet yükleme hatası:', error);
+                    cartContainer.innerHTML = `<p>${error.message || 'Sepet yüklenirken bir hata oluştu.'}</p>`;
+                    return;
                 }
+            } else {
+                // Giriş yapmamış kullanıcı - localStorage'dan al
+                const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                items = guestCart;
+            }
+            
+            if (items.length === 0) {
+                cartContainer.innerHTML = '<p>Sepetiniz şu anda boş.</p>';
+                cartTotalDiv.innerHTML = '';
+                document.querySelector('.checkout-button-container').style.display = 'none';
+                return;
+            }
+            
+            try {
                 let tableHTML = `<div class="table-container"><table>
                     <thead>
                         <tr>
@@ -90,18 +104,23 @@
                         </tr>
                     </thead>
                     <tbody>`;
-                let total = 0;
                 items.forEach(item => {
-                    const subtotal = item.price * item.quantity;
+                    const productData = token ? item : item.product;
+                    const price = token ? item.price : productData.price;
+                    const name = token ? item.name : productData.name;
+                    const imageUrl = token ? item.image_url : productData.image_url;
+                    const description = token ? item.description : productData.description;
+                    
+                    const subtotal = price * item.quantity;
                     total += subtotal;
 
                     tableHTML += `
                         <tr class="cart-item-row">
                             <td>
-                                ${item.name}
+                                ${name}
                                 <span class="toggle-details" data-product-id="${item.product_id}">&#9662;</span>
                             </td>
-                            <td>${parseFloat(item.price).toFixed(2)} TL</td>
+                            <td>${parseFloat(price).toFixed(2)} TL</td>
                             <td>
                                 <div class="quantity-controls">
                                     <button class="update-quantity" data-product-id="${item.product_id}" data-new-quantity="${item.quantity - 1}">-</button>
@@ -116,10 +135,10 @@
                             <td colspan="5">
                                 <div class="product-details-cart">
                                     <div class="product-image-cart">
-                                        <img src="${item.image_url || '/path/to/default-image.jpg'}" alt="${item.name}">
+                                        <img src="${imageUrl || '/path/to/default-image.jpg'}" alt="${name}">
                                     </div>
                                     <div class="product-description-cart">
-                                        <p>${item.description || 'Bu ürün için açıklama mevcut değil.'}</p>
+                                        <p>${description || 'Bu ürün için açıklama mevcut değil.'}</p>
                                     </div>
                                 </div>
                             </td>
@@ -128,28 +147,27 @@
                 tableHTML += '</tbody></table></div>';
                 cartContainer.innerHTML = tableHTML;
                 cartTotalDiv.innerHTML = `Toplam: ${total.toFixed(2)} TL`;
+                document.querySelector('.checkout-button-container').style.display = 'block';
                 addEventListeners();
-                return totalQuantity;
             } catch (error) {
                 console.error('Sepet görüntülenirken hata:', error);
                 showToast('Sepet yüklenirken bir hata oluştu.', 'error');
                 cartContainer.innerHTML = '<p>Sepet yüklenirken bir hata oluştu.</p>';
                 cartTotalDiv.innerHTML = '';
-                return 0;
             }
         }
 
         function addEventListeners() {
             document.querySelectorAll('.update-quantity').forEach(button => {
                 button.addEventListener('click', async () => {
-                    const productId = button.dataset.productId;
+                    const productId = parseInt(button.dataset.productId);
                     const newQuantity = parseInt(button.dataset.newQuantity);
                     await updateCartItem(productId, newQuantity);
                 });
             });
             document.querySelectorAll('.remove-item').forEach(button => {
                 button.addEventListener('click', async () => {
-                    const productId = button.dataset.productId;
+                    const productId = parseInt(button.dataset.productId);
                     await removeCartItem(productId);
                 });
             });
@@ -166,35 +184,86 @@
         }
 
         async function updateCartItem(productId, quantity) {
-            try {
-                const response = await fetch(`/api/cart/items/${productId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ quantity: quantity })
-                });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Miktar güncellenemedi.');
+            if (quantity <= 0) {
+                await removeCartItem(productId);
+                return;
+            }
+            
+            if (token) {
+                // Giriş yapmış kullanıcı
+                try {
+                    const response = await fetch(`/api/cart/items/${productId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ quantity: quantity })
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Miktar güncellenemedi.');
+                    }
+                    await displayCart();
+                } catch (error) {
+                    console.error('Miktar güncellerken hata:', error);
+                    showToast(error.message, 'error');
                 }
-                const newCount = await displayCart();
-                updateCartCountInHeader(newCount);
-            } catch (error) { console.error(error); showToast(error.message, 'error'); }
+            } else {
+                // Giriş yapmamış kullanıcı - localStorage
+                let cart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                const item = cart.find(i => i.product_id === productId);
+                if (item) {
+                    item.quantity = quantity;
+                    localStorage.setItem('guestCart', JSON.stringify(cart));
+                    await displayCart();
+                }
+            }
         }
 
         async function removeCartItem(productId) {
             const confirmed = await showConfirm('Bu ürünü sepetten kaldırmak istediğinizden emin misiniz?');
             if (!confirmed) return;
-            try {
-                const response = await fetch(`/api/cart/items/${productId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) throw new Error('Ürün kaldırılamadı.');
+            
+            if (token) {
+                // Giriş yapmış kullanıcı
+                try {
+                    const response = await fetch(`/api/cart/items/${productId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!response.ok) throw new Error('Ürün kaldırılamadı.');
+                    showToast('Ürün sepetten kaldırıldı.');
+                    await displayCart();
+                } catch (error) {
+                    console.error('Ürün kaldırılırken hata:', error);
+                    showToast('Ürün kaldırılamadı.', 'error');
+                }
+            } else {
+                // Giriş yapmamış kullanıcı - localStorage
+                let cart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                cart = cart.filter(item => item.product_id !== productId);
+                localStorage.setItem('guestCart', JSON.stringify(cart));
                 showToast('Ürün sepetten kaldırıldı.');
-                const newCount = await displayCart();
-                updateCartCountInHeader(newCount);
-            } catch (error) { console.error(error); showToast('Ürün kaldırılırken bir hata oluştu.', 'error'); }
+                await displayCart();
+            }
         }
+
+        // Ödeme butonuna tıklanınca giriş kontrolü yap
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkoutBtn = document.querySelector('.checkout-button-container a');
+            if (checkoutBtn) {
+                checkoutBtn.addEventListener('click', (e) => {
+                    if (!token) {
+                        e.preventDefault();
+                        showToast('Ödemeye geçmek için lütfen giriş yapın.', 'error');
+                        setTimeout(() => {
+                            localStorage.setItem('redirectAfterLogin', '/odeme.html');
+                            window.location.href = '/login.html';
+                        }, 1500);
+                    }
+                });
+            }
+            
+            displayCart();
+        });
 
         function setupUserMenu() {
             const menuButton = document.getElementById('user-menu-button');

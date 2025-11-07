@@ -28,9 +28,7 @@
             <span></span>
         </button>
         <a href="/" class="site-logo"></a>
-        <nav class="center-nav"></nav> 
-        <div class="user-controls" id="user-controls-container">
-        </div>
+        <div class="user-controls" id="user-controls-container"></div>
     </header>
 
     <main class="container">
@@ -57,10 +55,10 @@
 
     <footer class="site-footer">
         <div class="footer-links">
-            <a href="#">Yardım</a>
-            <a href="#">Sıkça Sorulan Sorular</a>
-            <a href="#">Hakkımızda</a>
-            <a href="#">İletişim</a>
+            <a href="/help.html">Yardım</a>
+            <a href="/faq.html">Sıkça Sorulan Sorular</a>
+            <a href="/about.html">Hakkımızda</a>
+            <a href="/contact.html">İletişim</a>
         </div>
         <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
     </footer>
@@ -94,7 +92,34 @@
                 }
                 localStorage.setItem('token', data.token);
                 showToast('Giriş başarılı!');
-                setTimeout(() => window.location.href = '/', 1500);
+                
+                // Misafir sepetini giriş yapan kullanıcının sepetine aktar
+                const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                if (guestCart.length > 0) {
+                    try {
+                        for (const item of guestCart) {
+                            await fetch('/api/cart/items', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${data.token}`
+                                },
+                                body: JSON.stringify({ 
+                                    productId: item.product_id, 
+                                    quantity: item.quantity 
+                                })
+                            });
+                        }
+                        localStorage.removeItem('guestCart');
+                    } catch (err) {
+                        console.error('Sepet aktarımında hata:', err);
+                    }
+                }
+                
+                // Eğer redirect varsa oraya git, yoksa ana sayfaya
+                const redirectUrl = localStorage.getItem('redirectAfterLogin') || '/';
+                localStorage.removeItem('redirectAfterLogin');
+                setTimeout(() => window.location.href = redirectUrl, 1500);
             } catch (error) {
                 showToast(error.message, 'error');
             }

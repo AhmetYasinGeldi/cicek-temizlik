@@ -1,4 +1,4 @@
-const LOGO_URL = "/uploads/logo.png"; // Logo dosyanızın yolu
+const LOGO_URL = "/uploads/logo.png";
 
 document.addEventListener('DOMContentLoaded', () => {
     const logoEl = document.querySelector('.site-logo');
@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
         logoImg.src = LOGO_URL;
         logoImg.alt = "Çiçek Temizlik Logosu";
         logoEl.appendChild(logoImg);
+        
+        // Logo'ya tıklanınca ana sayfaya gitsin
+        logoEl.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = '/';
+        });
     }
     
     // Hamburger menüyü başlat
@@ -17,6 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hamburgerBtn) {
         hamburgerBtn.addEventListener('click', toggleSidePanel);
     }
+    
+    // Footer linkleri düzelt
+    fixFooterLinks();
+    
+    // Mobilde bildirim badge'ini kontrol et
+    updateMobileNotificationBadge();
 });
 
 function parseJwt(token) {
@@ -74,7 +86,9 @@ function setupUserControls(user) {
                 <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </button>
         </div>
-        <a href="/cart.html" class="btn btn-primary">Sepetim</a>
+        <a href="/cart.html" class="btn btn-primary" id="cart-button">
+            Sepetim<span id="cart-count" style="margin-left: 4px;"></span>
+        </a>
     `;
     
     if (!user) {
@@ -88,6 +102,7 @@ function setupUserControls(user) {
     
     container.innerHTML = controlsHTML;
     setupThemeToggle();
+    updateCartBadge();
 }
 
 function setupThemeToggle() {
@@ -129,49 +144,53 @@ function updateSidePanelMenu(user) {
     let menuItems = '';
     
     if (user && user.role === 'admin') {
-        // Admin menüsü
+        // Admin menüsü - Daha güzel ikonlar
         menuItems = `
             <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Ana Sayfa</a></li>
             <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Ürünler</a></li>
-            <li><a href="/categories.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7v7H4z"></path><path d="M13 4h7v7h-7z"></path><path d="M4 13h7v7H4z"></path><path d="M13 13h7v7h-7z"></path></svg>Kategoriler</a></li>
-            <li><a href="/orders.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6h6V2H9zm0 14v6h6v-6H9z"/><path d="M2 9v6h6V9H2zm14 0v6h6V9h-6z"/><rect x="5" y="5" width="14" height="14" rx="2"/></svg>Siparişler</a></li>
-            <li><a href="/notifications.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>Bildirimler</a></li>
-            <li><a href="/admin-settings.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6m5.196-14.196l-4.242 4.242m0 5.908l4.242 4.242m5.958-9.192l-6 0m-6 0l-6 0m14.196 5.196l-4.242-4.242m0-5.908l4.242-4.242"></path></svg>Site Ayarları</a></li>
+            <li><a href="/categories.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Kategoriler</a></li>
+            <li><a href="/orders.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>Siparişler</a></li>
+            <li><a href="/notifications.html" id="notifications-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>Bildirimler</a></li>
+            <li><a href="/admin-settings.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6"></path><path d="M17 7l-5 5m0 0l-5-5m5 5l5 5m-5-5l-5 5"></path></svg>Site Ayarları</a></li>
             <li><a href="/admin-profile.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Profil Ayarları</a></li>
             <li><a href="#" class="logout-link" onclick="event.preventDefault(); localStorage.removeItem('token'); window.location.href='/login.html';"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>Çıkış Yap</a></li>
         `;
     } else if (user) {
-        // Kullanıcı menüsü
+        // Kullanıcı menüsü - Daha güzel ikonlar
         menuItems = `
             <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Ana Sayfa</a></li>
             <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Ürünler</a></li>
-            <li><a href="#" id="categories-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7v7H4z"></path><path d="M13 4h7v7h-7z"></path><path d="M4 13h7v7H4z"></path><path d="M13 13h7v7h-7z"></path></svg>Kategoriler</a></li>
-            <li><a href="/my-orders.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6h6V2H9zm0 14v6h6v-6H9z"/><path d="M2 9v6h6V9H2zm14 0v6h6V9h-6z"/><rect x="5" y="5" width="14" height="14" rx="2"/></svg>Siparişlerim</a></li>
+            <li><a href="#" id="categories-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Kategoriler</a></li>
+            <li><a href="/my-orders.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>Siparişlerim</a></li>
             <li><a href="/cart.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Sepetim</a></li>
-            <li><a href="/notifications.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>Bildirimler</a></li>
+            <li><a href="/notifications.html" id="notifications-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>Bildirimler</a></li>
             <li><a href="/my-addresses.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Adreslerim</a></li>
             <li><a href="/my-cards.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Kartlarım</a></li>
-            <li><a href="/user-settings.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Kullanıcı Ayarları</a></li>
+            <li><a href="/user-settings.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>Kullanıcı Ayarları</a></li>
             <li><a href="#" class="logout-link" onclick="event.preventDefault(); localStorage.removeItem('token'); window.location.href='/login.html';"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>Çıkış Yap</a></li>
         `;
         
-        // Kategoriler menüsü için alt kategoriler yükle
         setTimeout(() => loadCategoriesForMenu(), 100);
     } else {
-        // Giriş yapmamış kullanıcı menüsü
+        // Giriş yapmamış kullanıcı menüsü - Daha güzel ikonlar
         menuItems = `
             <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Ana Sayfa</a></li>
             <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Ürünler</a></li>
-            <li><a href="#" id="categories-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7v7H4z"></path><path d="M13 4h7v7h-7z"></path><path d="M4 13h7v7H4z"></path><path d="M13 13h7v7h-7z"></path></svg>Kategoriler</a></li>
+            <li><a href="#" id="categories-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Kategoriler</a></li>
             <li><a href="/cart.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Sepetim</a></li>
             <li><a href="/login.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>Giriş Yap</a></li>
-            <li><a href="/register.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><path d="M20 8v6M23 11h-6"></path></svg>Kayıt Ol</a></li>
+            <li><a href="/register.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>Kayıt Ol</a></li>
         `;
         
         setTimeout(() => loadCategoriesForMenu(), 100);
     }
     
     menu.innerHTML = menuItems;
+    
+    // Bildirim sayısını yükle ve güncelle
+    if (user) {
+        updateNotificationBadge();
+    }
 }
 
 async function loadCategoriesForMenu() {
@@ -247,6 +266,133 @@ function toggleSidePanel() {
         hamburger.classList.toggle('open');
     }
 }
+
+// Footer linkleri düzelt
+function fixFooterLinks() {
+    const footerLinks = document.querySelectorAll('.site-footer .footer-links a');
+    footerLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === '#') {
+            const text = link.textContent.trim();
+            if (text === 'Yardım') link.setAttribute('href', '/help.html');
+            else if (text === 'Sıkça Sorulan Sorular') link.setAttribute('href', '/faq.html');
+            else if (text === 'Hakkımızda') link.setAttribute('href', '/about.html');
+            else if (text === 'İletişim') link.setAttribute('href', '/contact.html');
+        }
+    });
+}
+
+// Bildirim badge güncelleme fonksiyonları
+async function updateNotificationBadge() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    try {
+        const response = await fetch('/api/notifications?unreadOnly=true', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const unreadCount = data.unreadCount || 0;
+        
+        // Hamburger menü badge'i (mobil)
+        updateMobileNotificationBadge(unreadCount);
+        
+        // Side panel menü badge'i
+        const notifMenuItem = document.querySelector('#notifications-menu-item');
+        if (notifMenuItem && unreadCount > 0) {
+            let badge = notifMenuItem.querySelector('.menu-item-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'menu-item-badge';
+                notifMenuItem.appendChild(badge);
+            }
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        } else if (notifMenuItem) {
+            const badge = notifMenuItem.querySelector('.menu-item-badge');
+            if (badge) badge.remove();
+        }
+    } catch (error) {
+        console.error('Bildirim sayısı yüklenemedi:', error);
+    }
+}
+
+function updateMobileNotificationBadge(count) {
+    const hamburger = document.querySelector('.hamburger-menu');
+    if (!hamburger) return;
+    
+    // Eğer masaüstündeyse badge'i gösterme
+    if (window.innerWidth >= 769) {
+        const existingBadge = hamburger.querySelector('.hamburger-notification-badge');
+        if (existingBadge) existingBadge.remove();
+        return;
+    }
+    
+    let badge = hamburger.querySelector('.hamburger-notification-badge');
+    
+    if (count && count > 0) {
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'hamburger-notification-badge';
+            hamburger.appendChild(badge);
+        }
+        badge.textContent = count > 99 ? '99+' : count;
+    } else if (badge) {
+        badge.remove();
+    }
+}
+
+// Her 30 saniyede bir bildirim sayısını güncelle
+setInterval(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        updateNotificationBadge();
+    }
+}, 30000);
+
+// Sepet badge güncelleme
+async function updateCartBadge() {
+    const token = localStorage.getItem('token');
+    const cartCount = document.getElementById('cart-count');
+    
+    if (!cartCount) return;
+    
+    let itemCount = 0;
+    
+    if (token) {
+        // Giriş yapmış kullanıcı - Backend'den al
+        try {
+            const response = await fetch('/api/cart', { 
+                headers: { 'Authorization': `Bearer ${token}` } 
+            });
+            if (response.ok) {
+                const data = await response.json();
+                itemCount = data.totalQuantity || 0;
+            }
+        } catch (error) {
+            console.error('Sepet sayısı alınamadı:', error);
+        }
+    } else {
+        // Giriş yapmamış kullanıcı - localStorage'dan al
+        const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+        itemCount = guestCart.reduce((total, item) => total + item.quantity, 0);
+    }
+    
+    if (itemCount > 0) {
+        cartCount.textContent = `(${itemCount})`;
+    } else {
+        cartCount.textContent = '';
+    }
+}
+
+// Sayfa yüklendiğinde ve her sepet değişikliğinde badge'i güncelle
+window.addEventListener('storage', (e) => {
+    if (e.key === 'guestCart') {
+        updateCartBadge();
+    }
+});
 
 let toastTimeout;
 function showToast(message, type = 'success') {

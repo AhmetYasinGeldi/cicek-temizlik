@@ -39,10 +39,10 @@
 
     <footer class="site-footer">
         <div class="footer-links">
-            <a href="#">Yardım</a>
-            <a href="#">Sıkça Sorulan Sorular</a>
-            <a href="#">Hakkımızda</a>
-            <a href="#">İletişim</a>
+            <a href="/help.html">Yardım</a>
+            <a href="/faq.html">Sıkça Sorulan Sorular</a>
+            <a href="/about.html">Hakkımızda</a>
+            <a href="/contact.html">İletişim</a>
         </div>
         <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
     </footer>
@@ -128,25 +128,52 @@
 
                 const addToCartButton = document.getElementById('add-to-cart-btn-detail');
                 if (addToCartButton) {
-                    addToCartButton.addEventListener('click', async () => {
-                        if (!token) {
-                            showToast('Lütfen önce giriş yapın.', 'error');
-                            setTimeout(() => window.location.href = '/login.html', 1500); return;
-                        }
-                        try {
-                            const cartResponse = await fetch('/api/cart/items', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                body: JSON.stringify({ productId: parseInt(productId), quantity: 1 })
-                            });
-                            if (cartResponse.ok) {
+                    addToCartButton.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        
+                        const token = localStorage.getItem('token');
+                        
+                        if (token) {
+                            // Giriş yapmış kullanıcı
+                            try {
+                                const response = await fetch('/api/cart/items', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify({ productId: parseInt(productId), quantity: 1 })
+                                });
+                                
+                                if (!response.ok) {
+                                    const errorData = await response.json();
+                                    throw new Error(errorData.error || 'Sepete eklenemedi.');
+                                }
                                 showToast('Ürün sepete eklendi!');
-                                setupHeader(); 
-                            } else {
-                                const errorData = await cartResponse.json();
-                                showToast(errorData.error || 'Ürün eklenemedi.', 'error');
+                                updateCartBadge();
+                            } catch (error) {
+                                console.error('Sepete ekleme hatası:', error);
+                                showToast(error.message || 'Sepete eklenirken bir hata oluştu.', 'error');
                             }
-                        } catch (error) { console.error('Sepete ekleme hatası:', error); showToast('Bir hata oluştu.', 'error'); }
+                        } else {
+                            // Giriş yapmamış kullanıcı - localStorage
+                            let cart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                            const existingItem = cart.find(item => item.product_id === parseInt(productId));
+                            
+                            if (existingItem) {
+                                existingItem.quantity += 1;
+                            } else {
+                                cart.push({
+                                    product_id: parseInt(productId),
+                                    quantity: 1,
+                                    product: product
+                                });
+                            }
+                            
+                            localStorage.setItem('guestCart', JSON.stringify(cart));
+                            showToast('Ürün sepete eklendi!');
+                            updateCartBadge();
+                        }
                     });
                 }
                 
