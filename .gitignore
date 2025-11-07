@@ -211,3 +211,4 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+.vercel

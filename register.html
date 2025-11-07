@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/responsive-additions.css">
     <script>
         // Prevents flash of wrong theme
         (function() {
@@ -21,7 +22,7 @@
 <body>
 
     <header class="site-header">
-        <button class="hamburger-menu" onclick="toggleSidePanel()" aria-label="Menü">
+        <button class="hamburger-menu" aria-label="Menü">
             <span></span>
             <span></span>
             <span></span>
@@ -85,6 +86,12 @@
 
     <script src="/common.js"></script>
     <script>
+        // Eğer kullanıcı zaten giriş yapmışsa ana sayfaya yönlendir
+        const token = localStorage.getItem('token');
+        if (token) {
+            window.location.href = '/';
+        }
+        
         const firstNameInput = document.getElementById('firstName');
         const lastNameInput = document.getElementById('lastName');
         const phoneInput = document.getElementById('phone');
@@ -191,62 +198,6 @@
                 showToast(error.message, 'error');
             }
         });
-
-        const userControlsContainer = document.getElementById('user-controls-container');
-
-        function setupHeader() {
-            userControlsContainer.innerHTML = `
-                <div class="theme-toggle-group">
-                    <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
-                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                    </button>
-                    <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
-                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                    </button>
-                </div>
-                <a href="/cart.html" class="btn btn-primary">Sepetim</a>
-                <div class="user-login-link">
-                    <a href="/login.html">Giriş Yap</a>
-                </div>
-            `;
-            setupThemeToggle();
-        }
-
-        function setupThemeToggle() {
-            const lightBtn = document.getElementById('theme-light-btn');
-            const darkBtn = document.getElementById('theme-dark-btn');
-            if (!lightBtn || !darkBtn) return;
-
-            const docElement = document.documentElement;
-
-            function updateButtons() {
-                if (docElement.classList.contains('dark-mode')) {
-                    darkBtn.classList.add('active');
-                    lightBtn.classList.remove('active');
-                } else {
-                    lightBtn.classList.add('active');
-                    darkBtn.classList.remove('active');
-                }
-            }
-
-            lightBtn.addEventListener('click', () => {
-                docElement.classList.remove('dark-mode');
-                localStorage.setItem('theme', 'light');
-                updateButtons();
-            });
-
-            darkBtn.addEventListener('click', () => {
-                docElement.classList.add('dark-mode');
-                localStorage.setItem('theme', 'dark');
-                updateButtons();
-            });
-
-            updateButtons();
-        }
-
-        window.onload = () => {
-            setupHeader();
-        };
     </script>
 </body>
 </html>

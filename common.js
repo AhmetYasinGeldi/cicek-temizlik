@@ -11,6 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Hamburger menüyü başlat
     initHamburgerMenu();
+    
+    // Hamburger butonuna event listener ekle
+    const hamburgerBtn = document.querySelector('.hamburger-menu');
+    if (hamburgerBtn) {
+        hamburgerBtn.addEventListener('click', toggleSidePanel);
+    }
 });
 
 function parseJwt(token) {
@@ -50,6 +56,70 @@ function initHamburgerMenu() {
     
     // Menü içeriğini güncelle
     updateSidePanelMenu(user);
+    
+    // Header controls'i kur
+    setupUserControls(user);
+}
+
+function setupUserControls(user) {
+    const container = document.getElementById('user-controls-container');
+    if (!container) return;
+    
+    let controlsHTML = `
+        <div class="theme-toggle-group">
+            <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
+                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </button>
+            <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
+                <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+        </div>
+        <a href="/cart.html" class="btn btn-primary">Sepetim</a>
+    `;
+    
+    if (!user) {
+        // Giriş yapmamış kullanıcı için
+        controlsHTML += `
+            <div class="user-login-link">
+                <a href="/login.html">Giriş Yap</a>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = controlsHTML;
+    setupThemeToggle();
+}
+
+function setupThemeToggle() {
+    const lightBtn = document.getElementById('theme-light-btn');
+    const darkBtn = document.getElementById('theme-dark-btn');
+    if (!lightBtn || !darkBtn) return;
+
+    const docElement = document.documentElement;
+
+    function updateButtons() {
+        if (docElement.classList.contains('dark-mode')) {
+            darkBtn.classList.add('active');
+            lightBtn.classList.remove('active');
+        } else {
+            lightBtn.classList.add('active');
+            darkBtn.classList.remove('active');
+        }
+    }
+
+    lightBtn.addEventListener('click', () => {
+        docElement.classList.remove('dark-mode');
+        localStorage.setItem('theme', 'light');
+        updateButtons();
+    });
+
+    darkBtn.addEventListener('click', () => {
+        docElement.classList.add('dark-mode');
+        localStorage.setItem('theme', 'dark');
+        updateButtons();
+    });
+
+    updateButtons();
 }
 
 function updateSidePanelMenu(user) {
@@ -95,6 +165,7 @@ function updateSidePanelMenu(user) {
             <li><a href="#" id="categories-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7v7H4z"></path><path d="M13 4h7v7h-7z"></path><path d="M4 13h7v7H4z"></path><path d="M13 13h7v7h-7z"></path></svg>Kategoriler</a></li>
             <li><a href="/cart.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Sepetim</a></li>
             <li><a href="/login.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>Giriş Yap</a></li>
+            <li><a href="/register.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><path d="M20 8v6M23 11h-6"></path></svg>Kayıt Ol</a></li>
         `;
         
         setTimeout(() => loadCategoriesForMenu(), 100);
@@ -150,17 +221,30 @@ function openSidePanel() {
 }
 
 function closeSidePanel() {
-    document.getElementById('side-panel').classList.remove('open');
-    document.getElementById('side-panel-overlay').classList.remove('open');
+    const panel = document.getElementById('side-panel');
+    const overlay = document.getElementById('side-panel-overlay');
+    const hamburger = document.querySelector('.hamburger-menu');
+    
+    if (panel) panel.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+    if (hamburger) hamburger.classList.remove('open');
     document.body.style.overflow = 'auto';
 }
 
 function toggleSidePanel() {
     const panel = document.getElementById('side-panel');
-    if (panel.classList.contains('open')) {
+    const overlay = document.getElementById('side-panel-overlay');
+    const hamburger = document.querySelector('.hamburger-menu');
+    
+    if (panel && panel.classList.contains('open')) {
         closeSidePanel();
     } else {
         openSidePanel();
+    }
+    
+    // Hamburger animasyonu
+    if (hamburger) {
+        hamburger.classList.toggle('open');
     }
 }
 

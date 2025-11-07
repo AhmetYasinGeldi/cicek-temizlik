@@ -1,0 +1,361 @@
+/* ==============================================
+   RESPONSIVE & MOBILE OPTIMIZATIONS
+   Designed by AI Assistant for Çiçek Temizlik
+   ============================================== */
+
+/* Mobil için cart table optimizasyonu */
+@media (max-width: 768px) {
+    body {
+        font-size: 15px;
+        line-height: 1.5;
+    }
+    
+    h1 {
+        font-size: 1.6rem !important;
+    }
+    
+    h2 {
+        font-size: 1.3rem !important;
+    }
+    
+    h3 {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Cart table mobilde */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 100%;
+        font-size: 0.85rem;
+    }
+    
+    table th, 
+    table td {
+        padding: 8px 6px !important;
+        font-size: 0.85rem !important;
+    }
+    
+    table th:first-child,
+    table td:first-child {
+        min-width: 120px;
+    }
+    
+    .quantity-controls {
+        flex-direction: row;
+        gap: 4px !important;
+    }
+    
+    .quantity-controls button {
+        padding: 4px 8px !important;
+        font-size: 0.85rem !important;
+        min-width: 28px;
+    }
+    
+    .quantity-controls span {
+        min-width: 30px;
+        text-align: center;
+    }
+    
+    .remove-item {
+        font-size: 0.85rem !important;
+        padding: 4px 8px !important;
+    }
+    
+    .cart-total {
+        font-size: 1.3rem !important;
+    }
+    
+    /* Form elemanları */
+    .form-container {
+        padding: 20px !important;
+        margin: 15px auto !important;
+    }
+    
+    .form-container h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Admin kontroller mobilde daha kompakt */
+    .admin-product-controls {
+        padding: 15px !important;
+    }
+    
+    .admin-product-controls input[type="number"] {
+        max-width: 80px;
+    }
+    
+    /* Notification dropdown mobilde tam genişlik */
+    .notification-dropdown {
+        right: -10px !important;
+        min-width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+    
+    /* User dropdown mobilde daha geniş */
+    .dropdown-content {
+        min-width: 160px !important;
+        right: -10px !important;
+    }
+    
+    /* Checkout sayfası mobil optimizasyonu */
+    .checkout-section {
+        padding: 20px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .summary-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 5px;
+    }
+    
+    .summary-item-calc {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Product detail mobilde */
+    .product-detail-layout {
+        padding: 20px !important;
+        gap: 20px !important;
+    }
+    
+    .product-info-area h1 {
+        font-size: 1.8rem !important;
+    }
+    
+    .product-info-area .price-detail,
+    .product-info-area .price-detail-out-of-stock {
+        font-size: 1.6rem !important;
+    }
+    
+    .product-actions-detail button {
+        padding: 12px 20px !important;
+        font-size: 1rem !important;
+    }
+    
+    /* Modal mobilde */
+    .modal-content {
+        width: 95% !important;
+        padding: 20px !important;
+        max-height: 80vh !important;
+    }
+    
+    /* Theme toggle mobilde */
+    .theme-toggle-group {
+        transform: scale(0.9);
+    }
+    
+    /* Footer mobilde */
+    .footer-links {
+        gap: 15px !important;
+    }
+    
+    .footer-links a {
+        font-size: 0.9rem !important;
+    }
+    
+    /* Address/Card options mobilde */
+    .address-option, .card-option {
+        padding: 12px !important;
+    }
+    
+    /* Butonlar mobilde tam genişlik */
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions button {
+        width: 100% !important;
+    }
+}
+
+/* Animasyon iyileştirmeleri */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Hover efektlerini touch cihazlarda devre dışı bırak */
+@media (hover: none) and (pointer: coarse) {
+    .product:hover {
+        transform: none;
+    }
+    
+    .product:hover > img {
+        transform: none;
+    }
+    
+    .product:active {
+        transform: scale(0.98);
+    }
+    
+    button:hover,
+    .btn:hover {
+        transform: none;
+    }
+    
+    button:active,
+    .btn:active {
+        transform: scale(0.95);
+    }
+}
+
+/* Landscape mode optimizations for phones */
+@media (max-width: 768px) and (orientation: landscape) {
+    .site-header {
+        height: 60px !important;
+    }
+    
+    .site-logo img {
+        max-height: 40px !important;
+    }
+    
+    .hamburger-menu {
+        width: 24px !important;
+        height: 18px !important;
+    }
+    
+    .hamburger-menu span {
+        height: 2px !important;
+    }
+}
+
+/* Extra small devices (phones in portrait, less than 375px) */
+@media (max-width: 374px) {
+    .site-header {
+        height: 65px !important;
+        padding: 0 10px !important;
+    }
+    
+    .site-logo img {
+        max-height: 45px !important;
+    }
+    
+    .user-controls {
+        gap: 8px !important;
+    }
+    
+    .user-controls > a.btn {
+        padding: 6px 10px !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .theme-toggle-group {
+        transform: scale(0.85);
+    }
+    
+    #products-container {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    .product-info {
+        padding: 12px !important;
+    }
+    
+    .product-info h2 {
+        font-size: 1rem !important;
+    }
+}
+
+/* Large desktop optimization */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1320px;
+    }
+    
+    #products-container {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+/* Print styles */
+@media print {
+    .site-header,
+    .site-footer,
+    .hamburger-menu,
+    .user-controls,
+    .admin-controls,
+    .notification-bell,
+    button,
+    .btn {
+        display: none !important;
+    }
+    
+    .product {
+        break-inside: avoid;
+    }
+    
+    * {
+        box-shadow: none !important;
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* Loading Animation for Images */
+.product > img,
+.product-image-area img {
+    animation: imageLoad 0.5s ease-in;
+}
+
+@keyframes imageLoad {
+    from {
+        opacity: 0;
+        filter: blur(10px);
+    }
+    to {
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+/* Smooth Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg-light);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-hover);
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+    background: var(--color-white);
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Selection colors */
+::selection {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+::-moz-selection {
+    background-color: var(--color-primary);
+    color: white;
+}
