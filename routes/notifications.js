@@ -21,10 +21,6 @@ const isAdmin = (req, res, next) => {
     next();
 };
 
-router.use((req, res, next) => {
-    console.log(`🔔 Notifications rotasına girdi! URL: ${req.url}, User Role: ${req.user?.role}`);
-    next();
-});
 
 // Kullanıcının bildirimlerini getir
 router.get('/', authenticateToken, async (req, res) => {
