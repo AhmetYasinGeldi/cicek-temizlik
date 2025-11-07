@@ -11,7 +11,10 @@ app.use(express.json());
 
 
 // Uploads klasörü için (NOT: Vercel'de yeni yüklemeler kalıcı olmaz, aşağıda açıkladım)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Artık gerek yok, public içinde
+
+// Animations klasörü için
+app.use('/animations', express.static(path.join(__dirname, 'animations')));
 
 // Rota Tanımlamaları
 const productRoutes = require('./routes/products');

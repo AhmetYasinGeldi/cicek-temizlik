@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/responsive-additions.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     <script>
         // Prevents flash of wrong theme
         (function() {
@@ -160,6 +161,22 @@
 
         async function fetchAndDisplayProducts() {
             try {
+                // Show loading animation
+                productsContainer.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; grid-column: 1 / -1;">
+                        <div id="products-loading-animation" class="lottie-animation-large"></div>
+                        <p style="color: var(--color-text-muted); font-size: 1.1rem; margin-top: 20px;">Ürünler yükleniyor...</p>
+                    </div>
+                `;
+                
+                lottie.loadAnimation({
+                    container: document.getElementById('products-loading-animation'),
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: '/animations/loading.json'
+                });
+                
                 const token = localStorage.getItem('token');
                 const user = token ? parseJwt(token) : null;
                 const isAdmin = user && user.role === 'admin';
@@ -176,7 +193,7 @@
                 
                 const products = await response.json();
                 allProductsData = products;
-                productsContainer.innerHTML = ''; 
+                productsContainer.innerHTML = '';
 
                 products.forEach(product => {
                     const productCard = document.createElement('div');

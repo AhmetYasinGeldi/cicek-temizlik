@@ -2533,6 +2533,10 @@ button:disabled {
     position: relative;
 }
 
+.dark-mode .footer-links a {
+    color: #1abc9c;
+}
+
 .footer-links a::after {
     content: '';
     position: absolute;

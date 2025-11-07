@@ -3,6 +3,42 @@
    Designed by AI Assistant for Çiçek Temizlik
    ============================================== */
 
+/* Lottie Animations */
+.lottie-animation {
+    width: 100%;
+    max-width: 300px;
+    margin: 20px auto;
+    display: block;
+}
+
+.lottie-animation-large {
+    width: 100%;
+    max-width: 400px;
+    margin: 30px auto;
+    display: block;
+}
+
+.lottie-animation-small {
+    width: 100%;
+    max-width: 150px;
+    margin: 10px auto;
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .lottie-animation {
+        max-width: 250px;
+    }
+    
+    .lottie-animation-large {
+        max-width: 300px;
+    }
+    
+    .lottie-animation-small {
+        max-width: 120px;
+    }
+}
+
 /* Mobil için cart table optimizasyonu */
 @media (max-width: 768px) {
     body {
@@ -36,13 +72,13 @@
     table th, 
     table td {
         padding: 6px 4px !important;
-        font-size: 0.75rem !important;
+        font-size: 0.65rem !important;
         white-space: nowrap;
     }
     
     table th:first-child,
     table td:first-child {
-        min-width: 100px;
+        min-width: 90px;
         white-space: normal;
     }
     
@@ -58,13 +94,13 @@
     }
     
     .quantity-controls span {
-        min-width: 25px;
+        min-width: 22px;
         text-align: center;
-        font-size: 0.75rem;
+        font-size: 0.65rem;
     }
     
     .remove-item {
-        font-size: 0.7rem !important;
+        font-size: 0.65rem !important;
         padding: 3px 6px !important;
     }
     

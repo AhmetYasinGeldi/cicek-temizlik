@@ -8,9 +8,16 @@ const authenticateToken = require('../middleware/authenticateToken');
 const authorizeAdmin = require('../middleware/authorizeAdmin');
 const getOptionalUser = require('../middleware/getOptionalUser');
 const { getSettings } = require('../settingsHelper');
+
+// Uploads klasörünü oluştur (yoksa)
+const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/');
+        cb(null, 'public/uploads/');
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);

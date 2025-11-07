@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/responsive-additions.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     <script>
         // Prevents flash of wrong theme
         (function() {
@@ -86,9 +87,24 @@
             }
             
             if (items.length === 0) {
-                cartContainer.innerHTML = '<p>Sepetiniz şu anda boş.</p>';
+                cartContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <div id="empty-cart-animation" class="lottie-animation"></div>
+                        <p style="font-size: 1.2rem; color: var(--color-text-muted); margin-top: 20px;">Sepetiniz şu anda boş.</p>
+                    </div>
+                `;
                 cartTotalDiv.innerHTML = '';
                 document.querySelector('.checkout-button-container').style.display = 'none';
+                
+                // Load empty cart animation
+                lottie.loadAnimation({
+                    container: document.getElementById('empty-cart-animation'),
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: '/animations/empty_cart.json'
+                });
+                
                 return;
             }
             

@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/responsive-additions.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     <script>
         // Prevents flash of wrong theme
         (function() {
@@ -93,11 +94,26 @@
                 const cartData = await response.json();
 
                 if (cartData.items.length === 0) {
-                    summaryItemsContainer.innerHTML = '<p style="color: var(--color-danger); font-weight: 600;">Sepetiniz boş. Ödeme yapamazsınız.</p>';
+                    summaryItemsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <div id="empty-cart-animation-payment" class="lottie-animation"></div>
+                            <p style="color: var(--color-danger); font-weight: 600; margin-top: 20px;">Sepetiniz boş. Ödeme yapamazsınız.</p>
+                        </div>
+                    `;
                     summaryTotalContainer.innerHTML = '';
                     document.getElementById('place-order-btn').disabled = true;
                     document.getElementById('address-section').style.display = 'none';
                     document.getElementById('payment-section').style.display = 'none';
+                    
+                    // Load empty cart animation
+                    lottie.loadAnimation({
+                        container: document.getElementById('empty-cart-animation-payment'),
+                        renderer: 'svg',
+                        loop: true,
+                        autoplay: true,
+                        path: '/animations/empty_cart.json'
+                    });
+                    
                     return;
                 }
 
@@ -978,10 +994,27 @@
                     })
                 });
 
-                showToast('Siparişiniz başarıyla oluşturuldu!', 'success');
+                // Success animasyonunu göster
+                const checkoutContainer = document.querySelector('.checkout-container');
+                checkoutContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <div id="success-animation" class="lottie-animation-large"></div>
+                        <h2 style="color: var(--color-success); margin: 20px 0;">Siparişiniz Başarıyla Oluşturuldu!</h2>
+                        <p style="color: var(--color-text); font-size: 1.1rem;">Ana sayfaya yönlendiriliyorsunuz...</p>
+                    </div>
+                `;
+                
+                lottie.loadAnimation({
+                    container: document.getElementById('success-animation'),
+                    renderer: 'svg',
+                    loop: false,
+                    autoplay: true,
+                    path: '/animations/add_to_cart_success.json'
+                });
+                
                 setTimeout(() => {
                     window.location.href = '/';
-                }, 2000);
+                }, 3000);
 
             } catch (error) {
                 console.error('Sipariş oluşturma hatası:', error);

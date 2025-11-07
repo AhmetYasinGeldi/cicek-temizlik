@@ -446,3 +446,39 @@ function showConfirm(message) {
         confirmModalOverlay.classList.add('visible');
     });
 }
+
+// Loading animation helper
+function showLoadingAnimation(message = 'Yükleniyor...') {
+    let loadingOverlay = document.getElementById('loading-overlay');
+    if (!loadingOverlay) {
+        const overlayHTML = `
+            <div class="loading-overlay" id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div id="loading-animation" class="lottie-animation"></div>
+                <p id="loading-message" style="color: white; font-size: 1.2rem; margin-top: 20px;"></p>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', overlayHTML);
+        loadingOverlay = document.getElementById('loading-overlay');
+        
+        // Check if lottie is available
+        if (typeof lottie !== 'undefined') {
+            lottie.loadAnimation({
+                container: document.getElementById('loading-animation'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: '/animations/loading.json'
+            });
+        }
+    }
+    
+    document.getElementById('loading-message').textContent = message;
+    loadingOverlay.style.display = 'flex';
+}
+
+function hideLoadingAnimation() {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+}
