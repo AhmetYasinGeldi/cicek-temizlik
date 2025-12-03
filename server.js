@@ -27,6 +27,7 @@ const categoryRoutes = require('./routes/categories');
 const orderRoutes = require('./routes/orders');
 const contentRoutes = require('./routes/content');
 const notificationRoutes = require('./routes/notifications');
+const favoriteRoutes = require('./routes/favorites');
 
 // API Rotaları
 app.use('/api/products', productRoutes);
@@ -39,12 +40,17 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
-// Diğer tüm GET isteklerini (frontend rotaları için) index.html'e yönlendir
-// Bu, eğer ilerde React/Vue gibi SPA kullanırsan gerekli olabilir, şimdilik opsiyonel ama dursun zararı yok.
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'public', 'index.html'));
-// });
+// 404 Handler - Tüm bulunamayan rotalar için
+app.use((req, res, next) => {
+    // API route'ları için JSON 404 döndür
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: 'API endpoint bulunamadı' });
+    }
+    // HTML sayfaları için 404.html göster
+    res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+});
 
 if (require.main === module) {
     app.listen(port, () => {

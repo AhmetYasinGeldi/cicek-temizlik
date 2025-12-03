@@ -229,6 +229,25 @@
                 return;
             }
 
+            const content = document.getElementById('favorites-content');
+            const countElement = document.getElementById('favorites-count');
+            
+            // Loading animasyonu göster
+            content.innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <div id="loading-animation" style="max-width: 300px; height: 300px; margin: 0 auto;"></div>
+                    <p style="color: var(--color-text-muted); font-size: 1.1rem; margin-top: 20px;">Favoriler yükleniyor...</p>
+                </div>
+            `;
+            
+            const loadingAnim = lottie.loadAnimation({
+                container: document.getElementById('loading-animation'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: '/animations/loading.json'
+            });
+
             try {
                 const response = await fetch('/api/favorites', {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -243,10 +262,29 @@
                 }
 
                 favorites = await response.json();
+                loadingAnim.destroy();
                 renderFavorites();
             } catch (error) {
                 console.error('Favoriler yüklenirken hata:', error);
+                loadingAnim.destroy();
                 showToast('Favoriler yüklenirken bir hata oluştu', 'error');
+                
+                // Hata animasyonu göster
+                content.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <div id="error-animation" style="max-width: 300px; height: 300px; margin: 0 auto;"></div>
+                        <h2 style="margin-top: 20px;">Favoriler yüklenemedi</h2>
+                        <p style="color: var(--color-text-muted); margin: 15px 0;">Bir hata oluştu. Lütfen tekrar deneyin.</p>
+                        <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top: 20px;">Yenile</button>
+                    </div>
+                `;
+                lottie.loadAnimation({
+                    container: document.getElementById('error-animation'),
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: '/animations/404_error.json'
+                });
             }
         }
 
@@ -262,7 +300,7 @@
                         <div class="empty-favorites-animation" id="empty-animation"></div>
                         <h2>Favori ürününüz yok</h2>
                         <p>Beğendiğiniz ürünleri favorilerinize ekleyerek kolayca erişebilirsiniz</p>
-                        <a href="/products.html" class="btn btn-primary">Ürünlere Göz At</a>
+                        <a href="/" class="btn btn-primary">Ürünlere Göz At</a>
                     </div>
                 `;
 
@@ -355,7 +393,8 @@
         }
 
         window.onload = async () => {
-            await setupHeader();
+            // Header'ı kur
+            await initHamburgerMenu();
             await loadFavorites();
         };
     </script>

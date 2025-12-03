@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sayfa Bulunamadı - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/responsive-additions.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+    <style>
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 200px);
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .error-animation {
+            width: 100%;
+            max-width: 400px;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .error-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 15px;
+        }
+
+        .error-message {
+            font-size: 1.2rem;
+            color: var(--color-text-muted);
+            margin-bottom: 30px;
+            max-width: 500px;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .error-animation {
+                max-width: 300px;
+                height: 300px;
+            }
+
+            .error-title {
+                font-size: 2rem;
+            }
+
+            .error-message {
+                font-size: 1rem;
+            }
+
+            .error-actions {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .error-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <button class="hamburger-menu" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container">
+        <div class="error-container">
+            <div class="error-animation" id="error-animation"></div>
+            <h1 class="error-title">Sayfa Bulunamadı</h1>
+            <p class="error-message">Aradığınız sayfa mevcut değil veya taşınmış olabilir. Lütfen ana sayfaya dönün veya aramayı kullanın.</p>
+            <div class="error-actions">
+                <a href="/" class="btn btn-primary">Ana Sayfaya Dön</a>
+                <button onclick="history.back()" class="btn">Geri Git</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="/help.html">Yardım</a>
+            <a href="/faq.html">Sıkça Sorulan Sorular</a>
+            <a href="/about.html">Hakkımızda</a>
+            <a href="/contact.html">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        window.onload = () => {
+            // 404 animasyonunu yükle
+            lottie.loadAnimation({
+                container: document.getElementById('error-animation'),
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: '/animations/404_error.json'
+            });
+        };
+    </script>
+</body>
+</html>

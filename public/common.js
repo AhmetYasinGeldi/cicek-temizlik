@@ -163,6 +163,7 @@ function updateSidePanelMenu(user) {
             <li><a href="#" id="categories-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Kategoriler</a></li>
             <li><a href="/my-orders.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>Siparişlerim</a></li>
             <li><a href="/cart.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Sepetim</a></li>
+            <li><a href="/favorites.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>Favorilerim</a></li>
             <li><a href="/notifications.html" id="notifications-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>Bildirimler</a></li>
             <li><a href="/my-addresses.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Adreslerim</a></li>
             <li><a href="/my-cards.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Kartlarım</a></li>
@@ -481,4 +482,171 @@ function hideLoadingAnimation() {
     if (loadingOverlay) {
         loadingOverlay.style.display = 'none';
     }
+}
+
+// ==================== FAVORİ FONKSİYONLARI ====================
+let userFavorites = [];
+
+// Kullanıcının favorilerini yükle
+async function loadUserFavorites() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+        const response = await fetch('/api/favorites', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            // Product ID'leri array'e al
+            userFavorites = data.map(item => item.id);
+        }
+    } catch (error) {
+        console.error('Favoriler yüklenirken hata:', error);
+    }
+}
+
+// Favori buton HTML'i oluştur
+function createFavoriteButton(productId, page = 'default') {
+    const token = localStorage.getItem('token');
+    if (!token) return ''; // Giriş yapmamışsa gösterme
+
+    const isFavorite = userFavorites.includes(productId);
+    
+    return `
+        <button 
+            class="favorite-btn ${isFavorite ? 'is-favorite' : ''}" 
+            data-product-id="${productId}"
+            data-page="${page}"
+            aria-label="${isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}"
+            title="${isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}">
+            <div class="favorite-animation" id="favorite-animation-${page}-${productId}"></div>
+        </button>
+    `;
+}
+
+// Favori butonunu başlat
+function initializeFavoriteButton(productId, page = 'default') {
+    const btn = document.querySelector(`[data-product-id="${productId}"][data-page="${page}"]`);
+    if (!btn) return;
+
+    const animContainer = document.getElementById(`favorite-animation-${page}-${productId}`);
+    if (!animContainer) return;
+
+    const isFavorite = btn.classList.contains('is-favorite');
+
+    // Lottie animasyonunu yükle
+    const animation = lottie.loadAnimation({
+        container: animContainer,
+        renderer: 'svg',
+        loop: false,
+        autoplay: false,
+        path: '/animations/favorites.json'
+    });
+
+    let isInitialized = false;
+    
+    const setInitialFrame = () => {
+        if (isInitialized) return;
+        isInitialized = true;
+        
+        try {
+            const totalFrames = animation.totalFrames;
+            const targetFrame = isFavorite ? totalFrames - 1 : 0;
+            
+            animation.goToAndStop(targetFrame, true);
+        } catch (e) {
+            console.error('Frame set hatası:', e);
+            // Fallback: SVG yıldız ekle
+            if (isFavorite) {
+                animContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#FF6B6B" stroke="#FF6B6B" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+            } else {
+                animContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+            }
+        }
+    };
+
+    animation.addEventListener('DOMLoaded', setInitialFrame);
+    animation.addEventListener('data_ready', setInitialFrame);
+    animation.addEventListener('config_ready', setInitialFrame);
+    
+    // Fallback - animasyon 1 saniye içinde yüklenmediyse SVG göster
+    setTimeout(() => {
+        if (!isInitialized) {
+            setInitialFrame();
+        }
+    }, 1000);
+
+    // Click event
+    btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showToast('Favorilere eklemek için giriş yapmalısınız', 'error');
+            setTimeout(() => window.location.href = '/login.html', 1500);
+            return;
+        }
+
+        const currentlyFavorite = btn.classList.contains('is-favorite');
+        
+        try {
+            if (currentlyFavorite) {
+                // Favorilerden çıkar
+                const response = await fetch(`/api/favorites/${productId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Favorilerden çıkarılamadı');
+                
+                btn.classList.remove('is-favorite');
+                btn.setAttribute('aria-label', 'Favorilere ekle');
+                btn.setAttribute('title', 'Favorilere ekle');
+                userFavorites = userFavorites.filter(id => id !== productId);
+                
+                // Animasyonu tersine oynat
+                animation.setDirection(-1);
+                animation.play();
+                
+                showToast('Favorilerden çıkarıldı');
+            } else {
+                // Favorilere ekle
+                const response = await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ productId })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Favori ekleme hatası:', errorData);
+                    throw new Error(errorData.error || errorData.message || 'Favorilere eklenemedi');
+                }
+                
+                btn.classList.add('is-favorite');
+                btn.setAttribute('aria-label', 'Favorilerden çıkar');
+                btn.setAttribute('title', 'Favorilerden çıkar');
+                
+                // userFavorites array'ine ekle
+                if (!userFavorites.includes(productId)) {
+                    userFavorites.push(productId);
+                }
+                
+                // Animasyonu düz oynat
+                animation.setDirection(1);
+                animation.play();
+                
+                showToast('Favorilere eklendi! ❤️');
+            }
+        } catch (error) {
+            console.error('Favori işlemi hatası:', error);
+            showToast(error.message, 'error');
+        }
+    });
 }

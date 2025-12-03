@@ -83,20 +83,6 @@
         let siteSettings = {};
         let searchTimeout = null;
 
-        // Basit favori fonksiyonları (müşteriler için değil)
-        function createFavoriteStar(productId, page) {
-            // Boş string döndür - favoriler sadece müşteriler için
-            return '';
-        }
-
-        function initializeFavoriteStar(productId, starId) {
-            // Hiçbir şey yapma
-        }
-
-        async function loadUserFavorites() {
-            // Hiçbir şey yapma
-        }
-
         // Kategorileri yükle
         async function loadCategories() {
             try {
@@ -410,6 +396,11 @@
                     imageArea.innerHTML = `<div class="product-image-placeholder-content"><span>(Ürün Fotoğrafı)</span></div>`;
                 }
                 
+                // Favori butonu ekle (müşteriler için)
+                if (!isAdmin) {
+                    imageArea.innerHTML += createFavoriteButton(product.id, 'index');
+                }
+                
                 productCard.appendChild(imageArea);
 
                     if (isAdmin) {
@@ -470,7 +461,13 @@
                 });
 
                 if (isAdmin) addAdminSaveListeners();
-                else addCartButtonListeners();
+                else {
+                    addCartButtonListeners();
+                    // Favori butonlarını başlat
+                    products.forEach(product => {
+                        initializeFavoriteButton(product.id, 'index');
+                    });
+                }
             } catch (error) {
                 console.error('Veri çekerken bir hata oluştu:', error);
                 productsContainer.innerText = 'Ürünler yüklenemedi.';
@@ -809,9 +806,13 @@
                 adminControls.innerHTML = '<a href="/add_product.html" class="btn btn-primary">+ Yeni Ürün Ekle</a>';
             } else {
                 adminControls.innerHTML = '';
+                // Müşteriler için favorileri yükle
+                if (user) {
+                    await loadUserFavorites();
+                }
             }
             
-            fetchAndDisplayProducts();
+            await fetchAndDisplayProducts();
         };
     </script>
 </body>

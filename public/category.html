@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/responsive-additions.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     <script>
         (function() {
             const theme = localStorage.getItem('theme') || 'light';
@@ -63,12 +64,31 @@
         if (token) user = parseJwt(token);
 
         async function loadCategoryProducts() {
+            // Müşteriler için favorileri yükle
+            if (user && user.role !== 'admin') {
+                await loadUserFavorites();
+            }
+            
             const container = document.getElementById('products-container');
             const categoryNameEl = document.getElementById('category-name');
             const productCountEl = document.getElementById('product-count');
 
             if (!categoryId) {
-                container.innerHTML = '<p>Kategori ID\'si bulunamadı.</p>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <div id="error-animation" style="max-width: 300px; height: 300px; margin: 0 auto;"></div>
+                        <h2 style="margin-top: 20px;">Kategori bulunamadı</h2>
+                        <p style="color: var(--color-text-muted); margin: 15px 0;">Geçersiz kategori bağlantısı.</p>
+                        <a href="/" class="btn btn-primary" style="margin-top: 20px;">Ana Sayfaya Dön</a>
+                    </div>
+                `;
+                lottie.loadAnimation({
+                    container: document.getElementById('error-animation'),
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: '/animations/404_error.json'
+                });
                 return;
             }
 
@@ -151,11 +171,19 @@
                             </div>`;
                     }
 
+                    let favoriteButtonHTML = '';
+                    if (user && user.role !== 'admin') {
+                        favoriteButtonHTML = createFavoriteButton(product.id, 'category');
+                    }
+
                     return `
                         <div class="product" data-href="/product.html?id=${product.id}">
-                            ${product.image_url 
-                                ? `<img src="${product.image_url}" alt="${product.name}">` 
-                                : `<div class="product-image-placeholder">Fotoğraf Yok</div>`}
+                            <div class="product-image-area" style="position: relative;">
+                                ${product.image_url 
+                                    ? `<img src="${product.image_url}" alt="${product.name}">` 
+                                    : `<div class="product-image-placeholder">Fotoğraf Yok</div>`}
+                                ${favoriteButtonHTML}
+                            </div>
                             <div class="product-info">
                                 <h2>${product.name}</h2>
                                 ${priceHTML}
@@ -165,6 +193,13 @@
                         </div>
                     `;
                 }).join('');
+
+                // Favori butonlarını başlat
+                if (user && user.role !== 'admin') {
+                    visibleProducts.forEach(product => {
+                        initializeFavoriteButton(product.id, 'category');
+                    });
+                }
 
                 // Sepete ekle butonları
                 document.querySelectorAll('.add-to-cart-btn').forEach(btn => {

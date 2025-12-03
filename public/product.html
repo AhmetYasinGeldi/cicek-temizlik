@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/responsive-additions.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     <script>
         // Prevents flash of wrong theme
         (function() {
@@ -57,10 +58,31 @@
             const container = document.getElementById('product-detail-container');
             const token = localStorage.getItem('token');
             let user = null;
-            if (token) user = parseJwt(token);
+            if (token) {
+                user = parseJwt(token);
+                // Müşteriler için favorileri yükle
+                if (user.role !== 'admin') {
+                    await loadUserFavorites();
+                }
+            }
 
             if (!productId) {
-                container.innerHTML = '<h1>Ürün ID\'si bulunamadı.</h1>'; return;
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <div id="error-animation" style="max-width: 300px; height: 300px; margin: 0 auto;"></div>
+                        <h1 style="margin-top: 20px;">Ürün ID'si bulunamadı</h1>
+                        <p style="color: var(--color-text-muted); margin: 15px 0;">Geçersiz ürün bağlantısı.</p>
+                        <a href="/" class="btn btn-primary" style="margin-top: 20px;">Ana Sayfaya Dön</a>
+                    </div>
+                `;
+                lottie.loadAnimation({
+                    container: document.getElementById('error-animation'),
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: '/animations/404_error.json'
+                });
+                return;
             }
 
             try {
@@ -69,7 +91,22 @@
                 const response = await fetch(`/api/products/${productId}`, { headers: headers });
                 
                 if (!response.ok) {
-                    container.innerHTML = '<h1>Ürün bulunamadı veya görme yetkiniz yok.</h1>'; return;
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 60px 20px;">
+                            <div id="error-animation" style="max-width: 300px; height: 300px; margin: 0 auto;"></div>
+                            <h1 style="margin-top: 20px;">Ürün bulunamadı</h1>
+                            <p style="color: var(--color-text-muted); margin: 15px 0;">Bu ürün mevcut değil veya görüntüleme yetkiniz yok.</p>
+                            <a href="/" class="btn btn-primary" style="margin-top: 20px;">Ana Sayfaya Dön</a>
+                        </div>
+                    `;
+                    lottie.loadAnimation({
+                        container: document.getElementById('error-animation'),
+                        renderer: 'svg',
+                        loop: true,
+                        autoplay: true,
+                        path: '/animations/404_error.json'
+                    });
+                    return;
                 }
 
                 const product = await response.json();
@@ -90,6 +127,7 @@
                 }
                 
                 let cartButtonHTML = ''; let priceHTML = '';
+                let favoriteButtonHTML = '';
                 
                 if (product.stock_quantity > 0) {
                     priceHTML = `<div class="price-detail">${product.price} TL</div>`;
@@ -97,6 +135,20 @@
                 } else {
                     priceHTML = `<div class="price-detail-out-of-stock">${product.price} TL</div>`;
                     cartButtonHTML = `<button class="btn" disabled>Stokta Yok</button>`;
+                }
+                
+                // Favori butonu (sadece müşteriler için)
+                if (user && user.role !== 'admin') {
+                    const isFavorite = userFavorites.includes(product.id);
+                    favoriteButtonHTML = `
+                        <button 
+                            class="favorite-btn product-detail-favorite-btn ${isFavorite ? 'is-favorite' : ''}" 
+                            data-product-id="${product.id}"
+                            data-page="detail">
+                            <div class="favorite-animation" id="favorite-animation-detail-${product.id}"></div>
+                            <span>${isFavorite ? 'Favorilerden Çıkar' : 'Favorilere Ekle'}</span>
+                        </button>
+                    `;
                 }
                 
                 let adminActionsHTML = '';
@@ -121,10 +173,18 @@
                             ${categoriesHTML}
                             ${priceHTML}
                             <div class="description-detail"><p>${product.description || 'Bu ürün için açıklama girilmemiştir.'}</p></div>
-                            <div class="product-actions-detail">${cartButtonHTML}</div>
+                            <div class="product-actions-detail">
+                                ${cartButtonHTML}
+                                ${favoriteButtonHTML}
+                            </div>
                             ${adminActionsHTML}
                         </div>
                     </div>`;
+
+                // Favori butonunu başlat
+                if (user && user.role !== 'admin') {
+                    initializeFavoriteButton(product.id, 'detail');
+                }
 
                 const addToCartButton = document.getElementById('add-to-cart-btn-detail');
                 if (addToCartButton) {

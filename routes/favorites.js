@@ -40,19 +40,23 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Favori ekle
-router.post('/:productId', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     if (req.user.role === 'admin') {
         return res.status(403).json({ message: 'Admin kullanıcılar favori özelliğini kullanamaz' });
     }
 
-    const productId = parseInt(req.params.productId);
+    const productId = parseInt(req.body.productId);
+    
+    if (!productId || isNaN(productId)) {
+        return res.status(400).json({ error: 'Geçersiz ürün ID', receivedData: req.body });
+    }
 
     try {
         // Önce ürünün var olup olmadığını kontrol et
         const productCheck = await pool.query('SELECT id FROM products WHERE id = $1', [productId]);
         
         if (productCheck.rows.length === 0) {
-            return res.status(404).json({ message: 'Ürün bulunamadı' });
+            return res.status(404).json({ error: 'Ürün bulunamadı' });
         }
 
         // Favoriye ekle
@@ -62,10 +66,10 @@ router.post('/:productId', authenticateToken, async (req, res) => {
         res.status(201).json({ message: 'Ürün favorilere eklendi', favoriteId: result.rows[0].id });
     } catch (err) {
         if (err.code === '23505') { // PostgreSQL unique constraint error code
-            return res.status(400).json({ message: 'Bu ürün zaten favorilerinizde' });
+            return res.status(400).json({ error: 'Bu ürün zaten favorilerinizde' });
         }
         console.error('Favori ekleme hatası:', err);
-        res.status(500).json({ message: 'Sunucu hatası' });
+        res.status(500).json({ error: 'Sunucu hatası' });
     }
 });
 
