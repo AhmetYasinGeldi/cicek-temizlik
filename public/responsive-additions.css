@@ -398,3 +398,26 @@
     background-color: var(--color-primary);
     color: white;
 }
+
+/* Arama bölümü responsive */
+@media (max-width: 768px) {
+    .search-section {
+        min-width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+        order: 3;
+    }
+    
+    #search-input {
+        font-size: 15px;
+        padding: 10px 35px 10px 12px;
+    }
+    
+    #search-results {
+        padding: 70px 15px 15px;
+    }
+    
+    #search-results > div {
+        border-radius: 12px;
+    }
+}

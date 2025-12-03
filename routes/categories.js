@@ -33,13 +33,40 @@ router.get('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Kategori bulunamadı.' });
         }
         
-        // Bu kategorideki ürünler
-        const productsResult = await pool.query(`
-            SELECT p.* FROM products p
-            INNER JOIN product_categories pc ON p.id = pc.product_id
-            WHERE pc.category_id = $1
-            ORDER BY p.name ASC
-        `, [id]);
+        // Token varsa ve admin ise tüm ürünleri göster, yoksa sadece aktif olanları
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        let isAdmin = false;
+        
+        if (token) {
+            const jwt = require('jsonwebtoken');
+            try {
+                const user = jwt.verify(token, process.env.JWT_SECRET);
+                isAdmin = user.role === 'admin';
+            } catch (err) {
+                // Token geçersiz, normal kullanıcı gibi devam et
+            }
+        }
+        
+        // Sorguyu admin durumuna göre oluştur
+        let productsQuery;
+        if (isAdmin) {
+            productsQuery = `
+                SELECT p.* FROM products p
+                INNER JOIN product_categories pc ON p.id = pc.product_id
+                WHERE pc.category_id = $1
+                ORDER BY p.name ASC
+            `;
+        } else {
+            productsQuery = `
+                SELECT p.* FROM products p
+                INNER JOIN product_categories pc ON p.id = pc.product_id
+                WHERE pc.category_id = $1 AND p.is_active = true
+                ORDER BY p.name ASC
+            `;
+        }
+        
+        const productsResult = await pool.query(productsQuery, [id]);
         
         res.json({
             category: categoryResult.rows[0],

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorilerim - Çiçek Temizlik</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/responsive-additions.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <style>
+        .favorites-header {
+            margin-bottom: 30px;
+        }
+
+        .favorites-header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--color-text);
+        }
+
+        .favorites-count {
+            color: var(--color-text-muted);
+            font-size: 1rem;
+        }
+
+        .favorites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        .favorite-card {
+            background: var(--color-bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .favorite-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .favorite-card-image-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .dark-mode .favorite-card-image-container {
+            background: #f5f5f5;
+        }
+
+        .favorite-card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .favorite-card-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+
+        .remove-favorite-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .remove-favorite-btn:hover {
+            transform: scale(1.1);
+            background: #fee;
+        }
+
+        .remove-favorite-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: #e74c3c;
+        }
+
+        .favorite-card-info {
+            padding: 20px;
+        }
+
+        .favorite-card-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--color-text);
+            cursor: pointer;
+        }
+
+        .favorite-card-info h3:hover {
+            color: var(--color-primary);
+        }
+
+        .favorite-card-price {
+            color: var(--color-primary);
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .favorite-card-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .favorite-card-actions .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .empty-favorites {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-favorites-animation {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px;
+        }
+
+        .empty-favorites h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--color-text);
+        }
+
+        .empty-favorites p {
+            color: var(--color-text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .favorites-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 15px;
+            }
+
+            .favorite-card-image-container {
+                height: 200px;
+            }
+
+            .favorite-card-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <header class="site-header">
+        <button class="hamburger-menu" aria-label="Menü">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="/" class="site-logo"></a>
+        <div class="user-controls" id="user-controls-container"></div>
+    </header>
+
+    <main class="container">
+        <div class="favorites-header">
+            <h1>❤️ Favorilerim</h1>
+            <p class="favorites-count" id="favorites-count">Yükleniyor...</p>
+        </div>
+
+        <div id="favorites-content">
+            <!-- Favoriler buraya yüklenecek -->
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-links">
+            <a href="/help.html">Yardım</a>
+            <a href="/faq.html">Sıkça Sorulan Sorular</a>
+            <a href="/about.html">Hakkımızda</a>
+            <a href="/contact.html">İletişim</a>
+        </div>
+        <p class="copyright">&copy; 2025 Çiçek Temizlik. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <div id="toast-container"></div>
+
+    <script src="/common.js"></script>
+    <script>
+        let favorites = [];
+
+        async function loadFavorites() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/favorites', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        window.location.href = '/';
+                        return;
+                    }
+                    throw new Error('Favoriler yüklenemedi');
+                }
+
+                favorites = await response.json();
+                renderFavorites();
+            } catch (error) {
+                console.error('Favoriler yüklenirken hata:', error);
+                showToast('Favoriler yüklenirken bir hata oluştu', 'error');
+            }
+        }
+
+        function renderFavorites() {
+            const content = document.getElementById('favorites-content');
+            const countElement = document.getElementById('favorites-count');
+
+            countElement.textContent = `${favorites.length} ürün`;
+
+            if (favorites.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-favorites">
+                        <div class="empty-favorites-animation" id="empty-animation"></div>
+                        <h2>Favori ürününüz yok</h2>
+                        <p>Beğendiğiniz ürünleri favorilerinize ekleyerek kolayca erişebilirsiniz</p>
+                        <a href="/products.html" class="btn btn-primary">Ürünlere Göz At</a>
+                    </div>
+                `;
+
+                // Empty cart animasyonunu kullan
+                lottie.loadAnimation({
+                    container: document.getElementById('empty-animation'),
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: '/animations/empty_cart.json'
+                });
+                return;
+            }
+
+            content.innerHTML = `
+                <div class="favorites-grid">
+                    ${favorites.map(product => `
+                        <div class="favorite-card">
+                            <div class="favorite-card-image-container" onclick="window.location.href='/product.html?id=${product.id}'">
+                                ${product.image_url 
+                                    ? `<img src="${product.image_url}" alt="${product.name}" class="favorite-card-image">` 
+                                    : `<div class="favorite-card-placeholder">Fotoğraf Yok</div>`
+                                }
+                                <button class="remove-favorite-btn" onclick="event.stopPropagation(); removeFavorite(${product.id})" title="Favorilerden Çıkar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="favorite-card-info">
+                                <h3 onclick="window.location.href='/product.html?id=${product.id}'">${product.name}</h3>
+                                <div class="favorite-card-price">${parseFloat(product.price).toFixed(2)} TL</div>
+                                <div class="favorite-card-actions">
+                                    <button class="btn btn-outline" onclick="window.location.href='/product.html?id=${product.id}'">Detayları Gör</button>
+                                    <button class="btn btn-primary" onclick="addToCart(${product.id})">Sepete Ekle</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function removeFavorite(productId) {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                const response = await fetch(`/api/favorites/${productId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Favoriden çıkarılamadı');
+
+                favorites = favorites.filter(p => p.id !== productId);
+                renderFavorites();
+                showToast('Ürün favorilerden çıkarıldı', 'success');
+            } catch (error) {
+                console.error('Favori çıkarma hatası:', error);
+                showToast('Ürün favorilerden çıkarılırken bir hata oluştu', 'error');
+            }
+        }
+
+        async function addToCart(productId) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ productId, quantity: 1 })
+                });
+
+                if (!response.ok) throw new Error('Sepete eklenemedi');
+
+                showToast('Ürün sepete eklendi', 'success');
+                await setupHeader(); // Sepet sayısını güncelle
+            } catch (error) {
+                console.error('Sepete ekleme hatası:', error);
+                showToast('Ürün sepete eklenirken bir hata oluştu', 'error');
+            }
+        }
+
+        window.onload = async () => {
+            await setupHeader();
+            await loadFavorites();
+        };
+    </script>
+</body>
+</html>

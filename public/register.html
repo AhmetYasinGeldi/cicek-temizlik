@@ -110,9 +110,10 @@
         }
         
         if (phoneInput) {
-            // İlk odakta 0 ekle
+            // İlk odakta ve yazıya başladığında 0 ekle
+            let hasTyped = false;
             phoneInput.addEventListener('focus', (e) => {
-                if (!e.target.value || e.target.value === '') {
+                if (!hasTyped && (!e.target.value || e.target.value === '')) {
                     e.target.value = '0';
                     setTimeout(() => {
                         e.target.setSelectionRange(1, 1);
@@ -123,34 +124,41 @@
             phoneInput.addEventListener('input', (e) => {
                 let value = e.target.value.replace(/\D/g, '');
                 
-                // İlk karakter mutlaka 0 olsun
-                if (!value.startsWith('0') && value.length > 0) {
-                    value = '0' + value.replace(/^0+/, '');
+                if (value.length > 0) {
+                    hasTyped = true;
+                    
+                    // İlk karakter mutlaka 0 olsun
+                    if (!value.startsWith('0')) {
+                        value = '0' + value.replace(/^0+/, '');
+                    }
+                    
+                    // Maksimum 11 hane
+                    value = value.substring(0, 11);
+                    
+                    // Formatlama: 0... ... .. ..
+                    let formatted = value;
+                    if (value.length > 1) {
+                        formatted = value[0];
+                        if (value.length > 1) formatted += value.substring(1, 4);
+                        if (value.length > 4) formatted += ' ' + value.substring(4, 7);
+                        if (value.length > 7) formatted += ' ' + value.substring(7, 9);
+                        if (value.length > 9) formatted += ' ' + value.substring(9, 11);
+                    }
+                    
+                    e.target.value = formatted;
+                } else {
+                    hasTyped = false;
+                    e.target.value = '';
                 }
-                
-                // Maksimum 11 hane
-                value = value.substring(0, 11);
-                
-                // Formatlama: 0... ... .. ..
-                let formatted = value;
-                if (value.length > 1) {
-                    formatted = value[0];
-                    if (value.length > 1) formatted += value.substring(1, 4);
-                    if (value.length > 4) formatted += ' ' + value.substring(4, 7);
-                    if (value.length > 7) formatted += ' ' + value.substring(7, 9);
-                    if (value.length > 9) formatted += ' ' + value.substring(9, 11);
-                }
-                
-                e.target.value = formatted;
                 
                 // Custom validity'yi temizle
                 e.target.setCustomValidity('');
             });
             
-            // Blur olayında uzunluk kontrolü (sadece doluysa kontrol et)
+            // Blur olayında uzunluk kontrolü (sadece doluysa ve 0'dan fazlaysa kontrol et)
             phoneInput.addEventListener('blur', (e) => {
                 const value = e.target.value.replace(/\s/g, '');
-                if (value.length > 0 && value.length !== 11) {
+                if (value.length > 1 && value.length !== 11) {
                     e.target.setCustomValidity('Telefon numarası 11 hane olmalı (örn: 0555 123 45 67)');
                 } else {
                     e.target.setCustomValidity('');
@@ -162,10 +170,12 @@
                 e.target.setCustomValidity('');
             });
             
-            // Backspace ile 0'ı silmesin
+            // Backspace ile tümünü silince sıfırla
             phoneInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && e.target.value === '0') {
+                if (e.key === 'Backspace' && (e.target.value === '0' || e.target.value === '')) {
                     e.preventDefault();
+                    e.target.value = '';
+                    hasTyped = false;
                 }
             });
         }
@@ -179,6 +189,12 @@
                 email: form.email.value,
                 password: form.password.value
             };
+            
+            // Telefon numarası varsa ekle
+            const phoneValue = form.phone.value.replace(/\s/g, '');
+            if (phoneValue && phoneValue.length > 1) {
+                userData.phone = phoneValue;
+            }
             try {
                 const response = await fetch('/api/users/register', {
                     method: 'POST',
