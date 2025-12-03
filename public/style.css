@@ -2576,6 +2576,32 @@ button:disabled {
     }
 }
 
+.developer-info {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    opacity: 0.7;
+}
+
+.developer-info a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.developer-info a:hover {
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+}
+
+@media (min-width: 769px) {
+    .developer-info {
+        margin-top: 15px;
+        font-size: 0.85rem;
+    }
+}
+
 .dark-mode .site-footer {
     background: linear-gradient(135deg, #000000 0%, #0a0a0a 100%);
 }

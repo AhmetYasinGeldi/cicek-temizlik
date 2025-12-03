@@ -281,6 +281,18 @@ function fixFooterLinks() {
             else if (text === 'İletişim') link.setAttribute('href', '/contact.html');
         }
     });
+    
+    // Developer info ekle (eğer yoksa)
+    const footer = document.querySelector('.site-footer');
+    if (footer && !footer.querySelector('.developer-info')) {
+        const copyright = footer.querySelector('.copyright');
+        if (copyright) {
+            const developerInfo = document.createElement('p');
+            developerInfo.className = 'developer-info';
+            developerInfo.innerHTML = 'Developed by <a href="https://www.linkedin.com/in/ahmetyasingeldi/" target="_blank" rel="noopener noreferrer">Ahmet Yasin Geldi</a>';
+            copyright.after(developerInfo);
+        }
+    }
 }
 
 // Bildirim badge güncelleme fonksiyonları
