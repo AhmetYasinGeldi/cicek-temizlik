@@ -98,11 +98,52 @@ function setupUserControls(user) {
                 <a href="/login.html">Giriş Yap</a>
             </div>
         `;
+    } else {
+        // Giriş yapmış kullanıcı için
+        controlsHTML += `
+            <div class="user-dropdown">
+                <button id="user-menu-button" class="user-menu-button">
+                    ${user.firstName || user.name || user.email} <span class="arrow">&#9662;</span>
+                </button>
+                <div id="user-dropdown-content" class="dropdown-content">
+                    ${user.role === 'admin' ? '<a href="/admin-profile.html">Profil Ayarları</a>' : '<a href="/user-settings.html">Ayarlar</a>'}
+                    <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
+                </div>
+            </div>
+        `;
     }
     
     container.innerHTML = controlsHTML;
     setupThemeToggle();
     updateCartBadge();
+    
+    if (user) {
+        setupUserMenu();
+    }
+}
+
+function setupUserMenu() {
+    const menuButton = document.getElementById('user-menu-button');
+    const dropdown = document.getElementById('user-dropdown-content');
+    if (!menuButton || !dropdown) return;
+    
+    menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
+    
+    window.addEventListener('click', (event) => {
+        if (!event.target.matches('#user-menu-button') && !event.target.closest('#user-menu-button')) {
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        }
+    });
+    
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            window.location.reload();
+        });
+    }
 }
 
 function setupThemeToggle() {
@@ -147,7 +188,7 @@ function updateSidePanelMenu(user) {
         // Admin menüsü - Daha güzel ikonlar
         menuItems = `
             <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Ana Sayfa</a></li>
-            <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Ürünler</a></li>
+            <li><a href="/products.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Ürünler</a></li>
             <li><a href="/categories.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Kategoriler</a></li>
             <li><a href="/orders.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>Siparişler</a></li>
             <li><a href="/notifications.html" id="notifications-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>Bildirimler</a></li>
@@ -159,7 +200,7 @@ function updateSidePanelMenu(user) {
         // Kullanıcı menüsü - Daha güzel ikonlar
         menuItems = `
             <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Ana Sayfa</a></li>
-            <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Ürünler</a></li>
+            <li><a href="/products.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Ürünler</a></li>
             <li><a href="#" id="categories-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Kategoriler</a></li>
             <li><a href="/my-orders.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>Siparişlerim</a></li>
             <li><a href="/cart.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Sepetim</a></li>
@@ -176,7 +217,7 @@ function updateSidePanelMenu(user) {
         // Giriş yapmamış kullanıcı menüsü - Daha güzel ikonlar
         menuItems = `
             <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Ana Sayfa</a></li>
-            <li><a href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Ürünler</a></li>
+            <li><a href="/products.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Ürünler</a></li>
             <li><a href="#" id="categories-menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Kategoriler</a></li>
             <li><a href="/cart.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Sepetim</a></li>
             <li><a href="/login.html"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>Giriş Yap</a></li>
@@ -502,7 +543,11 @@ let userFavorites = [];
 // Kullanıcının favorilerini yükle
 async function loadUserFavorites() {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+        userFavorites = [];
+        console.log('❌ Token yok, userFavorites temizlendi');
+        return;
+    }
 
     try {
         const response = await fetch('/api/favorites', {
@@ -511,11 +556,15 @@ async function loadUserFavorites() {
         
         if (response.ok) {
             const data = await response.json();
-            // Product ID'leri array'e al
+            // Favoriler API'si product objelerini döndürüyor, id'yi al
             userFavorites = data.map(item => item.id);
+        } else {
+            userFavorites = [];
+            console.log('❌ API yanıt vermedi, userFavorites temizlendi');
         }
     } catch (error) {
         console.error('Favoriler yüklenirken hata:', error);
+        userFavorites = [];
     }
 }
 
@@ -528,7 +577,7 @@ function createFavoriteButton(productId, page = 'default') {
     
     return `
         <button 
-            class="favorite-btn ${isFavorite ? 'is-favorite' : ''}" 
+            class="favorite-btn ${isFavorite ? 'is-favorite' : ''}"
             data-product-id="${productId}"
             data-page="${page}"
             aria-label="${isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}"
@@ -541,9 +590,15 @@ function createFavoriteButton(productId, page = 'default') {
 // Favori butonunu başlat
 function initializeFavoriteButton(productId, page = 'default') {
     const btn = document.querySelector(`[data-product-id="${productId}"][data-page="${page}"]`);
+    
     if (!btn) return;
+    
+    // Eğer zaten başlatılmışsa tekrar başlatma
+    if (btn.dataset.initialized === 'true') return;
+    btn.dataset.initialized = 'true';
 
     const animContainer = document.getElementById(`favorite-animation-${page}-${productId}`);
+    
     if (!animContainer) return;
 
     const isFavorite = btn.classList.contains('is-favorite');
@@ -624,6 +679,11 @@ function initializeFavoriteButton(productId, page = 'default') {
                 animation.play();
                 
                 showToast('Favorilerden çıkarıldı');
+                
+                // Custom event gönder (anasayfa dinleyebilsin)
+                window.dispatchEvent(new CustomEvent('favoriteChanged', { 
+                    detail: { productId, action: 'remove' } 
+                }));
             } else {
                 // Favorilere ekle
                 const response = await fetch('/api/favorites', {
@@ -655,6 +715,11 @@ function initializeFavoriteButton(productId, page = 'default') {
                 animation.play();
                 
                 showToast('Favorilere eklendi! ❤️');
+                
+                // Custom event gönder (anasayfa dinleyebilsin)
+                window.dispatchEvent(new CustomEvent('favoriteChanged', { 
+                    detail: { productId, action: 'add' } 
+                }));
             }
         } catch (error) {
             console.error('Favori işlemi hatası:', error);

@@ -3,13 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Çiçek Temizlik - Ürünlerimiz</title>
+    <title>Çiçek Temizlik - Ana Sayfa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/responsive-additions.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <style>
+        /* Anasayfa Özel Stiller */
+        .homepage-hero {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .homepage-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .homepage-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        .homepage-hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .homepage-hero p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .homepage-hero {
+                padding: 40px 20px;
+            }
+            .homepage-hero h1 {
+                font-size: 1.8rem;
+            }
+            .homepage-hero p {
+                font-size: 1rem;
+            }
+        }
+
+        /* Header için arama çubuğu */
+        .header-search {
+            display: none;
+            flex: 1;
+            max-width: 600px;
+            margin: 0 20px;
+        }
+
+        @media (min-width: 769px) {
+            .header-search {
+                display: block;
+            }
+        }
+
+        .mobile-search {
+            display: block;
+            padding: 0 15px 15px;
+            background: white;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        @media (min-width: 769px) {
+            .mobile-search {
+                display: none;
+            }
+        }
+
+        /* Kategoriler Grid */
+        .categories-section {
+            margin-bottom: 50px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .section-header h2 {
+            font-size: 1.8rem;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header h2::before {
+            content: '';
+            width: 4px;
+            height: 28px;
+            background: var(--color-primary);
+            border-radius: 2px;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        @media (min-width: 480px) {
+            .categories-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (min-width: 769px) {
+            .categories-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 20px;
+            }
+        }
+
+        .category-card {
+            background: var(--color-white);
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--color-text);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(var(--primary-color-rgb), 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .category-card:hover::before {
+            left: 100%;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--color-primary);
+            box-shadow: 0 8px 20px rgba(var(--primary-color-rgb), 0.15);
+        }
+
+        .category-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
+            transition: transform 0.3s;
+        }
+
+        .category-card:hover .category-icon {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .category-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        /* Kampanyalı Ürünler */
+        .featured-products-section {
+            margin-bottom: 50px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        @media (min-width: 480px) {
+            .products-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (min-width: 769px) {
+            .products-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 20px;
+            }
+        }
+
+        /* Favoriler Bölümü */
+        .favorites-section {
+            margin-bottom: 50px;
+            display: none;
+        }
+
+        .favorites-section.show {
+            display: block;
+        }
+
+        /* Animasyonlar */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Yükleniyor animasyonu */
+        .loading-spinner {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-muted);
+        }
+
+        .loading-spinner::after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 40px;
+            margin: 20px auto;
+            border: 4px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: var(--color-text);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+        }
+
+        /* Badge için stil */
+        .campaign-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(238, 90, 111, 0.4);
+            z-index: 2;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
     <script>
         // Prevents flash of wrong theme
         (function() {
@@ -29,33 +352,86 @@
             <span></span>
         </button>
         <a href="/" class="site-logo"></a>
+        
+        <!-- Desktop için header içinde arama -->
+        <div class="header-search" style="display: flex; justify-content: center;">
+            <div style="position: relative; width: 100%; max-width: 500px;">
+                <input 
+                    type="text" 
+                    id="header-search-input" 
+                    placeholder="Ürün veya kategori ara..." 
+                    style="width: 100%; padding: 10px 40px 10px 15px; font-size: 15px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg); color: var(--color-text); transition: border-color 0.2s;"
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none; color: var(--color-text-muted);">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <div id="header-search-results" style="display: none;"></div>
+            </div>
+        </div>
+
         <div class="user-controls" id="user-controls-container"></div>
     </header>
 
-    <main class="container">
-        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; justify-content: space-between;">
-            <h1 style="margin: 0;">Ürünlerimiz</h1>
-            
-            <!-- Arama Bölümü -->
-            <div class="search-section">
-                <div style="position: relative;">
-                    <input 
-                        type="text" 
-                        id="search-input" 
-                        placeholder="Ürün veya kategori ara..." 
-                    />
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none; color: var(--color-text-muted);">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                    <!-- Arama sonuçları dropdown -->
-                    <div id="search-results" style="display: none;"></div>
-                </div>
-            </div>
+    <!-- Mobil için arama çubuğu -->
+    <div class="mobile-search">
+        <div style="position: relative;">
+            <input 
+                type="text" 
+                id="mobile-search-input" 
+                placeholder="Ürün veya kategori ara..." 
+                style="width: 100%; padding: 12px 40px 12px 15px; font-size: 16px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg); color: var(--color-text); transition: border-color 0.2s;"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); opacity: 0.5; pointer-events: none; color: var(--color-text-muted);">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <div id="mobile-search-results" style="display: none;"></div>
         </div>
-        
-        <div class="admin-controls" id="admin-controls"></div>
-        <div id="products-container"></div>
+    </div>
+
+    <main class="container">
+        <!-- Hero Bölümü -->
+        <div class="homepage-hero">
+            <h1>🌸 Çiçek Temizlik'e Hoş Geldiniz</h1>
+            <p>Temizlik ve hijyen ürünlerinde kalite ve güvenin adresi</p>
+        </div>
+
+        <!-- Kategoriler Bölümü -->
+        <section class="categories-section">
+            <div class="section-header">
+                <h2>Kategoriler</h2>
+            </div>
+            <div id="categories-container" class="categories-grid">
+                <div class="loading-spinner">Kategoriler yükleniyor...</div>
+            </div>
+        </section>
+
+        <!-- Kampanyalı Ürünler Bölümü -->
+        <section class="featured-products-section">
+            <div class="section-header">
+                <h2>Kampanyalı Ürünler</h2>
+                <a href="/products.html" style="color: var(--color-primary); font-size: 0.95rem; font-weight: 600; text-decoration: none; transition: opacity 0.2s;">
+                    Tümünü Gör →
+                </a>
+            </div>
+            <div id="featured-products-container" class="products-grid">
+                <div class="loading-spinner">Kampanyalı ürünler yükleniyor...</div>
+            </div>
+        </section>
+
+        <!-- Favoriler Bölümü (Sadece giriş yapan kullanıcılar için) -->
+        <section class="favorites-section" id="favorites-section">
+            <div class="section-header">
+                <h2>Favorilerim</h2>
+                <a href="/favorites.html" style="color: var(--color-primary); font-size: 0.95rem; font-weight: 600; text-decoration: none; transition: opacity 0.2s;">
+                    Tümünü Gör →
+                </a>
+            </div>
+            <div id="favorites-container" class="products-grid">
+                <div class="loading-spinner">Favoriler yükleniyor...</div>
+            </div>
+        </section>
     </main>
 
     <footer class="site-footer">
@@ -72,16 +448,43 @@
 
     <script src="/common.js"></script>
     <script>
-        const userControlsContainer = document.getElementById('user-controls-container');
-        const adminControls = document.getElementById('admin-controls');
-        const productsContainer = document.getElementById('products-container');
-        const searchInput = document.getElementById('search-input');
-        const searchResults = document.getElementById('search-results');
-        
-        let allProductsData = []; 
+        const categoriesContainer = document.getElementById('categories-container');
+        const featuredProductsContainer = document.getElementById('featured-products-container');
+        const favoritesSection = document.getElementById('favorites-section');
+        const favoritesContainer = document.getElementById('favorites-container');
+
+        // Arama inputları
+        const headerSearchInput = document.getElementById('header-search-input');
+        const headerSearchResults = document.getElementById('header-search-results');
+        const mobileSearchInput = document.getElementById('mobile-search-input');
+        const mobileSearchResults = document.getElementById('mobile-search-results');
+
         let allCategories = [];
-        let siteSettings = {};
+        let allProducts = [];
         let searchTimeout = null;
+
+        // Kategori ikonları mapping
+        const categoryIcons = {
+            'kişisel hijyen': '🧼',
+            'ev temizliği': '🏠',
+            'saç bakım': '💇',
+            'mutfak': '🍳',
+            'banyo': '🛁',
+            'çamaşır': '👕',
+            'bulaşık': '🍽️',
+            'temizlik araçları': '🧹',
+            'default': '✨'
+        };
+
+        function getCategoryIcon(categoryName) {
+            const name = categoryName.toLowerCase();
+            for (const key in categoryIcons) {
+                if (name.includes(key)) {
+                    return categoryIcons[key];
+                }
+            }
+            return categoryIcons.default;
+        }
 
         // Kategorileri yükle
         async function loadCategories() {
@@ -89,16 +492,308 @@
                 const response = await fetch('/api/categories');
                 if (response.ok) {
                     allCategories = await response.json();
+                    displayCategories();
+                } else {
+                    categoriesContainer.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <div class="empty-state-icon">📂</div>
+                            <h3>Kategori bulunamadı</h3>
+                            <p>Henüz kategori eklenmemiş</p>
+                        </div>
+                    `;
                 }
             } catch (error) {
                 console.error('Kategoriler yüklenemedi:', error);
+                categoriesContainer.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>Hata oluştu</h3>
+                        <p>Kategoriler yüklenirken bir sorun oluştu</p>
+                    </div>
+                `;
             }
         }
 
-        // Arama fonksiyonu
-        async function performSearch(query) {
+        // Kategorileri göster
+        function displayCategories() {
+            if (allCategories.length === 0) {
+                categoriesContainer.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">📂</div>
+                        <h3>Kategori bulunamadı</h3>
+                    </div>
+                `;
+                return;
+            }
+
+            categoriesContainer.innerHTML = allCategories.map(category => `
+                <a href="/category.html?id=${category.id}" class="category-card fade-in">
+                    <span class="category-icon">${getCategoryIcon(category.name)}</span>
+                    <div class="category-name">${category.name}</div>
+                </a>
+            `).join('');
+        }
+
+        // Ürünleri yükle
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                if (response.ok) {
+                    const data = await response.json();
+                    allProducts = data;
+                    displayFeaturedProducts();
+                } else {
+                    featuredProductsContainer.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <div class="empty-state-icon">📦</div>
+                            <h3>Ürün bulunamadı</h3>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Ürünler yüklenemedi:', error);
+                featuredProductsContainer.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>Hata oluştu</h3>
+                        <p>Ürünler yüklenirken bir sorun oluştu</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Kampanyalı ürünleri göster (şimdilik ilk 6 aktif ürünü gösteriyoruz)
+        function displayFeaturedProducts() {
+            const token = localStorage.getItem('token');
+            const user = token ? parseJwt(token) : null;
+            const isAdmin = user && user.role === 'admin';
+
+            // Aktif ürünleri filtrele
+            let activeProducts = allProducts.filter(p => p.is_active);
+            
+            // Admin değilse stokta olmayanları da filtrele
+            if (!isAdmin) {
+                activeProducts = activeProducts.filter(p => p.stock_quantity > 0);
+            }
+
+            const featuredProducts = activeProducts.slice(0, 6);
+
+            if (featuredProducts.length === 0) {
+                featuredProductsContainer.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">🎁</div>
+                        <h3>Kampanyalı ürün yok</h3>
+                        <p>Yakında kampanyalı ürünler eklenecek!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            featuredProductsContainer.innerHTML = featuredProducts.map(product => 
+                createProductCard(product, 'featured') // 'featured' page identifier
+            ).join('');
+
+            // Favori butonlarını başlat ve sepete ekle butonlarını ekle
+            featuredProducts.forEach(product => {
+                initializeFavoriteButton(product.id, `hp-featured-${product.id}`);
+            });
+            addCartButtonListeners();
+        }
+
+        // Ürün kartı oluştur (products.html'deki gibi)
+        function createProductCard(product, section = 'featured') {
+            const token = localStorage.getItem('token');
+            const user = token ? parseJwt(token) : null;
+            const isLoggedIn = !!token;
+            
+            // Favoriler API'den geldiğinde product_id olarak gelir, normal ürünlerde id olarak
+            const productId = product.id || product.product_id;
+            
+            const imageHTML = product.image_url 
+                ? `<img src="${product.image_url}" alt="${product.name}">` 
+                : `<div class="product-image-placeholder-content"><span>(Ürün Fotoğrafı)</span></div>`;
+
+            const outOfStock = product.stock_quantity <= 0;
+            const price = parseFloat(product.price).toFixed(2);
+
+            // Favori butonu (sadece giriş yapmış kullanıcılar için)
+            // section bazlı unique page identifier
+            const favoriteBtn = isLoggedIn ? createFavoriteButton(productId, `hp-${section}-${productId}`) : '';
+
+            let buttonHTML = '';
+            let priceClass = '';
+            if (outOfStock) {
+                buttonHTML = `<button class="out-of-stock-btn btn" disabled>Stokta Yok</button>`;
+                priceClass = "price price-out-of-stock";
+            } else {
+                buttonHTML = `<button class="add-to-cart-btn btn btn-primary" data-product-id="${productId}">Sepete Ekle</button>`;
+                priceClass = "price";
+            }
+
+            return `
+                <div class="product fade-in" style="display: flex; flex-direction: column;">
+                    <span class="campaign-badge" style="left: 10px; right: auto;">Kampanya</span>
+                    <div class="product-image-area" style="position: relative;">
+                        ${imageHTML}
+                        ${favoriteBtn}
+                    </div>
+                    <a href="/product.html?id=${productId}" style="text-decoration: none; color: inherit; display: block; flex: 1; display: flex; flex-direction: column;">
+                        <div class="product-info" style="pointer-events: none; flex: 1; display: flex; flex-direction: column; padding: 15px 10px 10px;">
+                            <h2 style="margin: 0 0 auto 0; font-size: 1rem;">${product.name}</h2>
+                            <p class="${priceClass}" style="margin: 10px 0 0 0;">${price} TL</p>
+                        </div>
+                    </a>
+                    <div style="padding: 0 10px 10px; pointer-events: auto;">
+                        ${buttonHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Favorileri yükle
+        async function loadFavorites() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                favoritesSection.classList.remove('show');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/favorites', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (response.ok) {
+                    const favorites = await response.json();
+                    
+                    // userFavorites array'ini güncelle
+                    userFavorites = favorites.map(f => f.id);
+                    
+                    if (favorites.length > 0) {
+                        favoritesSection.classList.add('show');
+                        displayFavorites(favorites);
+                    } else {
+                        favoritesSection.classList.remove('show');
+                    }
+                } else {
+                    favoritesSection.classList.remove('show');
+                }
+            } catch (error) {
+                console.error('Favoriler yüklenemedi:', error);
+                favoritesSection.classList.remove('show');
+            }
+        }
+
+        // Favorileri göster
+        function displayFavorites(favorites) {
+            const favoriteProducts = favorites.slice(0, 6);
+            
+            // Önce container'ı tamamen temizle
+            favoritesContainer.innerHTML = '';
+            
+            if (favoriteProducts.length === 0) {
+                favoritesSection.classList.remove('show');
+                return;
+            }
+            
+            favoritesContainer.innerHTML = favoriteProducts.map(fav => 
+                createProductCard(fav, 'favorites') // 'favorites' page identifier
+            ).join('');
+
+            // Küçük bir gecikme ile favori butonlarını başlat (DOM'un hazır olması için)
+            setTimeout(() => {
+                favoriteProducts.forEach(product => {
+                    const productId = product.id || product.product_id;
+                    initializeFavoriteButton(productId, `hp-favorites-${productId}`);
+                });
+                addCartButtonListeners();
+            }, 100);
+        }
+
+        // Sepete ekle buton event listeners
+        function addCartButtonListeners() {
+            document.querySelectorAll('.add-to-cart-btn:not(.cart-listener-added)').forEach(button => {
+                button.classList.add('cart-listener-added'); // Çift eklemeyi önle
+                
+                button.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Butonu devre dışı bırak (çift tıklama önleme)
+                    if (button.disabled) return;
+                    button.disabled = true;
+                    
+                    // Buton efekti
+                    button.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        button.style.transform = 'scale(1)';
+                    }, 150);
+                    
+                    const productId = parseInt(button.dataset.productId);
+                    const product = allProducts.find(p => p.id === productId);
+                    
+                    if (!product || !product.is_active || product.stock_quantity <= 0) {
+                        showToast('Bu ürün şu anda mevcut değil.', 'error');
+                        button.disabled = false;
+                        return;
+                    }
+                    
+                    const token = localStorage.getItem('token');
+                    
+                    try {
+                        if (token) {
+                            // Giriş yapmış kullanıcı - Backend'e kaydet
+                            const response = await fetch('/api/cart/items', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ productId: productId, quantity: 1 })
+                            });
+                            
+                            if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.error || 'Sepete eklenemedi.');
+                            }
+                            showToast(`${product.name} sepete eklendi! 🛒`, 'success');
+                            updateCartBadge();
+                        } else {
+                            // Giriş yapmamış kullanıcı - localStorage'a kaydet
+                            let cart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+                            const existingItem = cart.find(item => item.product_id === productId);
+                            
+                            if (existingItem) {
+                                existingItem.quantity += 1;
+                            } else {
+                                cart.push({
+                                    product_id: productId,
+                                    quantity: 1,
+                                    product: product
+                                });
+                            }
+                            
+                            localStorage.setItem('guestCart', JSON.stringify(cart));
+                            showToast(`${product.name} sepete eklendi! 🛒`, 'success');
+                            updateCartBadge();
+                        }
+                    } catch (error) {
+                        console.error('Sepete ekleme hatası:', error);
+                        showToast(error.message || 'Sepete eklenirken bir hata oluştu.', 'error');
+                    } finally {
+                        // Butonu tekrar aktif et
+                        setTimeout(() => {
+                            button.disabled = false;
+                        }, 500);
+                    }
+                });
+            });
+        }
+
+        // Arama fonksiyonu (products.html'den kopyalandı)
+        async function performSearch(query, resultsElement) {
             if (!query || query.trim().length < 2) {
-                searchResults.style.display = 'none';
+                resultsElement.style.display = 'none';
                 return;
             }
 
@@ -109,12 +804,9 @@
             query = query.toLowerCase().trim();
 
             // Ürünlerde ara
-            let filteredProducts = allProductsData.filter(product => {
+            let filteredProducts = allProducts.filter(product => {
                 const matchesQuery = product.name.toLowerCase().includes(query);
-                
-                // Admin değilse sadece aktif ürünleri göster
                 if (!isAdmin && !product.is_active) return false;
-                
                 return matchesQuery;
             });
 
@@ -125,14 +817,14 @@
 
             // Sonuçları göster
             if (filteredProducts.length === 0 && matchedCategories.length === 0) {
-                searchResults.innerHTML = `
+                resultsElement.innerHTML = `
                     <div style="padding: 20px; text-align: center; color: var(--color-text-muted);">
                         <div style="font-size: 36px; margin-bottom: 8px; opacity: 0.5;">🔍</div>
                         <div style="font-size: 14px; font-weight: 600; margin-bottom: 3px;">Sonuç bulunamadı</div>
                         <div style="font-size: 12px;">"${query}" için eşleşme yok</div>
                     </div>
                 `;
-                searchResults.style.display = 'block';
+                resultsElement.style.display = 'block';
                 return;
             }
 
@@ -144,11 +836,8 @@
                 matchedCategories.forEach(cat => {
                     resultsHTML += `
                         <a href="/category.html?id=${cat.id}" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--color-bg); border-radius: 6px; margin-bottom: 6px; text-decoration: none; color: var(--color-text); transition: all 0.2s; border: 1px solid var(--color-border);">
-                            <div style="width: 32px; height: 32px; background: var(--color-primary-light-alpha); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2">
-                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                                </svg>
+                            <div style="width: 32px; height: 32px; background: var(--color-primary-light-alpha); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px;">
+                                ${getCategoryIcon(cat.name)}
                             </div>
                             <div style="flex: 1;">
                                 <div style="font-weight: 600; font-size: 13px;">${cat.name}</div>
@@ -167,7 +856,6 @@
             if (filteredProducts.length > 0) {
                 resultsHTML += '<div><h3 style="font-size: 11px; font-weight: 600; color: var(--color-text-muted); margin: 0 0 8px 5px; text-transform: uppercase; letter-spacing: 0.5px;">Ürünler</h3>';
                 
-                // Maksimum 8 ürün göster
                 const productsToShow = filteredProducts.slice(0, 8);
                 
                 productsToShow.forEach(product => {
@@ -210,610 +898,103 @@
             }
 
             resultsHTML += '</div>';
-            searchResults.innerHTML = resultsHTML;
-            searchResults.style.display = 'block';
+            resultsElement.innerHTML = resultsHTML;
+            resultsElement.style.display = 'block';
         }
 
-        // Arama input event
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                performSearch(e.target.value);
-            }, 300); // 300ms debounce
-        });
+        // Header arama event listeners
+        if (headerSearchInput) {
+            headerSearchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    performSearch(e.target.value, headerSearchResults);
+                }, 300);
+            });
+
+            headerSearchInput.addEventListener('focus', () => {
+                headerSearchInput.style.borderColor = 'var(--color-primary)';
+                headerSearchInput.style.boxShadow = '0 0 0 3px var(--color-primary-light-alpha)';
+            });
+
+            headerSearchInput.addEventListener('blur', () => {
+                headerSearchInput.style.borderColor = 'var(--color-border)';
+                headerSearchInput.style.boxShadow = 'none';
+            });
+
+            headerSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const firstLink = headerSearchResults.querySelector('a');
+                    if (firstLink) window.location.href = firstLink.href;
+                } else if (e.key === 'Escape') {
+                    headerSearchResults.style.display = 'none';
+                    headerSearchInput.value = '';
+                }
+            });
+        }
+
+        // Mobil arama event listeners
+        if (mobileSearchInput) {
+            mobileSearchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    performSearch(e.target.value, mobileSearchResults);
+                }, 300);
+            });
+
+            mobileSearchInput.addEventListener('focus', () => {
+                mobileSearchInput.style.borderColor = 'var(--color-primary)';
+                mobileSearchInput.style.boxShadow = '0 0 0 3px var(--color-primary-light-alpha)';
+            });
+
+            mobileSearchInput.addEventListener('blur', () => {
+                mobileSearchInput.style.borderColor = 'var(--color-border)';
+                mobileSearchInput.style.boxShadow = 'none';
+            });
+
+            mobileSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const firstLink = mobileSearchResults.querySelector('a');
+                    if (firstLink) window.location.href = firstLink.href;
+                } else if (e.key === 'Escape') {
+                    mobileSearchResults.style.display = 'none';
+                    mobileSearchInput.value = '';
+                }
+            });
+        }
 
         // Dışarı tıklayınca kapat
         document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
+            if (headerSearchInput && !headerSearchInput.contains(e.target) && !headerSearchResults.contains(e.target)) {
+                headerSearchResults.style.display = 'none';
             }
-        });
-        
-        // ESC tuşu ile kapat
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && searchResults.style.display === 'block') {
-                searchResults.style.display = 'none';
-                searchInput.value = '';
+            if (mobileSearchInput && !mobileSearchInput.contains(e.target) && !mobileSearchResults.contains(e.target)) {
+                mobileSearchResults.style.display = 'none';
             }
         });
 
-        // Enter tuşuna basınca ilk sonuca git
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const firstLink = searchResults.querySelector('a');
-                if (firstLink) {
-                    window.location.href = firstLink.href;
-                }
-            }
+        // Sayfa yüklendiğinde çalışacak (common.js yüklendikten sonra)
+        window.addEventListener('load', async () => {
+            // Favori bilgilerini yükle (common.js'den)
+            await loadUserFavorites();
+            
+            await loadCategories();
+            await loadProducts();
+            await loadFavorites();
+            
+            // Favori değişikliklerini dinle
+            window.addEventListener('favoriteChanged', async (event) => {
+                const { productId, action } = event.detail;
+                
+                // userFavorites güncelle
+                await loadUserFavorites();
+                
+                // Favorilerim bölümünü yeniden yükle
+                await loadFavorites();
+                
+                // Kampanyalı ürünler bölümünü de yeniden yükle
+                await loadProducts();
+            });
         });
-
-        function addAdminSaveListeners() {
-            const saveButtons = document.querySelectorAll('.admin-save-btn');
-            saveButtons.forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    e.stopPropagation(); 
-                    const productId = button.dataset.productId;
-                    const token = localStorage.getItem('token');
-                    if (!token) return;
-
-                    const priceInput = document.getElementById(`price-${productId}`);
-                    const activeCheckbox = document.getElementById(`active-${productId}`);
-                    const stockInput = document.getElementById(`stock-${productId}`);
-                    const originalProduct = allProductsData.find(p => p.id == productId);
-                    
-                    const updatedData = {
-                        ...originalProduct,
-                        price: parseFloat(priceInput.value),
-                        is_active: activeCheckbox.checked,
-                        stock_quantity: parseInt(stockInput.value),
-                    };
-
-                    try {
-                        const response = await fetch(`/api/products/${productId}`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                            body: JSON.stringify(updatedData)
-                        });
-                        if (!response.ok) throw new Error('Güncelleme başarısız.');
-                        showToast('Değişiklikler kaydedildi!');
-                        fetchAndDisplayProducts(); 
-                    } catch (error) {
-                        console.error('Hızlı güncelleme hatası:', error);
-                        showToast('Bir hata oluştu.', 'error');
-                    }
-                });
-            });
-        }
-
-        function addCartButtonListeners() {
-            const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
-            addToCartButtons.forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const productId = parseInt(button.dataset.productId);
-                    const product = allProductsData.find(p => p.id === productId);
-                    
-                    if (!product || !product.is_active || product.stock_quantity <= 0) {
-                        showToast('Bu ürün şu anda mevcut değil.', 'error');
-                        return;
-                    }
-                    
-                    const token = localStorage.getItem('token');
-                    
-                    if (token) {
-                        // Giriş yapmış kullanıcı - Backend'e kaydet
-                        try {
-                            const response = await fetch('/api/cart/items', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify({ productId: productId, quantity: 1 })
-                            });
-                            
-                            if (!response.ok) {
-                                const errorData = await response.json();
-                                throw new Error(errorData.error || 'Sepete eklenemedi.');
-                            }
-                            showToast(`${product.name} sepete eklendi!`);
-                            updateCartBadge();
-                        } catch (error) {
-                            console.error('Sepete ekleme hatası:', error);
-                            showToast(error.message || 'Sepete eklenirken bir hata oluştu.', 'error');
-                        }
-                    } else {
-                        // Giriş yapmamış kullanıcı - localStorage'a kaydet
-                        let cart = JSON.parse(localStorage.getItem('guestCart') || '[]');
-                        const existingItem = cart.find(item => item.product_id === productId);
-                        
-                        if (existingItem) {
-                            existingItem.quantity += 1;
-                        } else {
-                            cart.push({
-                                product_id: productId,
-                                quantity: 1,
-                                product: product
-                            });
-                        }
-                        
-                        localStorage.setItem('guestCart', JSON.stringify(cart));
-                        showToast(`${product.name} sepete eklendi!`);
-                        updateCartBadge();
-                    }
-                });
-            });
-        }
-
-        async function fetchAndDisplayProducts() {
-            try {
-                // Show loading animation
-                productsContainer.innerHTML = `
-                    <div style="text-align: center; padding: 60px 20px; grid-column: 1 / -1;">
-                        <div id="products-loading-animation" class="lottie-animation-large"></div>
-                        <p style="color: var(--color-text-muted); font-size: 1.1rem; margin-top: 20px;">Ürünler yükleniyor...</p>
-                    </div>
-                `;
-                
-                lottie.loadAnimation({
-                    container: document.getElementById('products-loading-animation'),
-                    renderer: 'svg',
-                    loop: true,
-                    autoplay: true,
-                    path: '/animations/loading.json'
-                });
-                
-                const token = localStorage.getItem('token');
-                const user = token ? parseJwt(token) : null;
-                const isAdmin = user && user.role === 'admin';
-                const headers = {};
-                if (token) { headers['Authorization'] = `Bearer ${token}`; }
-
-                if (isAdmin) {
-                    const settingsResponse = await fetch('/api/settings', { headers: headers });
-                    if(settingsResponse.ok) siteSettings = await settingsResponse.json();
-                }
-
-                const response = await fetch('/api/products', { headers: headers });
-                if (!response.ok) throw new Error('Ürünler getirilemedi.');
-                
-                const products = await response.json();
-                allProductsData = products;
-                productsContainer.innerHTML = '';
-
-                products.forEach(product => {
-                    const productCard = document.createElement('div');
-                    productCard.className = 'product';
-                    const imageArea = document.createElement('div');
-                imageArea.className = 'product-image-area';
-                imageArea.style.position = 'relative';
-
-                if (product.image_url) {
-                    imageArea.innerHTML = `<img src="${product.image_url}" alt="${product.name}">`;
-                } else {
-                    imageArea.innerHTML = `<div class="product-image-placeholder-content"><span>(Ürün Fotoğrafı)</span></div>`;
-                }
-                
-                // Favori butonu ekle (müşteriler için)
-                if (!isAdmin) {
-                    imageArea.innerHTML += createFavoriteButton(product.id, 'index');
-                }
-                
-                productCard.appendChild(imageArea);
-
-                    if (isAdmin) {
-                        productCard.dataset.href = `edit_product.html?id=${product.id}`;
-                        productCard.style.cursor = 'pointer';
-                        let criticalStockIcon = '';
-                        if (product.is_active && product.stock_quantity > 0) {
-                            let effectiveThreshold = 0;
-                            if (product.critical_stock_threshold != null && product.critical_stock_threshold > 0) {
-                                effectiveThreshold = product.critical_stock_threshold;
-                            } else if (siteSettings.critical_stock_percentage != null && siteSettings.critical_stock_percentage > 0) {
-                                effectiveThreshold = parseInt(siteSettings.critical_stock_percentage);
-                            }
-                            if (effectiveThreshold > 0 && product.stock_quantity <= effectiveThreshold) {
-                                criticalStockIcon = `<span class="critical-stock-warning" title="Stok kritik seviyede!"></span>`;
-                            }
-                        }
-                        const infoDiv = document.createElement('div');
-                        infoDiv.className = 'product-info';
-                        infoDiv.innerHTML = `<h2>${product.name} ${criticalStockIcon}</h2>`;
-                        if (!product.is_active) {
-                            productCard.style.opacity = '0.6';
-                            infoDiv.innerHTML += product.stock_quantity <= 0 ? '<p style="color: red; font-weight: bold;">Stok Bitti & Satışta Değil</p>' : '<p style="color: red; font-weight: bold;">Satışta Değil</p>';
-                        } else if (product.stock_quantity <= 0) {
-                            infoDiv.innerHTML += '<p style="color: orange; font-weight: bold;">Stok Bitti</p>';
-                        }
-                        productCard.appendChild(infoDiv);
-                        const priceStep = siteSettings.quick_edit_price_step || 5;
-                        const adminControlsDiv = document.createElement('div');
-                        adminControlsDiv.className = 'admin-product-controls';
-                        adminControlsDiv.innerHTML = `
-                            <div><label>Fiyat:</label><input type="number" id="price-${product.id}" value="${product.price}" step="${priceStep}"></div>
-                            <div><label>Stok:</label><input type="number" id="stock-${product.id}" value="${product.stock_quantity}" min="0"></div>
-                            <div><label>Satışta mı?</label><input type="checkbox" id="active-${product.id}" ${product.is_active ? 'checked' : ''}></div>
-                            <button class="admin-save-btn btn btn-primary" data-product-id="${product.id}">Hızlı Kaydet</button>
-                        `;
-                        productCard.appendChild(adminControlsDiv);
-                        productsContainer.appendChild(productCard);
-                    } else {
-                        const link = document.createElement('a');
-                        link.href = `product.html?id=${product.id}`;
-                        link.style.textDecoration = 'none'; link.style.color = 'inherit';
-                        const infoDiv = document.createElement('div');
-                        infoDiv.className = 'product-info';
-                        let buttonHTML = ''; let priceClass = '';
-                        if (product.stock_quantity > 0) {
-                            buttonHTML = `<button class="add-to-cart-btn btn btn-primary" data-product-id="${product.id}">Sepete Ekle</button>`;
-                            priceClass = "price";
-                        } else {
-                            buttonHTML = `<button class="out-of-stock-btn btn" disabled>Stokta Yok</button>`;
-                            priceClass = "price price-out-of-stock";
-                        }
-                        infoDiv.innerHTML = `<h2>${product.name}</h2><p class="${priceClass}">${product.price} TL</p>${buttonHTML}`;
-                        productCard.appendChild(infoDiv);
-                        link.appendChild(productCard);
-                        productsContainer.appendChild(link);
-                    }
-                });
-
-                if (isAdmin) addAdminSaveListeners();
-                else {
-                    addCartButtonListeners();
-                    // Favori butonlarını başlat
-                    products.forEach(product => {
-                        initializeFavoriteButton(product.id, 'index');
-                    });
-                }
-            } catch (error) {
-                console.error('Veri çekerken bir hata oluştu:', error);
-                productsContainer.innerText = 'Ürünler yüklenemedi.';
-            }
-        }
-        
-        productsContainer.addEventListener('click', (event) => {
-            if (event.target.closest('input, button, label')) return;
-            const productCard = event.target.closest('.product');
-            if (productCard && productCard.dataset.href) window.location.href = productCard.dataset.href;
-        });
-        
-        function setupUserMenu() {
-            const menuButton = document.getElementById('user-menu-button');
-            const dropdown = document.getElementById('user-dropdown-content');
-            if (!menuButton || !dropdown) return;
-            menuButton.addEventListener('click', () => dropdown.classList.toggle('show'));
-            window.addEventListener('click', (event) => {
-                if (!event.target.matches('#user-menu-button')) {
-                    if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
-                }
-            });
-            const logoutButton = document.getElementById('logout-button');
-            if (logoutButton) {
-                logoutButton.addEventListener('click', () => {
-                    localStorage.removeItem('token');
-                    window.location.reload();
-                });
-            }
-        }
-
-        async function setupHeader() { 
-            const token = localStorage.getItem('token');
-            userControlsContainer.innerHTML = ''; 
-            let cartItemCount = 0; 
-            let isCustomer = false; 
-            let user = null;
-            if (token) {
-                user = parseJwt(token);
-                if (user && user.role !== 'admin') isCustomer = true;
-            }
-            if (isCustomer) {
-            try {
-                const response = await fetch('/api/cart', { headers: { 'Authorization': `Bearer ${token}` } });
-                if (response.ok) {
-                    const cartData = await response.json();
-                    cartItemCount = cartData.totalQuantity;
-                } else {
-                    console.error('Sepet sayısı alınamadı.');
-                }
-            } catch (error) { console.error('Sepet sayısı alınırken hata:', error); }
-            }
-
-            let themeToggleButtons = `
-                <div class="theme-toggle-group">
-                    <button id="theme-light-btn" class="theme-toggle-btn" data-theme="light">
-                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                    </button>
-                    <button id="theme-dark-btn" class="theme-toggle-btn" data-theme="dark">
-                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                    </button>
-                </div>`;
-
-            if (user && user.role === 'admin') {
-                userControlsContainer.innerHTML = `
-                    <div class="notification-bell" id="notification-bell">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                        </svg>
-                        <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
-                        <div class="notification-dropdown" id="notification-dropdown">
-                            <div class="notification-dropdown-header">
-                                <h3>Bildirimler</h3>
-                                <a href="/notifications.html">Tümünü Gör</a>
-                            </div>
-                            <div class="notification-dropdown-body" id="notification-dropdown-body">
-                                <div class="notification-dropdown-empty">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                                    </svg>
-                                    <h4>Şimdilik bildiriminiz yok</h4>
-                                    <p>Yeni bildirimler burada görünecek</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    ${themeToggleButtons}
-                    <div class="user-dropdown">
-                        <button id="user-menu-button" class="user-menu-button">
-                            ${user.firstName} (Admin) <span class="arrow">&#9662;</span>
-                        </button>
-                        <div id="user-dropdown-content" class="dropdown-content">
-                            <a href="/admin-profile.html">Profil Ayarları</a>
-                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
-                        </div>
-                    </div>`;
-                    
-                loadNotificationCount();
-                setupNotificationDropdown();
-            } else if (user) {
-                const cartText = cartItemCount > 0 ? `Sepetim (${cartItemCount})` : 'Sepetim';
-                userControlsContainer.innerHTML = `
-                    <a href="/cart.html" class="btn btn-primary">${cartText}</a>
-                    <div class="notification-bell" id="notification-bell">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                        </svg>
-                        <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
-                        <div class="notification-dropdown" id="notification-dropdown">
-                            <div class="notification-dropdown-header">
-                                <h3>Bildirimler</h3>
-                                <a href="/notifications.html">Tümünü Gör</a>
-                            </div>
-                            <div class="notification-dropdown-body" id="notification-dropdown-body">
-                                <div class="notification-dropdown-empty">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                                    </svg>
-                                    <h4>Şimdilik bildiriminiz yok</h4>
-                                    <p>Yeni bildirimler burada görünecek</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    ${themeToggleButtons}
-                    <div class="user-dropdown">
-                        <button id="user-menu-button" class="user-menu-button">
-                            ${user.firstName} <span class="arrow">&#9662;</span>
-                        </button>
-                        <div id="user-dropdown-content" class="dropdown-content">
-                            <a href="/user-settings.html">Ayarlar</a>
-                            <button id="logout-button" class="logout-button" style="color: var(--color-danger);">Çıkış Yap</button>
-                        </div>
-                    </div>`;
-                    
-                // Bildirim sayısını yükle
-                loadNotificationCount();
-                setupNotificationDropdown();
-            } else {
-                userControlsContainer.innerHTML = `
-                    <a href="/cart.html" class="btn btn-primary">Sepetim</a>
-                    ${themeToggleButtons}
-                    <div class="user-login-link"><a href="/login.html">Giriş Yap</a></div>`;
-            }
-            if (user) setupUserMenu(); 
-            setupThemeToggle();
-        }
-
-        function setupThemeToggle() {
-            const lightBtn = document.getElementById('theme-light-btn');
-            const darkBtn = document.getElementById('theme-dark-btn');
-            if (!lightBtn || !darkBtn) return;
-
-            const docElement = document.documentElement;
-
-            function updateButtons() {
-                if (docElement.classList.contains('dark-mode')) {
-                    darkBtn.classList.add('active');
-                    lightBtn.classList.remove('active');
-                } else {
-                    lightBtn.classList.add('active');
-                    darkBtn.classList.remove('active');
-                }
-            }
-
-            lightBtn.addEventListener('click', () => {
-                docElement.classList.remove('dark-mode');
-                localStorage.setItem('theme', 'light');
-                updateButtons();
-            });
-
-            darkBtn.addEventListener('click', () => {
-                docElement.classList.add('dark-mode');
-                localStorage.setItem('theme', 'dark');
-                updateButtons();
-            });
-
-            updateButtons();
-        }
-
-        async function loadNotificationCount() {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-            
-            try {
-                const response = await fetch('/api/notifications/unread-count', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    const badge = document.getElementById('notification-badge');
-                    if (badge) {
-                        if (data.count > 0) {
-                            badge.textContent = data.count > 99 ? '99+' : data.count;
-                            badge.style.display = 'flex';
-                        } else {
-                            badge.style.display = 'none';
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Bildirim sayısı yüklenemedi:', error);
-            }
-        }
-
-        function setupNotificationDropdown() {
-            const notificationBell = document.getElementById('notification-bell');
-            const notificationDropdown = document.getElementById('notification-dropdown');
-            
-            if (!notificationBell || !notificationDropdown) return;
-
-            notificationBell.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const isOpen = notificationDropdown.classList.contains('show');
-                
-                if (!isOpen) {
-                    // Dropdown'u aç ve bildirimleri yükle
-                    notificationDropdown.classList.add('show');
-                    await loadNotificationDropdown();
-                } else {
-                    notificationDropdown.classList.remove('show');
-                }
-            });
-
-            // Dışarı tıklanınca kapat
-            window.addEventListener('click', (e) => {
-                if (!notificationBell.contains(e.target)) {
-                    notificationDropdown.classList.remove('show');
-                }
-            });
-        }
-
-        async function loadNotificationDropdown() {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
-            const dropdownBody = document.getElementById('notification-dropdown-body');
-            if (!dropdownBody) return;
-
-            try {
-                const response = await fetch('/api/notifications?limit=5', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error('Bildirimler yüklenemedi');
-
-                const data = await response.json();
-                const notifications = data.notifications;
-
-                if (notifications.length === 0) {
-                    dropdownBody.innerHTML = `
-                        <div class="notification-dropdown-empty">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                            </svg>
-                            <h4>Şimdilik bildiriminiz yok</h4>
-                            <p>Yeni bildirimler burada görünecek</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                dropdownBody.innerHTML = notifications.map(notification => {
-                    const unreadClass = notification.is_read ? '' : 'unread';
-                    const time = formatNotificationTime(notification.created_at);
-                    const link = notification.link || '/notifications.html';
-
-                    return `
-                        <div class="notification-dropdown-item ${unreadClass}" onclick="handleNotificationClick(${notification.id}, '${link}')">
-                            <h5 class="notification-dropdown-title">${notification.title}</h5>
-                            <p class="notification-dropdown-message">${notification.message}</p>
-                            <span class="notification-dropdown-time">${time}</span>
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (error) {
-                console.error('Bildirimler yüklenirken hata:', error);
-                dropdownBody.innerHTML = `
-                    <div class="notification-dropdown-empty">
-                        <p style="color: var(--color-danger);">Bildirimler yüklenemedi</p>
-                    </div>
-                `;
-            }
-        }
-
-        function formatNotificationTime(timestamp) {
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diff = now - date;
-            const minutes = Math.floor(diff / 60000);
-            const hours = Math.floor(minutes / 60);
-            const days = Math.floor(hours / 24);
-
-            if (minutes < 1) return 'Şimdi';
-            if (minutes < 60) return `${minutes} dakika önce`;
-            if (hours < 24) return `${hours} saat önce`;
-            if (days < 7) return `${days} gün önce`;
-            return date.toLocaleDateString('tr-TR');
-        }
-
-        async function handleNotificationClick(notificationId, link) {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
-            // Bildirimi okundu olarak işaretle
-            try {
-                await fetch(`/api/notifications/${notificationId}/read`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                // Badge'i güncelle
-                await loadNotificationCount();
-            } catch (error) {
-                console.error('Bildirim okundu işaretlenemedi:', error);
-            }
-
-            // Sayfaya git
-            window.location.href = link;
-        }
-
-        window.onload = async () => {
-            await setupHeader();
-            await loadCategories(); // Kategorileri yükle
-            
-            const token = localStorage.getItem('token');
-            const user = token ? parseJwt(token) : null;
-            if (user && user.role === 'admin') {
-                adminControls.innerHTML = '<a href="/add_product.html" class="btn btn-primary">+ Yeni Ürün Ekle</a>';
-            } else {
-                adminControls.innerHTML = '';
-                // Müşteriler için favorileri yükle
-                if (user) {
-                    await loadUserFavorites();
-                }
-            }
-            
-            await fetchAndDisplayProducts();
-        };
     </script>
 </body>
 </html>
